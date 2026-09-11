@@ -341,7 +341,10 @@ export function AdminAppFixture(props: AdminAppFixtureProps) {
       if (!response.ok) throw new Error(`Refresh failed (${response.status})`);
       if (token !== refreshToken) return;
       const nextRevision = revision() + 1;
+      await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
       const nextSnapshot = refreshAdminWorkload(snapshot(), nextRevision);
+      await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
+      if (token !== refreshToken) return;
       batch(() => {
         setSnapshot(nextSnapshot);
         setRevision(nextRevision);

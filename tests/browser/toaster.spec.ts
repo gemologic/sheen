@@ -1,7 +1,5 @@
 import { expect, test } from "@playwright/test";
 
-// Native tab-focus qualification needs full Chromium, not the headless shell.
-test.use({ channel: "chromium" });
 test.beforeEach(async ({ page }) => { page.on("pageerror", error => { throw error; }); });
 
 test("presenter disposal releases its lease and cancels its running timers", async ({ page }) => {

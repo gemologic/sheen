@@ -120,7 +120,7 @@ function driftFailures(current: ComposerNormalizedBaseline): readonly string[] {
 
 async function choose(page: Page, label: string, option: string): Promise<void> {
   await page.getByRole("button", { name: new RegExp(`^${label} `, "u") }).click();
-  await page.getByRole("option", { name: option, exact: true }).click();
+  await page.getByRole("listbox").getByRole("option", { name: option, exact: true }).click();
 }
 
 async function runOnce(browser: Browser): Promise<ComposerBenchmarkRun> {

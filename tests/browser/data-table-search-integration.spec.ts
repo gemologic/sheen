@@ -30,9 +30,16 @@ test("integrated client search debounces one accepted state and round-trips thro
   await page.getByRole("checkbox", { name: "Select row account-1", exact: true }).press("Space");
   await expect(page.getByRole("status", { name: "Selection snapshot" })).toHaveText("1 IDs");
 
-  await search.fill("Acme 01");
-  await expect(root).toHaveAttribute("data-pending", "");
-  await expect(root).toHaveAttribute("data-previous-results", "");
+  const pending = await search.evaluate(element => {
+    if (!(element instanceof HTMLInputElement)) throw new Error("Expected the account search input");
+    const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set;
+    if (!setter) throw new Error("Expected the native input value setter");
+    setter.call(element, "Acme 01");
+    element.dispatchEvent(new InputEvent("input", { bubbles: true, inputType: "insertText", data: "Acme 01" }));
+    const root = element.closest(".sheen-data-table");
+    return Object.freeze({ pending: root?.hasAttribute("data-pending") ?? false, previous: root?.hasAttribute("data-previous-results") ?? false });
+  });
+  expect(pending).toEqual({ pending: true, previous: true });
   await expect(retained).toHaveAttribute("data-retained-search", "true");
   await expect(page.locator('[data-row-id="account-1"]')).toBeVisible();
   await expect(page.locator("[data-row-id]")).toHaveCount(1);

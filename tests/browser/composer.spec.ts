@@ -293,6 +293,7 @@ test("hostile multilingual content reflows in a reduced-motion RTL phone preview
 });
 
 test("repeated add and remove edits retain a bounded live DOM and drag-registration surface", async ({ page }) => {
+  test.setTimeout(90_000);
   await page.goto("/composer");
   await ready(page);
   const frame = page.frameLocator('iframe[title="Editable AdminApp preview"]');

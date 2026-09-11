@@ -61,6 +61,23 @@ test("keyboard inspection and legend buttons provide equivalent retained control
   await expect(chart.locator("table")).toHaveCount(1);
 });
 
+test("large-chart keyboard inspection retains full-resolution sample semantics", async ({ page }) => {
+  await page.goto("/chart-benchmark");
+  await expect(page.locator("main")).toHaveAttribute("data-chart-benchmark-ready", "true");
+  await page.getByRole("button", { name: "Mount 100k-point chart", exact: true }).click();
+  const chart = page.locator(".sheen-time-series");
+  await expect(chart).toHaveAttribute("data-enhanced", "true");
+  const plot = chart.getByRole("img", { name: "100k point benchmark", exact: true });
+  const tooltip = chart.locator(".sheen-chart-tooltip");
+  await plot.focus();
+  await plot.press("Home");
+  await expect(tooltip).toHaveAttribute("data-index", "0");
+  await plot.press("ArrowRight");
+  await expect(tooltip).toHaveAttribute("data-index", "1");
+  await plot.press("End");
+  await expect(tooltip).toHaveAttribute("data-index", "99999");
+});
+
 test("drag zoom survives accepted data refresh and double click resets it", async ({ page }) => {
   await page.goto("/chart-time-series");
   await expect(page.locator(".sheen-time-series")).toHaveAttribute("data-enhanced", "true");

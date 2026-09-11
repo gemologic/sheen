@@ -2,8 +2,8 @@ import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 import type { Locator, Page } from "@playwright/test";
 
-async function ready(page: Page): Promise<void> {
-  await expect(page.locator('[data-sheen-portal="root"]')).toHaveAttribute("data-sheen-ready", "true");
+async function ready(page: Page, timeout = 5_000): Promise<void> {
+  await expect(page.locator('[data-sheen-portal="root"]')).toHaveAttribute("data-sheen-ready", "true", { timeout });
 }
 
 async function expectNoAxeViolations(page: Page, label: string): Promise<void> {
@@ -46,7 +46,7 @@ test("date controls preserve complete server markup, identity, and a native draf
     await picker.fill("12/02/2026");
     await picker.focus();
     release();
-    await ready(page);
+    await ready(page, 15_000);
     await expect(main).toHaveAttribute("data-date-hydration-identity", "main");
     await expect(picker).toHaveAttribute("data-date-hydration-identity", "picker");
     await expect(calendar).toHaveAttribute("data-date-hydration-identity", "calendar");

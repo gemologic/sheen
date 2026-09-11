@@ -10,6 +10,7 @@ import { useThemeTokens } from "./theme-tokens.ts";
 import type { ThemeTokenName, ThemeTokenValues } from "./theme-tokens.ts";
 import { ChartLegend, createSeriesVisibility } from "./ChartLegend.tsx";
 import { resolveChartMessages } from "./messages.ts";
+import { downsampleTimeSeriesRendererData, sourceIndexAtTimestamp } from "./renderer-data.ts";
 
 const tokenNames: readonly ThemeTokenName[] = Object.freeze([
   "--sheen-chart-1", "--sheen-chart-2", "--sheen-chart-3", "--sheen-chart-4",
@@ -288,6 +289,9 @@ export function TimeSeries(props: TimeSeriesProps): JSX.Element {
   let initializationFrame: number | undefined;
   let currentTokens: ThemeTokenValues = Object.freeze({});
   let currentConfiguration: string | undefined;
+  let currentRendererSource: ChartData | undefined;
+  let currentRendererData: ChartData | undefined;
+  let currentRendererKeys = "";
   let plotReady = false;
   let suppressScale = false;
   let announceCursor = false;
@@ -308,11 +312,16 @@ export function TimeSeries(props: TimeSeriesProps): JSX.Element {
   }
 
   function updateTooltip(current: uPlot): void {
-    const index = current.cursor.idx;
+    const rendererIndex = current.cursor.idx;
     const left = current.cursor.left;
     const xColumn = current.data[0];
-    const timestamp = index === null || index === undefined ? undefined : xColumn?.[index];
-    if (props.tooltip === false || index === null || index === undefined || typeof left !== "number" || left < 0 || typeof timestamp !== "number") {
+    const rendererTimestamp = rendererIndex === null || rendererIndex === undefined ? undefined : xColumn?.[rendererIndex];
+    const source = data();
+    const index = announceCursor && keyboardIndex >= 0
+      ? keyboardIndex
+      : typeof rendererTimestamp === "number" ? sourceIndexAtTimestamp(source.t, rendererTimestamp) : undefined;
+    const timestamp = index === undefined ? undefined : source.t[index];
+    if (props.tooltip === false || index === undefined || typeof left !== "number" || left < 0 || typeof timestamp !== "number") {
       hideTooltip();
       announceCursor = false;
       return;
@@ -327,7 +336,7 @@ export function TimeSeries(props: TimeSeriesProps): JSX.Element {
       if (definition === undefined) continue;
       const row = tooltipRowElements.get(definition.key);
       const valueElement = tooltipValueElements.get(definition.key);
-      const raw = current.data[seriesIndex + 1]?.[index];
+      const raw = source[definition.key]?.[index];
       const missing = typeof raw !== "number" || Number.isNaN(raw);
       const formatted = missing ? "—" : formatters().value(raw);
       if (row) row.hidden = !(visible[seriesIndex] ?? false);
@@ -398,6 +407,16 @@ export function TimeSeries(props: TimeSeriesProps): JSX.Element {
     return Math.max(1, Math.floor(plotHost?.getBoundingClientRect().width ?? 1));
   }
 
+  function resolveRendererData(source: ChartData, resolvedDefinitions: readonly ChartSeries[]): ChartData {
+    const keys = resolvedDefinitions.map(definition => definition.key).join("\u0000");
+    if (currentRendererSource !== source || currentRendererKeys !== keys || currentRendererData === undefined) {
+      currentRendererSource = source;
+      currentRendererKeys = keys;
+      currentRendererData = downsampleTimeSeriesRendererData(source, resolvedDefinitions);
+    }
+    return currentRendererData;
+  }
+
   function disposePlot(): void {
     if (initializationFrame !== undefined) window.cancelAnimationFrame(initializationFrame);
     initializationFrame = undefined;
@@ -422,7 +441,7 @@ export function TimeSeries(props: TimeSeriesProps): JSX.Element {
       const resolvedDefinitions = untrack(definitions);
       const resolvedData = untrack(data);
       currentConfiguration = untrack(configuration);
-      plot = new uPlot(options(props, resolvedDefinitions, untrack(visibility.values), () => currentTokens, theme.state().locale, measuredWidth(), height(), lifecycle), alignedData(resolvedData, resolvedDefinitions), plotHost);
+      plot = new uPlot(options(props, resolvedDefinitions, untrack(visibility.values), () => currentTokens, theme.state().locale, measuredWidth(), height(), lifecycle), alignedData(resolveRendererData(resolvedData, resolvedDefinitions), resolvedDefinitions), plotHost);
       resizeObserver = new ResizeObserver(scheduleResize);
       resizeObserver.observe(plotHost);
       setEnhanced(true);
@@ -538,22 +557,29 @@ export function TimeSeries(props: TimeSeriesProps): JSX.Element {
       const fontWeight = values["--sheen-text-caption-weight"] || "400";
       const fontFamily = values["--sheen-font-sans"] || "system-ui";
       const font = `${fontWeight} ${fontSize} ${fontFamily}`;
+      let fontChanged = false;
       for (const axis of plot.axes) {
+        fontChanged = fontChanged || axis.font !== font || axis.labelFont !== font;
         axis.font = font;
         axis.labelFont = font;
       }
+      const width = lineWidth(values);
+      let widthChanged = false;
       for (let index = 1; index < plot.series.length; index++) {
         const series = plot.series[index];
-        if (series) series.width = lineWidth(values);
+        if (series) {
+          widthChanged = widthChanged || series.width !== width;
+          series.width = width;
+        }
       }
-      plot.redraw(true, true);
+      plot.redraw(widthChanged, fontChanged);
     });
     createEffect(() => {
       const resolvedDefinitions = definitions();
       const resolvedData = data();
       if (!plot) return;
       suppressScale = true;
-      plot.batch(() => plot?.setData(alignedData(resolvedData, resolvedDefinitions), !zoomed()), true);
+      plot.batch(() => plot?.setData(alignedData(resolveRendererData(resolvedData, resolvedDefinitions), resolvedDefinitions), !zoomed()), true);
       suppressScale = false;
       if (keyboardIndex >= resolvedData.t.length) keyboardIndex = resolvedData.t.length - 1;
     });

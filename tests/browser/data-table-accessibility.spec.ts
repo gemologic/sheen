@@ -42,8 +42,15 @@ test("keyboard search, filter, and sort publish atomic assistive state", async (
   await page.keyboard.press("Control+f");
   await expect(search).toBeFocused();
   await search.evaluate(element => element.setAttribute("data-focus-identity", "retained"));
-  await page.keyboard.type("Acme 01");
-  await expect(root).toHaveAttribute("data-previous-results", "");
+  const pending = await search.evaluate(element => {
+    if (!(element instanceof HTMLInputElement)) throw new Error("Expected the account search input");
+    const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set;
+    if (!setter) throw new Error("Expected the native input value setter");
+    setter.call(element, "Acme 01");
+    element.dispatchEvent(new InputEvent("input", { bubbles: true, inputType: "insertText", data: "Acme 01" }));
+    return element.closest(".sheen-data-table")?.hasAttribute("data-previous-results") ?? false;
+  });
+  expect(pending).toBe(true);
   await expect(result).toContainText("Previous results");
   await expect(result).toHaveText("1 result");
   await expect(search).toBeFocused();

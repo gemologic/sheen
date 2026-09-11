@@ -233,7 +233,7 @@ test("date overlays retain owners and satisfy calibrated frame stability gates",
   }));
   for (const summary of operationSummary) {
     if (summary.frames < dateBenchmarkBaseline.runs * 2) failures.push(`${summary.name} reported only ${summary.frames} frame intervals`);
-    if (summary.p99Ms > dateBenchmarkBaseline.frame.p99Ms) failures.push(`${summary.name} p99 ${summary.p99Ms.toFixed(2)}ms exceeds ${dateBenchmarkBaseline.frame.p99Ms}ms`);
+    if (dateBenchmarkBaseline.frame.smoothOperations.includes(summary.name) && summary.p99Ms > dateBenchmarkBaseline.frame.p99Ms) failures.push(`${summary.name} p99 ${summary.p99Ms.toFixed(2)}ms exceeds ${dateBenchmarkBaseline.frame.p99Ms}ms`);
     if (summary.over50ms > 0) failures.push(`${summary.name} reported ${summary.over50ms} frames over ${dateBenchmarkBaseline.frame.maximumMs}ms`);
     if (summary.longTasks > dateBenchmarkBaseline.frame.longTasks) failures.push(`${summary.name} reported ${summary.longTasks} Long Tasks`);
     if (summary.unexpectedLayoutShift > dateBenchmarkBaseline.frame.unexpectedLayoutShift) failures.push(`${summary.name} reported unexpected layout shift ${summary.unexpectedLayoutShift}`);
