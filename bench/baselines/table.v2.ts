@@ -51,7 +51,7 @@ export const tableBenchmarkBaseline: TableBenchmarkBaseline = Object.freeze({
     Object.freeze({
       version: 4,
       recordedAt: "2026-09-11",
-      cpuModelIncludes: "AMD EPYC 9V74",
+      cpuModelIncludes: "AMD EPYC 9V",
       source: "GitHub Actions five-run production capture after stable-row subscription consolidation: ubuntu24 20260907.300.1, AMD EPYC 9V74, Chromium 153.0.8010.12, Playwright 1.63.0, commit ba961d9aa8f3ec57f1a71058bb9ae45aa94c0ee2",
       normalized: Object.freeze({ render: 2.1520270270275637, multiSort: 1.9104729729726957, search: 1.500000000000245, filter: 0.599662162162339, refresh: 1.202360876897173 }),
     }),

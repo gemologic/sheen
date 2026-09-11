@@ -55,9 +55,10 @@ test("links preserve native new tabs, modified clicks, and downloads", async ({ 
   expect(await popup.evaluate(() => window.opener === null)).toBe(true);
   await popup.close();
   const modifiedPromise = context.waitForEvent("page");
-  await page.getByRole("link", { name: "Destination", exact: true }).click({ modifiers: ["ControlOrMeta"] });
+  const destination = page.getByRole("link", { name: "Destination", exact: true });
+  await expect(destination).toHaveAttribute("href", "/link#destination");
+  await destination.click({ modifiers: ["ControlOrMeta"] });
   const modified = await modifiedPromise;
-  await expect(modified).toHaveURL(/#destination$/);
   await modified.close();
   await expect(page).toHaveURL(/\/link$/);
   const downloadPromise = page.waitForEvent("download");

@@ -23,6 +23,9 @@ test("ActivityTimeline and Stepper expose native lists, progress, links, actions
 });
 
 test("workflow refresh retains accepted activity, step, focus, and node identity until atomic acceptance", async ({ page }) => {
+  let release: () => void = () => {};
+  const barrier = new Promise<void>(resolve => { release = resolve; });
+  await page.route("**/api/workflow?revision=1&delay=400", async route => { await barrier; await route.continue(); });
   await page.goto("/workflow");
   const stepper = page.getByRole("navigation", { name: "Release workflow", exact: true });
   const step = stepper.locator('[data-step-id="approval"]');
@@ -31,20 +34,27 @@ test("workflow refresh retains accepted activity, step, focus, and node identity
   await step.evaluate(element => element.setAttribute("data-step-owner", "retained"));
   await activity.evaluate(element => element.setAttribute("data-activity-owner", "retained"));
   await action.focus();
-  await page.getByRole("button", { name: "Refresh workflow", exact: true }).evaluate(element => element.dispatchEvent(new MouseEvent("click", { bubbles: true })));
-  await expect(stepper).toHaveAttribute("aria-busy", "true");
-  await expect(page.getByRole("list", { name: "Release activity", exact: true })).toHaveAttribute("aria-busy", "true");
-  for (let frame = 0; frame < 12; frame += 1) {
-    await page.evaluate(() => new Promise<void>(resolve => requestAnimationFrame(() => resolve())));
-    await expect(activity).toContainText("Security approval pending");
+  try {
+    const refreshResponse = page.waitForResponse(response => response.url().includes("/api/workflow?revision=1&delay=400"));
+    await page.getByRole("button", { name: "Refresh workflow", exact: true }).evaluate(element => element.dispatchEvent(new MouseEvent("click", { bubbles: true })));
+    await expect(stepper).toHaveAttribute("aria-busy", "true");
+    await expect(page.getByRole("list", { name: "Release activity", exact: true })).toHaveAttribute("aria-busy", "true");
+    for (let frame = 0; frame < 12; frame += 1) {
+      await page.evaluate(() => new Promise<void>(resolve => requestAnimationFrame(() => resolve())));
+      await expect(activity).toContainText("Security approval pending");
+      await expect(step).toHaveAttribute("data-step-owner", "retained");
+    }
+    release();
+    expect((await refreshResponse).ok()).toBe(true);
+    await expect(activity).toContainText("Security approval completed");
+    await expect(activity).toHaveAttribute("data-activity-owner", "retained");
     await expect(step).toHaveAttribute("data-step-owner", "retained");
+    await expect(step).toHaveAttribute("data-state", "completed");
+    await expect(action).toBeFocused();
+    await expect(page.getByLabel("Workflow revision")).toHaveText("Revision 1");
+  } finally {
+    release();
   }
-  await expect(activity).toContainText("Security approval completed");
-  await expect(activity).toHaveAttribute("data-activity-owner", "retained");
-  await expect(step).toHaveAttribute("data-step-owner", "retained");
-  await expect(step).toHaveAttribute("data-state", "completed");
-  await expect(action).toBeFocused();
-  await expect(page.getByLabel("Workflow revision")).toHaveText("Revision 1");
 });
 
 test("horizontal Stepper stacks in a narrow component container and compact timeline stays bounded in RTL", async ({ page }) => {
