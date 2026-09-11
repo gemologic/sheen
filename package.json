@@ -16,9 +16,11 @@
     "node": ">=24 <25"
   },
   "scripts": {
-    "build:packages": "pnpm --filter @gemologic/sheen-tokens build && pnpm --filter @gemologic/sheen-icons build && pnpm --filter @gemologic/sheen build && pnpm --filter @gemologic/sheen-code build && pnpm --filter @gemologic/sheen-date build && pnpm --filter @gemologic/sheen-table build && pnpm --filter @gemologic/sheen-patterns build && pnpm --filter @gemologic/sheen-charts build && pnpm --filter eslint-plugin-sheen build && pnpm --filter @gemologic/sheen-cli build",
+    "build:runtime-packages": "pnpm --filter @gemologic/sheen-tokens build && pnpm --filter @gemologic/sheen-icons build && pnpm --filter @gemologic/sheen build && pnpm --filter @gemologic/sheen-code build && pnpm --filter @gemologic/sheen-date build && pnpm --filter @gemologic/sheen-table build && pnpm --filter @gemologic/sheen-patterns build && pnpm --filter @gemologic/sheen-charts build",
+    "build:tool-packages": "pnpm --filter eslint-plugin-sheen build && pnpm --filter @gemologic/sheen-cli build",
+    "build:packages": "pnpm build:runtime-packages && pnpm build:tool-packages",
     "build": "pnpm build:packages && pnpm --filter loupe build",
-    "build:pages": "pnpm manifest && pnpm build:packages && pnpm --filter loupe build:pages",
+    "build:pages": "pnpm manifest && pnpm --filter loupe build:pages",
     "dev": "pnpm --filter loupe dev",
     "test:browser": "playwright test",
     "test:webkit": "playwright test --config playwright.webkit.config.ts",
@@ -35,7 +37,8 @@
     "test:npm-consumer": "node tools/check-npm-consumer.ts",
     "test:release-artifacts": "node tools/check-release-artifacts.ts",
     "test:consumer-browser": "node tools/check-consumers.ts --browser",
-    "manifest": "node tools/build-manifest.ts && node tools/build-llms.ts && node tools/build-composer-fixtures.ts",
+    "manifest": "pnpm build:runtime-packages && pnpm manifest:generate",
+    "manifest:generate": "node tools/build-manifest.ts && node tools/build-llms.ts && node tools/build-composer-fixtures.ts",
     "check:agent-evals": "node tools/agent-eval-baseline.ts",
     "check:agent-evals:if-present": "node tools/agent-eval-baseline.ts --if-present",
     "composer:generate": "node tools/build-composer-fixtures.ts",
@@ -43,7 +46,7 @@
     "version-packages": "changeset version",
     "check:packages": "node tools/check-package-contents.ts",
     "check:pages": "node tools/check-pages.ts",
-    "check": "pnpm manifest && pnpm build && pnpm lint && pnpm typecheck && pnpm test && pnpm check:agent-evals:if-present && pnpm check:packages && pnpm check:consumers"
+    "check": "pnpm manifest && pnpm build:tool-packages && pnpm --filter loupe build && pnpm lint && pnpm typecheck && pnpm test && pnpm check:agent-evals:if-present && pnpm check:packages && pnpm check:consumers"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.13.0",

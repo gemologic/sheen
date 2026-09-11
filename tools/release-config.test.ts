@@ -17,6 +17,17 @@ async function json(path: string): Promise<unknown> {
 }
 
 describe("release configuration", () => {
+  it("builds public package entries before generators import them", async () => {
+    const rootManifest = await json(join(root, "package.json"));
+    assert.ok(record(rootManifest) && record(rootManifest.scripts));
+    const manifest = rootManifest.scripts.manifest;
+    const pages = rootManifest.scripts["build:pages"];
+    const check = rootManifest.scripts.check;
+    assert.equal(manifest, "pnpm build:runtime-packages && pnpm manifest:generate");
+    assert.ok(typeof pages === "string" && pages.startsWith("pnpm manifest && "));
+    assert.ok(typeof check === "string" && check.startsWith("pnpm manifest && "));
+  });
+
   it("keeps every public package on one fixed public version line", async () => {
     const config = await json(join(root, ".changeset", "config.json"));
     assert.ok(record(config));
