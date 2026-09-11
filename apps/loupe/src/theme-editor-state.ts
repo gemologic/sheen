@@ -1,0 +1,306 @@
+import {
+  accentTokens,
+  contrastRatio,
+  currentSchemaVersion,
+  defineTheme,
+  isTokenName,
+  obsidian,
+  parseColor,
+  primitives,
+  resolveTokens,
+  toHex,
+  toOklch,
+  validateChartPalette,
+  validateContrast,
+} from "@gemologic/sheen-tokens";
+import type { AccentName, Mode, Theme, ThemeDefinition, TokenName, Tokens } from "@gemologic/sheen-tokens";
+
+export const themeEditorStorageKey = "sheen:loupe:theme-editor:v1";
+const editorFormatVersion = 1;
+const modulePrefix = 'import { defineTheme } from "@gemologic/sheen-tokens";\n\nexport default defineTheme(';
+const moduleSuffix = ");\n";
+
+export interface OklchChannels {
+  readonly lightness: number;
+  readonly chroma: number;
+  readonly hue: number;
+  readonly alpha: number;
+}
+
+export interface ThemeEditorAudit {
+  readonly dark: Tokens;
+  readonly light: Tokens;
+  readonly diagnostics: readonly string[];
+}
+
+export interface ThemeEditorStorageRead {
+  readonly status: "empty" | "loaded" | "invalid" | "unavailable";
+  readonly definition?: ThemeDefinition;
+  readonly message?: string;
+}
+
+export interface ThemeEditorStorageWrite {
+  readonly ok: boolean;
+  readonly message?: string;
+}
+
+export interface ThemeEditorStorage {
+  getItem(key: string): string | null;
+  setItem(key: string, value: string): void;
+  removeItem(key: string): void;
+}
+
+export interface DeriveThemeOptions {
+  readonly mode: Mode;
+  readonly background: string;
+  readonly accent: AccentName;
+  readonly neutralHue: number;
+}
+
+function copyTokens(tokens: Partial<Tokens>): Partial<Tokens> {
+  return { ...tokens };
+}
+
+function copyTheme(theme: Theme, id = theme.id, label = theme.label, description = theme.description): ThemeDefinition {
+  return {
+    schemaVersion: theme.schemaVersion,
+    id,
+    label,
+    description,
+    defaultMode: theme.defaultMode,
+    iconSet: theme.iconSet,
+    primitives: { ...theme.primitives },
+    dark: copyTokens(theme.dark),
+    light: copyTokens(theme.light),
+  };
+}
+
+export function createDefaultEditorTheme(): ThemeDefinition {
+  return copyTheme(obsidian, "custom-theme", "Custom theme", "A theme authored in Loupe");
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function readString(record: Record<string, unknown>, key: string): string {
+  const value = record[key];
+  if (typeof value !== "string" || !value.trim()) throw new Error(`Theme ${key} must be a nonempty string`);
+  return value;
+}
+
+function readStringMap(value: unknown, label: string): Record<string, string> {
+  if (!isRecord(value)) throw new Error(`Theme ${label} must be an object`);
+  const output: Record<string, string> = {};
+  for (const [key, item] of Object.entries(value)) {
+    if (typeof item !== "string" || !item.trim()) throw new Error(`Theme ${label}.${key} must be a nonempty string`);
+    output[key] = item;
+  }
+  return output;
+}
+
+function readTokenMap(value: unknown, mode: Mode): Partial<Tokens> {
+  const input = readStringMap(value, mode);
+  for (const name of Object.keys(input)) {
+    if (!isTokenName(name)) throw new Error(`Theme ${mode} contains unknown token ${name}`);
+  }
+  return input;
+}
+
+function parseDefinition(value: unknown, strict: boolean): ThemeDefinition {
+  if (!isRecord(value)) throw new Error("Theme data must be an object");
+  const allowed = new Set(["schemaVersion", "id", "label", "description", "defaultMode", "iconSet", "primitives", "dark", "light"]);
+  const unknown = Object.keys(value).filter(key => !allowed.has(key));
+  if (unknown.length) throw new Error(`Theme contains unknown field ${unknown.join(", ")}`);
+  const schemaVersion = value.schemaVersion;
+  if (typeof schemaVersion !== "number") throw new Error("Theme schemaVersion must be a number");
+  const defaultMode = value.defaultMode;
+  if (defaultMode !== "dark" && defaultMode !== "light") throw new Error("Theme defaultMode must be dark or light");
+  const iconSet = value.iconSet;
+  if (iconSet !== "radix" && iconSet !== "phosphor") throw new Error("Theme iconSet must be radix or phosphor");
+  const definition: ThemeDefinition = {
+    schemaVersion,
+    id: readString(value, "id"),
+    label: readString(value, "label"),
+    description: readString(value, "description"),
+    defaultMode,
+    iconSet,
+    primitives: readStringMap(value.primitives, "primitives"),
+    dark: readTokenMap(value.dark, "dark"),
+    light: readTokenMap(value.light, "light"),
+  };
+  if (strict) return copyTheme(defineTheme(definition));
+  resolveTokens(definition, "dark");
+  resolveTokens(definition, "light");
+  return definition;
+}
+
+function parseSerializedSource(source: string): unknown {
+  const trimmed = source.trim();
+  if (trimmed.startsWith("{")) return JSON.parse(trimmed);
+  if (!source.startsWith(modulePrefix) || !source.endsWith(moduleSuffix)) {
+    throw new Error("Import accepts JSON or a .theme.ts file generated by Loupe; TypeScript is never executed");
+  }
+  return JSON.parse(source.slice(modulePrefix.length, -moduleSuffix.length));
+}
+
+export function importThemeSource(source: string): ThemeDefinition {
+  return parseDefinition(parseSerializedSource(source), true);
+}
+
+export function exportThemeModule(definition: ThemeDefinition): string {
+  const validated = copyTheme(defineTheme(definition));
+  return `${modulePrefix}${JSON.stringify(validated, null, 2)}${moduleSuffix}`;
+}
+
+export function auditEditorTheme(definition: ThemeDefinition): ThemeEditorAudit {
+  const dark = resolveTokens(definition, "dark");
+  const light = resolveTokens(definition, "light");
+  const diagnostics = (["dark", "light"] satisfies Mode[]).flatMap(mode => {
+    const tokens = mode === "dark" ? dark : light;
+    return [
+      ...validateContrast(tokens, definition.id === "contrast" ? 7 : 4.5),
+      ...validateChartPalette(tokens),
+    ].map(message => `${mode}: ${message}`);
+  });
+  return { dark, light, diagnostics };
+}
+
+export function updateEditorToken(definition: ThemeDefinition, mode: Mode, name: TokenName, value: string): ThemeDefinition {
+  const updated: ThemeDefinition = { ...definition, [mode]: { ...definition[mode], [name]: value } };
+  resolveTokens(updated, mode);
+  return updated;
+}
+
+export function readOklchChannels(value: string): OklchChannels {
+  const normalized = toOklch(value);
+  const match = /^oklch\(([\d.]+)% ([\d.]+) ([\d.]+)(?: \/ ([\d.]+))?\)$/u.exec(normalized);
+  if (!match?.[1] || !match[2] || !match[3]) throw new Error(`Could not read OKLCH channels from ${value}`);
+  return {
+    lightness: Number(match[1]),
+    chroma: Number(match[2]),
+    hue: Number(match[3]),
+    alpha: match[4] === undefined ? 1 : Number(match[4]),
+  };
+}
+
+export function formatOklchChannels(channels: OklchChannels): string {
+  const lightness = Math.min(100, Math.max(0, channels.lightness));
+  const chroma = Math.min(0.4, Math.max(0, channels.chroma));
+  const hue = ((channels.hue % 360) + 360) % 360;
+  const alpha = Math.min(1, Math.max(0, channels.alpha));
+  return `oklch(${lightness.toFixed(2)}% ${chroma.toFixed(4)} ${hue.toFixed(2)}${alpha < 1 ? ` / ${alpha.toFixed(3)}` : ""})`;
+}
+
+function neutral(lightness: number, hue: number, chroma = 0.006): string {
+  return toHex(parseColor(`oklch(${Math.min(0.995, Math.max(0.005, lightness))} ${chroma} ${hue})`));
+}
+
+function contrastingNeutral(backgrounds: readonly string[], hue: number, minimum: number, dark: boolean): string {
+  for (let step = 0; step <= 100; step += 1) {
+    const lightness = dark ? 0.4 + step * 0.006 : 0.6 - step * 0.006;
+    const candidate = neutral(lightness, hue);
+    if (backgrounds.every(background => contrastRatio(candidate, background) >= minimum)) return candidate;
+  }
+  return dark ? "#ffffff" : "#000000";
+}
+
+function deriveMode(tokens: Partial<Tokens>, definition: ThemeDefinition, options: DeriveThemeOptions): Partial<Tokens> {
+  const background = toHex(parseColor(options.background));
+  if (parseColor(background).a !== 1) throw new Error("Derived backgrounds must be opaque");
+  if (!Number.isFinite(options.neutralHue) || options.neutralHue < 0 || options.neutralHue >= 360) throw new Error("Neutral hue must be between 0 and 359.999 degrees");
+  const backgroundLightness = readOklchChannels(background).lightness / 100;
+  const dark = options.mode === "dark";
+  if (dark && backgroundLightness > 0.35) throw new Error("Dark-mode derivation needs a background at or below 35% OKLCH lightness");
+  if (!dark && backgroundLightness < 0.75) throw new Error("Light-mode derivation needs a background at or above 75% OKLCH lightness");
+  const direction = dark ? 1 : -1;
+  const surface = (offset: number): string => neutral(backgroundLightness + offset * direction, options.neutralHue);
+  const backgrounds: readonly [string, string, string, string, string, string, string] = [background, surface(-0.025), surface(0.05), surface(-0.04), surface(0.08), surface(0.115), surface(0.145)];
+  const foreground = contrastingNeutral(backgrounds, options.neutralHue, 7, dark);
+  const muted = contrastingNeutral(backgrounds, options.neutralHue, 4.5, dark);
+  const control = contrastingNeutral(backgrounds, options.neutralHue, 3, dark);
+  const subtleLightness = backgroundLightness + 0.24 * direction;
+  const border = surface(0.1);
+  const subtleBorder = surface(0.055);
+  const derived: Partial<Tokens> = {
+    ...tokens,
+    "color-bg": background,
+    "color-bg-subtle": backgrounds[1],
+    "color-bg-raised": backgrounds[2],
+    "color-bg-inset": backgrounds[3],
+    "color-bg-hover": backgrounds[4],
+    "color-bg-active": backgrounds[5],
+    "color-bg-selected": backgrounds[6],
+    "color-fg": foreground,
+    "color-fg-muted": muted,
+    "color-fg-subtle": neutral(subtleLightness, options.neutralHue),
+    "color-border": border,
+    "color-border-control": control,
+    "color-border-strong": control,
+    "color-border-subtle": subtleBorder,
+    "color-focus-ring": dark ? "#ffffff" : "#000000",
+    "color-focus-ring-offset": background,
+    "color-neutral": foreground,
+    "color-neutral-fg": foreground,
+    "color-neutral-subtle": backgrounds[1],
+    "color-neutral-on": background,
+    "chart-grid": border,
+    "chart-axis": muted,
+    "chart-crosshair": foreground,
+    ...accentTokens(options.accent, options.mode, definition.id),
+  };
+  return derived;
+}
+
+export function deriveEditorTheme(definition: ThemeDefinition, options: DeriveThemeOptions): ThemeDefinition {
+  const updated: ThemeDefinition = {
+    ...definition,
+    defaultMode: options.mode,
+    [options.mode]: deriveMode(definition[options.mode], definition, options),
+  };
+  resolveTokens(updated, options.mode);
+  return updated;
+}
+
+export function readEditorStorage(storage: ThemeEditorStorage): ThemeEditorStorageRead {
+  let source: string | null;
+  try {
+    source = storage.getItem(themeEditorStorageKey);
+  } catch (error) {
+    return { status: "unavailable", message: error instanceof Error ? error.message : String(error) };
+  }
+  if (source === null) return { status: "empty" };
+  try {
+    const value: unknown = JSON.parse(source);
+    if (!isRecord(value) || value.version !== editorFormatVersion) return { status: "invalid", message: "Stored theme editor data has an unsupported version" };
+    return { status: "loaded", definition: parseDefinition(value.definition, false) };
+  } catch (error) {
+    return { status: "invalid", message: error instanceof Error ? error.message : String(error) };
+  }
+}
+
+export function writeEditorStorage(storage: ThemeEditorStorage, definition: ThemeDefinition): ThemeEditorStorageWrite {
+  try {
+    storage.setItem(themeEditorStorageKey, JSON.stringify({ version: editorFormatVersion, definition }));
+    return { ok: true };
+  } catch (error) {
+    return { ok: false, message: error instanceof Error ? error.message : String(error) };
+  }
+}
+
+export function clearEditorStorage(storage: ThemeEditorStorage): ThemeEditorStorageWrite {
+  try {
+    storage.removeItem(themeEditorStorageKey);
+    return { ok: true };
+  } catch (error) {
+    return { ok: false, message: error instanceof Error ? error.message : String(error) };
+  }
+}
+
+export function resetEditorTheme(): ThemeDefinition {
+  return {
+    ...createDefaultEditorTheme(),
+    schemaVersion: currentSchemaVersion,
+    primitives: { ...primitives },
+  };
+}

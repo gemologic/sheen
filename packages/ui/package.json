@@ -1,0 +1,91 @@
+{
+  "name": "@gemologic/sheen",
+  "version": "0.0.0",
+  "description": "Accessible, themeable SolidJS components for application interfaces.",
+  "type": "module",
+  "license": "MIT",
+  "repository": { "type": "git", "url": "git+https://github.com/gemologic/sheen.git", "directory": "packages/ui" },
+  "homepage": "https://sheen.gemologic.dev",
+  "bugs": { "url": "https://github.com/gemologic/sheen/issues" },
+  "publishConfig": { "access": "public", "provenance": true },
+  "files": [
+    "dist",
+    "src",
+    "!dist/**/*.test.*",
+    "!dist/**/*.demo.*",
+    "!dist/**/*.meta.*",
+    "!src/**/*.test.*",
+    "!src/**/*.demo.*",
+    "!src/**/*.meta.*"
+  ],
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "solid": "./src/index.ts",
+      "import": "./dist/index.js"
+    },
+    "./core": {
+      "types": "./dist/core.d.ts",
+      "solid": "./src/core.ts",
+      "import": "./dist/core.js"
+    },
+    "./forms": {
+      "types": "./dist/forms.d.ts",
+      "solid": "./src/forms.ts",
+      "import": "./dist/forms.js"
+    },
+    "./overlays": {
+      "types": "./dist/overlays.d.ts",
+      "solid": "./src/overlays.ts",
+      "import": "./dist/overlays.js"
+    },
+    "./navigation": {
+      "types": "./dist/navigation.d.ts",
+      "solid": "./src/navigation.ts",
+      "import": "./dist/navigation.js"
+    },
+    "./formisch": {
+      "types": "./dist/formisch.d.ts",
+      "solid": "./src/formisch.ts",
+      "import": "./dist/formisch.js"
+    },
+    "./theme-script": {
+      "types": "./dist/theme/script.d.ts",
+      "solid": "./src/theme/script.ts",
+      "import": "./dist/theme/script.js"
+    },
+    "./metadata": {
+      "types": "./dist/metadata.d.ts",
+      "solid": "./src/metadata.ts",
+      "import": "./dist/metadata.js"
+    },
+    "./styles.css": "./src/styles.css"
+  },
+  "scripts": {
+    "build": "vite build && tsc -p tsconfig.build.json"
+  },
+  "peerDependencies": {
+    "@formisch/solid": ">=1 <2",
+    "solid-js": "1.9.15"
+  },
+  "peerDependenciesMeta": {
+    "@formisch/solid": {
+      "optional": true
+    }
+  },
+  "dependencies": {
+    "@corvu/resizable": "0.2.5",
+    "@gemologic/sheen-tokens": "workspace:*",
+    "@kobalte/core": "0.13.13",
+    "clsx": "2.1.1",
+    "cmdk-solid": "1.2.0"
+  },
+  "devDependencies": {
+    "@formisch/solid": "1.0.0",
+    "solid-js": "1.9.15",
+    "valibot": "1.4.2"
+  }
+}

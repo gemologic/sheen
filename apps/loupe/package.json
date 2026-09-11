@@ -1,0 +1,35 @@
+{
+  "name": "loupe",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0 --port 4173",
+    "build": "vite build",
+    "build:pages": "SHEEN_PAGES=1 VITE_SHEEN_PUBLIC_SITE=1 vite build",
+    "preview": "vite preview --host 0.0.0.0 --port 4173",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@atlaskit/pragmatic-drag-and-drop": "3.1.0",
+    "@atlaskit/pragmatic-drag-and-drop-auto-scroll": "3.1.0",
+    "@gemologic/sheen": "workspace:*",
+    "@gemologic/sheen-charts": "workspace:*",
+    "@gemologic/sheen-code": "workspace:*",
+    "@gemologic/sheen-date": "workspace:*",
+    "@gemologic/sheen-icons": "workspace:*",
+    "@gemologic/sheen-patterns": "workspace:*",
+    "@gemologic/sheen-table": "workspace:*",
+    "@gemologic/sheen-tokens": "workspace:*",
+    "@solidjs/meta": "0.29.4",
+    "@solidjs/router": "1.0.0",
+    "@solidjs/start": "2.0.4",
+    "@tanstack/solid-router": "1.170.31",
+    "colorjs.io": "0.7.1",
+    "solid-js": "1.9.15"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "4.3.3",
+    "nitro": "3.0.260903-beta",
+    "tailwindcss": "4.3.3"
+  }
+}

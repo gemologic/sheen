@@ -1,0 +1,16 @@
+{
+  "name": "eslint-plugin-sheen",
+  "version": "0.0.0",
+  "description": "Lint rules for safe, accessible, and package-boundary-correct Sheen applications.",
+  "type": "module",
+  "license": "MIT",
+  "repository": { "type": "git", "url": "git+https://github.com/gemologic/sheen.git", "directory": "packages/eslint-plugin" },
+  "homepage": "https://sheen.gemologic.dev",
+  "bugs": { "url": "https://github.com/gemologic/sheen/issues" },
+  "publishConfig": { "access": "public", "provenance": true },
+  "keywords": ["eslint", "eslintplugin", "eslint-plugin", "sheen", "solidjs"],
+  "files": ["dist", "!dist/**/*.test.*", "!dist/**/*.demo.*", "!dist/**/*.meta.*"],
+  "exports": { ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" } },
+  "scripts": { "build": "tsc -p tsconfig.build.json" },
+  "peerDependencies": { "eslint": ">=10 <11" }
+}

@@ -1,0 +1,35 @@
+{
+  "source": "Li et al. 2017 CAM16-UCS and Machado, Oliveira, Fernandes 2009 severity 1.0",
+  "thresholds": {
+    "normalAdjacent": 18,
+    "simulatedAdjacent": 7
+  },
+  "cam16Ucs": {
+    "xyz": [19.01, 20, 21.78],
+    "white": [95.05, 100, 108.88],
+    "adaptingLuminance": 318.31,
+    "backgroundLuminance": 20,
+    "expected": [54.90445024274, -0.085621245626, -0.06467960478]
+  },
+  "redSimulation": {
+    "input": "#ff0000",
+    "protanopia": "#6d5f00",
+    "deuteranopia": "#a39000",
+    "tritanopia": "#ff000f",
+    "achromatopsia": "#7f7f7f"
+  },
+  "bundledMinimumAdjacent": {
+    "dark": {
+      "normal": 32.873936513555,
+      "protanopia": 14.783979248795,
+      "deuteranopia": 7.52633621771,
+      "tritanopia": 7.668679165472
+    },
+    "light": {
+      "normal": 19.055277522889,
+      "protanopia": 18.002300927551,
+      "deuteranopia": 9.054247224518,
+      "tritanopia": 7.413139262926
+    }
+  }
+}

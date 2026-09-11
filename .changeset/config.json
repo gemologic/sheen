@@ -1,0 +1,28 @@
+{
+  "$schema": "https://unpkg.com/@changesets/config@4.0.0/schema.json",
+  "changelog": "@changesets/cli/changelog",
+  "commit": false,
+  "fixed": [
+    [
+      "@gemologic/sheen",
+      "@gemologic/sheen-charts",
+      "@gemologic/sheen-cli",
+      "@gemologic/sheen-code",
+      "@gemologic/sheen-date",
+      "@gemologic/sheen-icons",
+      "@gemologic/sheen-patterns",
+      "@gemologic/sheen-table",
+      "@gemologic/sheen-tokens",
+      "eslint-plugin-sheen"
+    ]
+  ],
+  "linked": [],
+  "access": "public",
+  "baseBranch": "main",
+  "updateInternalDependencies": "patch",
+  "ignore": [],
+  "privatePackages": {
+    "version": false,
+    "tag": false
+  }
+}

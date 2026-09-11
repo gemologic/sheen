@@ -1,0 +1,15 @@
+import { defineMeta } from "../metadata.ts";
+import type { FileDropzoneProps } from "./FileDropzone.tsx";
+
+export default defineMeta<FileDropzoneProps>({
+  name: "FileDropzone", package: "@gemologic/sheen", category: "forms", summary: "A native-picker-first file intake surface with drag parity, validation, and app-owned upload state.",
+  props: {
+    ref: { description: "Native root reference." }, inputRef: { description: "Native file-input reference." }, label: { description: "Required visible field label.", control: { kind: "text" } }, description: { description: "Supporting requirements associated with the intake surface." }, chooseLabel: { description: "Visible native picker action; defaults to the localized message." }, dropLabel: { description: "Visible and announced active-drag instruction." },
+    accept: { description: "Comma-separated native accept hint, also enforced for dropped and selected files." }, multiple: { description: "Allows more than one file in each native selection; defaults to one.", default: false }, capture: { description: "Native device capture hint." }, maxFiles: { description: "Positive total item limit, including app-owned existing items." }, maxSize: { description: "Positive maximum file size in bytes." }, validateFile: { description: "Optional synchronous app validation returning an error message or null." },
+    items: { description: "Serializable app-owned upload records with stable IDs, visible status text, and optional progress." }, onFilesSelected: { description: "Receives accepted browser File objects; the app starts and owns transport." }, onFilesRejected: { description: "Receives count, size, type, and custom validation failures." }, onRemove: { description: "Optional app-owned removal action by stable item ID." }, onRetry: { description: "Optional app-owned retry action shown for error items." }, disabled: { description: "Disables picker, drop, actions, and selection callbacks.", default: false }, readOnly: { description: "Keeps files inspectable while rejecting picker, drop, retry, and removal.", default: false },
+  },
+  tokens: ["--sheen-color-bg-subtle", "--sheen-color-bg-hover", "--sheen-color-bg-raised", "--sheen-color-border", "--sheen-color-border-control", "--sheen-color-fg", "--sheen-color-fg-muted", "--sheen-color-fg-subtle", "--sheen-color-accent-fg", "--sheen-color-accent-subtle", "--sheen-color-success-fg", "--sheen-color-danger-fg", "--sheen-color-focus-ring", "--sheen-color-focus-ring-offset"],
+  a11y: { role: "native file input and selected-file list", keyboard: ["Tab", "Enter", "Space"] },
+  examples: [{ title: "Document intake", code: '<FileDropzone label="Documents" accept=".pdf,text/plain" multiple items={[]} onFilesSelected={files => queueUploads(files)} />', setup: "const queueUploads = (_files: readonly File[]) => {};" }],
+  guidance: { do: ["Expose app-owned text status for every queued, uploading, complete, or failed item."], dont: ["Do not make dropping the only way to select files or start transport inside the component."] },
+});

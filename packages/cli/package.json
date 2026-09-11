@@ -1,0 +1,15 @@
+{
+  "name": "@gemologic/sheen-cli",
+  "version": "0.0.0",
+  "description": "Scaffolding, diagnostics, and vendorable agent guidance for Sheen applications.",
+  "type": "module",
+  "license": "MIT",
+  "repository": { "type": "git", "url": "git+https://github.com/gemologic/sheen.git", "directory": "packages/cli" },
+  "homepage": "https://sheen.gemologic.dev",
+  "bugs": { "url": "https://github.com/gemologic/sheen/issues" },
+  "publishConfig": { "access": "public", "provenance": true },
+  "files": ["dist", "!dist/**/*.test.*", "!dist/**/*.demo.*", "!dist/**/*.meta.*"],
+  "bin": { "sheen": "./dist/cli.js" },
+  "exports": { ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" } },
+  "scripts": { "build": "tsc -p tsconfig.build.json && node ../../tools/copy-cli-skill.ts" }
+}

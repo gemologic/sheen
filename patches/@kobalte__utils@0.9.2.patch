@@ -1,0 +1,16 @@
+diff --git a/dist/index.js b/dist/index.js
+--- a/dist/index.js
++++ b/dist/index.js
+@@ -768,3 +768,3 @@
+         targetElement = scrollParent;
+-        scrollParent = getScrollParent(targetElement);
++        scrollParent = targetElement.parentElement ? getScrollParent(targetElement.parentElement) : root;
+       }
+diff --git a/dist/index.cjs b/dist/index.cjs
+--- a/dist/index.cjs
++++ b/dist/index.cjs
+@@ -771,3 +771,3 @@
+         targetElement = scrollParent;
+-        scrollParent = getScrollParent(targetElement);
++        scrollParent = targetElement.parentElement ? getScrollParent(targetElement.parentElement) : root;
+       }

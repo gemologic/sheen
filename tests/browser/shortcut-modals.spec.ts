@@ -1,0 +1,77 @@
+import { expect, test } from "@playwright/test";
+
+test("imperative confirmations suspend an enclosing dialog's shortcut scope", async ({ page }) => {
+  await page.goto("/shortcut-modals");
+  await page.getByRole("button", { name: "Ready", exact: true }).click();
+  await expect(page.getByRole("status", { name: "Global action" })).toHaveText("ready");
+  await page.keyboard.press("g");
+  await page.getByRole("button", { name: "Open first", exact: true }).click();
+  const first = page.getByRole("dialog", { name: "First modal", exact: true });
+  await first.getByRole("button", { name: "Ask confirmation", exact: true }).click();
+  const confirmation = page.getByRole("alertdialog", { name: "Confirm action", exact: true });
+  await expect(confirmation).toBeVisible();
+  await page.keyboard.press("g");
+  await page.keyboard.press("Escape");
+  await expect(confirmation).not.toBeVisible();
+  await expect(first.getByRole("status", { name: "First action" })).toHaveText("global");
+  await page.keyboard.press("g");
+  await expect(first.getByRole("status", { name: "First action" })).toHaveText("first");
+});
+
+test("nested dialogs automatically suspend and restore outer shortcut scopes", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("pageerror", error => errors.push(error.message));
+  page.on("console", message => { if (message.type() === "warning" && message.text().includes("computations created outside")) errors.push(message.text()); });
+  await page.goto("/shortcut-modals");
+  await page.getByRole("button", { name: "Ready", exact: true }).click();
+  await expect(page.getByRole("status", { name: "Global action" })).toHaveText("ready");
+  await page.keyboard.press("g");
+  await expect(page.getByRole("status", { name: "Global action" })).toHaveText("global");
+  await page.keyboard.press("x");
+  await page.getByRole("button", { name: "Open first", exact: true }).click();
+  const first = page.getByRole("dialog", { name: "First modal", exact: true });
+  await expect(first).toBeVisible();
+  await page.keyboard.press("i");
+  await expect(first.getByRole("status", { name: "First action" })).toHaveText("global");
+  await page.keyboard.press("g");
+  await expect(first.getByRole("status", { name: "First action" })).toHaveText("first");
+  const nestedTrigger = first.getByRole("button", { name: "Open second", exact: true });
+  await nestedTrigger.click();
+  const second = page.getByRole("dialog", { name: "Second modal", exact: true });
+  await expect(second).toBeVisible();
+  await page.keyboard.press("g");
+  await expect(second.getByRole("status", { name: "Second action" })).toHaveText("second");
+  await page.keyboard.press("Escape");
+  await expect(second).not.toBeVisible();
+  await expect(first).toBeVisible();
+  await expect(nestedTrigger).toBeFocused();
+  await page.keyboard.press("g");
+  await expect(first.getByRole("status", { name: "First action" })).toHaveText("first");
+  await page.keyboard.press("Escape");
+  await expect(first).not.toBeVisible();
+  await page.keyboard.press("g");
+  await expect(page.getByRole("status", { name: "Global action" })).toHaveText("global");
+  expect(errors).toEqual([]);
+});
+
+test("disposing an open inner modal releases its scope and permits a fresh registration", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("pageerror", error => errors.push(error.message));
+  await page.goto("/shortcut-modals");
+  await page.getByRole("button", { name: "Open first", exact: true }).click();
+  const first = page.getByRole("dialog", { name: "First modal", exact: true });
+  await first.getByRole("button", { name: "Open second", exact: true }).click();
+  const second = page.getByRole("dialog", { name: "Second modal", exact: true });
+  await second.getByRole("button", { name: "Remove second modal", exact: true }).click();
+  await expect(second).not.toBeVisible();
+  const restore = first.getByRole("button", { name: "Restore second modal", exact: true });
+  await restore.focus();
+  await page.keyboard.press("g");
+  await expect(first.getByRole("status", { name: "First action" })).toHaveText("first");
+  await restore.click();
+  await first.getByRole("button", { name: "Open second", exact: true }).click();
+  await expect(second).toBeVisible();
+  await page.keyboard.press("g");
+  await expect(second.getByRole("status", { name: "Second action" })).toHaveText("second");
+  expect(errors).toEqual([]);
+});

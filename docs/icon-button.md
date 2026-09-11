@@ -1,0 +1,11 @@
+# IconButton
+
+IconButton composes Tooltip and the native Button. It requires ThemeProvider for contextual tooltip layers, a nonempty `label`, and noninteractive icon children. The label supplies both the button's accessible name and tooltip text; decorative children are aria-hidden. Callers cannot provide conflicting aria-label/aria-labelledby props through the typed API. This is an action, not a navigation link.
+
+Button size/tone/variant, native form props, refs, loading/disabled behavior, and tooltip placement/delays/shortcut hints pass through. Shortcut hints remain display-only. Controls are square at each control-height token. Glyphs use icon-size-md, and direct SVG/image children are bounded by that glyph box. This does not implement the semantic Icon registry or its build transform.
+
+Two SSR tests and two native Chromium cases, each browser case repeated twice, cover required naming, decorative content, native loading state, square sizes, a 128px SVG constrained inside an extra-small control, matching tooltip names, reactive renaming with retained identity, keyboard activation, and delayed hydration replay. UI build, lint/typechecks, and manifest validation pass at 75 components and 77 examples. Visual matrices, density/RTL combinations, shortcut registration association, and other engines remain unfinished.
+
+An additional native form case verifies the submitter's name/value in FormData, reset behavior, keyboard submission, and loading exclusion for both programmatic native click and implicit Enter from a text input. All three Chromium cases pass twice each. The WebKit selection includes these cases, but WebKit runtime remains unverified.
+
+The scoped fixture now qualifies compact, comfortable, and spacious density in both LTR and RTL. All four sizes match their effective control-height token in both dimensions. Changing obsidian/dark to paper/light and back while the action is focused preserves its node and focus, changes its computed foreground, and updates the open tooltip's contextual portal theme without losing direction. The five-case Chromium suite passes twice (ten executions), with lint/typechecks passing. This is geometry and interaction coverage, not a reviewed visual matrix or proof of every theme/accent combination. No production change was required.

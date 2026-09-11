@@ -1,0 +1,18 @@
+# Chart benchmark contract
+
+`pnpm benchmark:chart` builds the workspace and Loupe for production, starts the production preview, and runs five fresh Chromium contexts against `/chart-benchmark`. `sheen-benchmark-chart` exposes the same command in `default.nix`. The committed `sheen-chart-v1` fixture uses a fixed seed, UTC start, no clock, no per-run randomness, and no production data. It defines four finite `Float64Array` series over 100,000 strictly increasing millisecond timestamps. Dataset construction and application-boundary validation happen before the initial-render mark, as they would for already accepted query data.
+
+The measured operations are:
+
+- Initial draw starts immediately before the real Solid mount trigger and ends on the animation frame after the retained uPlot canvas is ready. The deterministic SVG fallback paints before canvas enhancement. The artifact records the complete wrapper time, while the 16ms number in `SPEC.md` is a reference rather than an absolute gate.
+- Tooltip inspection drives 120 real pointer positions at 60Hz over the 100k-point chart. One tooltip and canvas must remain connected, and every run must publish at least 100 updates.
+- Pan/zoom drives the real uPlot drag surface through 120 positions over two seconds and requires an accepted zoom without replacing the canvas.
+- Streaming starts with 1,024 points and publishes 120 scheduled samples at 60Hz through `useStreamingSeries`. Every sample must appear and the canvas must survive.
+- Sparkline records the synchronous mount work for one dependency-free 128-point instance.
+- Theme switching changes mode and accent together across twenty on-screen, four-series canvas charts. All twenty canvas owners must survive through the token bridge redraw.
+
+Initial draw, Sparkline, and the twenty-chart switch have five-run median work times normalized to the deterministic same-context CPU calibration. A normalized value more than ten percent above the latest versioned baseline fails; three successive smaller increases warn. All operations fail on a Long Task, a frame over 50ms, unexpected layout shift, or lost owner. Tooltip, pan/zoom, streaming, and the theme redraw additionally require p99 animation-frame intervals at or below 20ms. Initial draw and Sparkline are discrete operations, so their frame p99 is diagnostic while calibrated work time and stall gates remain authoritative. Cursor, selection, and tooltip movement is separately recorded as transient-overlay layout shift, not mistaken for underlying content movement.
+
+The local bootstrap capture used WSL2 6.6.87.2, an AMD Ryzen Threadripper 9960X, Chromium 153.0.8010.12, and Playwright 1.63.0. It measured normalized initial draw/Sparkline/theme values of 1.60095/0.04038/1.09501. An independent run measured 60.2ms complete initial progressive enhancement, 1.6ms Sparkline mount work, and 45.7ms for all twenty charts to accept mode and accent, with 16.8ms or lower p99 across every continuous workload, zero Long Tasks, zero frames over 50ms, zero unexpected shift, complete tooltip/stream publication, and all owners retained. These local numbers diagnose behavior; the first accepted `ubuntu-24.04` CI artifact must deliberately replace the local baseline, and a Playwright upgrade requires an explicit rebaseline.
+
+CI runs the pinned Playwright Chromium workload on `ubuntu-24.04` and uploads `test-results/bench/chart-benchmark.json` whether the gate passes or fails. The artifact includes raw runs, fixture and baseline versions, calibration, browser/runner metadata, transient versus unexpected shift, update counts, warnings, and failures.

@@ -1,0 +1,15 @@
+# Cross-system laboratory
+
+Loupe's `/lab` route exercises the complete theme context rather than maintaining a second editor-only state model. Its URL records theme, accent, mode, density, radius, motion, direction, locale, width, and height. A copied URL therefore restores the same preview independently of browser storage.
+
+Theme-axis changes have two destinations. The root `ThemeProvider` receives the preference so normal client hydration persists it, while the preview receives a validated same-origin message and updates a controllable `ThemeScope`. The iframe `src` is set once. Changing an axis must not navigate the iframe, replace its component owner, discard an uncontrolled draft, or expose a blank frame. Browser history changes are parsed back into local state and sent through the same scoped channel.
+
+Width and height describe the iframe's content viewport. The resizable boundary consequently uses content-box sizing, and its `ResizeObserver` reads current client geometry inside the queued animation frame. Using the observer entry captured before that frame can replay stale dimensions. Using global border-box sizing without accounting for the border creates a two-pixel feedback loop. The preview sits in a two-axis `ScrollArea`, so a wide device preset remains exact on a narrower Loupe pane instead of being silently clamped to the authoring viewport.
+
+Current browser qualification covers all live axes, root storage and reload restoration, twenty painted frames across theme changes, exact numeric resizing, iframe and draft identity, explicit locale output, and direct delayed hydration. The tests use the real SolidStart server and real Sheen components. This does not yet substitute for WebKit, native drag-handle coverage, the remaining Loupe overlays/editor tools, or release-wide first-paint checks.
+
+`/comparisons` supplies independent A and B configurations. Each side owns a component `ThemeScope` and a full-layout iframe while its theme, accent, mode, density, and content width remain URL-backed. The scopes make contextual token and portal behavior visible; the iframes preserve honest media and container-query boundaries. Updating or swapping configurations sends validated messages to stable frame documents, so local component and iframe drafts remain attached to their original owners.
+
+The lab URL also owns debug state without persisting it as a user theme preference. Its preview-local tools include a 4px baseline grid, per-box spacing outlines, always-visible focus indicators, hover/active/focus/disabled visual forcing, Machado severity-one protanopia/deuteranopia/tritanopia filters, an achromatic preview, and 1.5px/3px reduced-vision blur. Forced disabled is deliberately a visual inspection state, not a semantic mutation that changes whether controls can be operated.
+
+The optional performance meter reports measured frames per second, p99 animation-frame interval, and Long Task count for each one-second window. FPS alone is not a gate. This meter is diagnostic; calibrated table and chart benchmark artifacts remain the reproducible performance boundary.

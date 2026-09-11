@@ -1,0 +1,29 @@
+{
+  "name": "@gemologic/sheen-icons",
+  "version": "0.0.0",
+  "description": "Build-time-selectable icon sets for the Sheen SolidJS design system.",
+  "type": "module",
+  "license": "MIT",
+  "repository": { "type": "git", "url": "git+https://github.com/gemologic/sheen.git", "directory": "packages/icons" },
+  "homepage": "https://sheen.gemologic.dev",
+  "bugs": { "url": "https://github.com/gemologic/sheen/issues" },
+  "publishConfig": { "access": "public", "provenance": true },
+  "files": ["dist", "src", "THIRD_PARTY_NOTICES.md", "!dist/**/*.test.*", "!dist/**/*.demo.*", "!dist/**/*.meta.*", "!src/**/*.test.*", "!src/**/*.demo.*", "!src/**/*.meta.*"],
+  "sideEffects": ["**/*.css"],
+  "exports": {
+    ".": { "types": "./dist/index.d.ts", "solid": "./src/index.ts", "import": "./dist/index.js" },
+    "./runtime": { "types": "./dist/runtime.d.ts", "solid": "./src/runtime.tsx", "import": "./dist/runtime.js" },
+    "./vite": { "types": "./dist/vite.d.ts", "import": "./dist/vite.js" },
+    "./icons/*": { "types": "./dist/icons/*.d.ts", "solid": "./src/icons/*.tsx", "import": "./dist/icons/*.js" },
+    "./styles.css": "./src/styles.css"
+  },
+  "scripts": { "generate": "node ../../tools/build-icons.ts", "build": "pnpm generate && vite build && tsc -p tsconfig.build.json" },
+  "peerDependencies": { "solid-js": "1.9.15", "vite": ">=8 <9" },
+  "peerDependenciesMeta": { "vite": { "optional": true } },
+  "devDependencies": {
+    "@iconify-json/ph": "1.2.2",
+    "@iconify-json/radix-icons": "1.2.6",
+    "solid-js": "1.9.15",
+    "vite": "8.2.2"
+  }
+}

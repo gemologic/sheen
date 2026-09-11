@@ -1,0 +1,16 @@
+@layer theme, base, components, utilities;
+@layer components {
+.sheen-icon { display: inline-flex; align-items: center; justify-content: center; inline-size: var(--sheen-icon-size-md); block-size: var(--sheen-icon-size-md); flex: none; vertical-align: -0.125em; color: var(--sheen-color-fg-muted); }
+.sheen-icon[data-size="sm"] { inline-size: var(--sheen-icon-size-sm); block-size: var(--sheen-icon-size-sm); }
+.sheen-icon[data-size="lg"] { inline-size: var(--sheen-icon-size-lg); block-size: var(--sheen-icon-size-lg); }
+.sheen-icon[data-tone="inherit"] { color: currentColor; }
+.sheen-icon > svg { display: none; inline-size: 100%; block-size: 100%; overflow: visible; }
+:where([data-sheen-icon-set="radix"]) { --sheen-icon-default-display: none; --sheen-icon-radix-display: block; --sheen-icon-phosphor-display: none; }
+:where([data-sheen-icon-set="phosphor"]) { --sheen-icon-default-display: none; --sheen-icon-radix-display: none; --sheen-icon-phosphor-display: block; }
+.sheen-icon > svg[data-sheen-icon-default] { display: var(--sheen-icon-default-display, block); }
+.sheen-icon > svg[data-sheen-icon-set-value="radix"] { display: var(--sheen-icon-radix-display, none); }
+.sheen-icon > svg[data-sheen-icon-set-value="phosphor"] { display: var(--sheen-icon-phosphor-display, none); }
+.sheen-button:has(> .sheen-icon) { display: inline-flex; align-items: center; gap: var(--sheen-space-inline-sm); }
+.sheen-button > .sheen-icon { color: currentColor; margin-inline-start: -1px; }
+.sheen-icon-button-glyph > .sheen-icon { color: currentColor; }
+}

@@ -1,0 +1,44 @@
+diff --git a/web/dist/web.js b/web/dist/web.js
+--- a/web/dist/web.js
++++ b/web/dist/web.js
+@@ -509,4 +509,4 @@
+-  if (sharedConfig.registry && !sharedConfig.done) sharedConfig.done = _$HY.done = true;
++  if (sharedConfig.registry && !sharedConfig.done && !sharedConfig.count) sharedConfig.done = _$HY.done = true;
+-  if (e.composedPath) {
+-    const path = e.composedPath();
++  const path = e.composedPath && e.composedPath();
++  if (path && path.length) {
+     retarget(path[0]);
+diff --git a/web/dist/web.cjs b/web/dist/web.cjs
+--- a/web/dist/web.cjs
++++ b/web/dist/web.cjs
+@@ -510,4 +510,4 @@
+-  if (solidJs.sharedConfig.registry && !solidJs.sharedConfig.done) solidJs.sharedConfig.done = _$HY.done = true;
++  if (solidJs.sharedConfig.registry && !solidJs.sharedConfig.done && !solidJs.sharedConfig.count) solidJs.sharedConfig.done = _$HY.done = true;
+-  if (e.composedPath) {
+-    const path = e.composedPath();
++  const path = e.composedPath && e.composedPath();
++  if (path && path.length) {
+     retarget(path[0]);
+diff --git a/web/dist/dev.js b/web/dist/dev.js
+--- a/web/dist/dev.js
++++ b/web/dist/dev.js
+@@ -517,4 +517,4 @@
+-  if (sharedConfig.registry && !sharedConfig.done) sharedConfig.done = _$HY.done = true;
++  if (sharedConfig.registry && !sharedConfig.done && !sharedConfig.count) sharedConfig.done = _$HY.done = true;
+-  if (e.composedPath) {
+-    const path = e.composedPath();
++  const path = e.composedPath && e.composedPath();
++  if (path && path.length) {
+     retarget(path[0]);
+diff --git a/web/dist/dev.cjs b/web/dist/dev.cjs
+--- a/web/dist/dev.cjs
++++ b/web/dist/dev.cjs
+@@ -518,4 +518,4 @@
+-  if (solidJs.sharedConfig.registry && !solidJs.sharedConfig.done) solidJs.sharedConfig.done = _$HY.done = true;
++  if (solidJs.sharedConfig.registry && !solidJs.sharedConfig.done && !solidJs.sharedConfig.count) solidJs.sharedConfig.done = _$HY.done = true;
+-  if (e.composedPath) {
+-    const path = e.composedPath();
++  const path = e.composedPath && e.composedPath();
++  if (path && path.length) {
+     retarget(path[0]);

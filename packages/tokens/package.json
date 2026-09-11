@@ -1,0 +1,25 @@
+{
+  "name": "@gemologic/sheen-tokens",
+  "version": "0.0.0",
+  "description": "Validated themes, accents, fonts, and semantic design tokens for Sheen.",
+  "type": "module",
+  "license": "MIT",
+  "repository": { "type": "git", "url": "git+https://github.com/gemologic/sheen.git", "directory": "packages/tokens" },
+  "homepage": "https://sheen.gemologic.dev",
+  "bugs": { "url": "https://github.com/gemologic/sheen/issues" },
+  "publishConfig": { "access": "public", "provenance": true },
+  "files": ["dist", "!dist/**/*.test.*", "!dist/**/*.demo.*", "!dist/**/*.meta.*"],
+  "sideEffects": ["**/*.css"],
+  "exports": {
+    ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" },
+    "./catalog": { "types": "./dist/catalog.d.ts", "import": "./dist/catalog.js" },
+    "./core.css": "./dist/core.css",
+    "./fonts.css": "./dist/fonts.css",
+    "./fonts/*.woff2": "./dist/fonts/*.woff2",
+    "./themes.css": "./dist/themes.css",
+    "./preset.css": "./dist/preset.css",
+    "./themes/*.css": "./dist/themes/*.css",
+    "./accents/*.css": "./dist/accents/*.css"
+  },
+  "scripts": { "build": "vite build && tsc -p tsconfig.build.json && node ../../tools/build-themes.ts" }
+}

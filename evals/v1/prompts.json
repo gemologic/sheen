@@ -1,0 +1,187 @@
+{
+  "schemaVersion": 1,
+  "suiteId": "sheen-agent-v1",
+  "universalRubric": [
+    { "id": "public-imports", "description": "Imports only public @gemologic/sheen package entries and uses explicit __unsafe seams only when justified." },
+    { "id": "valid-props", "description": "Uses only exported components and props present in sheen.manifest.json; any hallucinated prop is a hard failure." },
+    { "id": "solid-reactivity", "description": "Keeps Solid props reactive and does not destructure component props." },
+    { "id": "semantic-tokens", "description": "Uses semantic Sheen tokens with no raw colors, tier-one values, arbitrary spacing, or hardcoded radii." },
+    { "id": "native-semantics", "description": "Uses links for URL changes, buttons for actions, explicit labels, and keyboard-reachable native semantics." },
+    { "id": "hydration", "description": "Emits complete deterministic server markup without initial browser-global or mounted-state branches." },
+    { "id": "refresh-continuity", "description": "Retains accepted content, focus, drafts, and stable DOM identities during background refresh." }
+  ],
+  "prompts": [
+    {
+      "id": "01-settings-save",
+      "prompt": "Build a settings page with Profile, Notifications, and Security sections. It needs a persistent save bar, dirty-state navigation blocking, pending/error feedback, and a retryable save without disabling unrelated fields.",
+      "rubric": [
+        { "id": "settings-layout", "description": "Uses SettingsLayout inside AppShell and registers app-owned dirty state." },
+        { "id": "save-version", "description": "Accepts only the submitted draft version and retains the form through pending or failed saves." }
+      ]
+    },
+    {
+      "id": "02-orders-table",
+      "prompt": "Build a remotely filtered orders table with numbered pagination, URL state, saved views, selection across all matching rows, bulk archive, CSV export, and retained rows while a request is pending.",
+      "rubric": [
+        { "id": "server-pagination", "description": "Uses delegated numbered pagination and does not fetch all pages for selection or export." },
+        { "id": "query-selection", "description": "Represents all-matching selection as a query plus exclusions and keeps app-owned execution." },
+        { "id": "request-race", "description": "Aborts superseded requests, rejects stale tokens, and accepts state plus rows atomically." }
+      ]
+    },
+    {
+      "id": "03-latency-chart",
+      "prompt": "Add an API latency chart for p50 and p99 over UTC timestamps. Include gaps, localized tooltips, a narrative summary, a view-as-table alternative, and a theme switch that never remounts the chart.",
+      "rubric": [
+        { "id": "columnar-time", "description": "Uses strictly increasing epoch-millisecond Float64 columns and NaN gaps." },
+        { "id": "chart-alternative", "description": "Provides the required narrative and bounded accessible table alternative." },
+        { "id": "token-redraw", "description": "Uses the token bridge and redraws without replacing the chart owner." }
+      ]
+    },
+    {
+      "id": "04-shell-navigation",
+      "prompt": "Create the authenticated application shell with header, desktop sidebar, phone drawer, status bar connection text, shortcut help, and router-backed navigation restoration.",
+      "rubric": [
+        { "id": "single-scroll-owner", "description": "Uses AppShell and its pane ownership without document scrolling on tablet/desktop." },
+        { "id": "router-adapter", "description": "Injects one Sheen router adapter for navigation, blocking, URL state, and restoration." },
+        { "id": "connection-owned", "description": "Treats connection detection as app-owned data rendered through StatusBar." }
+      ]
+    },
+    {
+      "id": "05-account-form",
+      "prompt": "Build an account form with name, email, locale, notification channels, and a numeric alert threshold. Show synchronous validation without losing drafts and submit through a real async action.",
+      "rubric": [
+        { "id": "field-labels", "description": "Uses visible labels and associated descriptions/errors for every control." },
+        { "id": "controlled-boundary", "description": "Keeps edit drafts in controls while committed application state remains authoritative." },
+        { "id": "numeric-locale", "description": "Uses NumberField with explicit locale-aware formatting and numeric app state." }
+      ]
+    },
+    {
+      "id": "06-list-detail",
+      "prompt": "Build an inbox-style list/detail view where the list keeps scroll and selection while message details refresh. It must become a reversible drill-in view on phones.",
+      "rubric": [
+        { "id": "list-detail-pattern", "description": "Uses ListDetailLayout with stable list/detail identities and app-owned selection." },
+        { "id": "phone-history", "description": "Uses router history for phone drill-in/back behavior rather than local-only hidden state." }
+      ]
+    },
+    {
+      "id": "07-theme-controls",
+      "prompt": "Add preferences for all bundled themes, a broad accent palette, dark/light/system mode, density, radius, and reduced motion. Fresh installs must start dark and stored light preference must not flash dark first.",
+      "rubric": [
+        { "id": "independent-axes", "description": "Keeps theme, accent, mode, density, radius, and motion as independent validated axes." },
+        { "id": "single-hydration-owner", "description": "Uses either client-script or cookie-authoritative hydration without two owners for root attributes." },
+        { "id": "dark-default", "description": "Preserves Obsidian dark as the fresh-install default while honoring stored state before paint." }
+      ]
+    },
+    {
+      "id": "08-theme-comparison",
+      "prompt": "Show the same settings card in two nested theme scopes with different themes and accents. Each card opens a Select and Dialog that must inherit its own scope.",
+      "rubric": [
+        { "id": "partial-scope", "description": "Uses partial ThemeScope overrides and inherited unspecified axes." },
+        { "id": "contextual-portals", "description": "Lets overlays resolve their contextual portal targets instead of mounting to document.body." }
+      ]
+    },
+    {
+      "id": "09-notification-flow",
+      "prompt": "Implement a retryable background operation with one persistent status region, a toast on transport failure, and an Undo action after success. Keep the page usable throughout.",
+      "rubric": [
+        { "id": "toast-ownership", "description": "Uses Sheen toast affordances while keeping operation state and undo semantics app-owned." },
+        { "id": "persistent-status", "description": "Does not rely on a transient toast as the only source of essential state or recovery." }
+      ]
+    },
+    {
+      "id": "10-editable-table",
+      "prompt": "Add inline editing for order quantity and status. Validation stays in edit mode, transport failure reverts with retry, conflicts remain explicit, and background refetch must not erase a dirty value.",
+      "rubric": [
+        { "id": "editing-contract", "description": "Uses the DataTable editor contract and one promise-returning onCellCommit boundary." },
+        { "id": "error-kinds", "description": "Distinguishes validation, transport, conflict, stale refetch, and authorization reset." }
+      ]
+    },
+    {
+      "id": "11-hierarchy-table",
+      "prompt": "Build a hierarchical service table with lazy children, keyboard treegrid navigation, child-load retry, stable expansion, and immediate clearing when the account changes.",
+      "rubric": [
+        { "id": "hierarchy-requests", "description": "Uses per-node request tokens and AbortSignals with hasChildren for remote branches." },
+        { "id": "treegrid-keys", "description": "Preserves row navigation while adding Left/Right parent-child behavior." },
+        { "id": "authorization-reset", "description": "Changes hierarchy reset identity at the account boundary." }
+      ]
+    },
+    {
+      "id": "12-dashboard",
+      "prompt": "Create a service-health dashboard with stats, sparklines, one detailed chart, recent incidents, empty and permission-denied states, and a retained refresh indicator.",
+      "rubric": [
+        { "id": "display-primitives", "description": "Uses Stat, StatGroup, Sparkline, structured tables/lists, and Sheen regional states." },
+        { "id": "non-color-encoding", "description": "Pairs every status or trend color with text, shape, or another non-color signal." },
+        { "id": "state-distinction", "description": "Distinguishes cold, empty, denied, refresh-pending, and refresh-error states." }
+      ]
+    },
+    {
+      "id": "13-command-palette",
+      "prompt": "Add a command palette combining navigation, recent entities, and contextual actions. Register mod+k only while its provider exists and keep the visible shortcut inventory accurate.",
+      "rubric": [
+        { "id": "palette-lifecycle", "description": "Uses the Sheen palette/shortcut registry owner and cleans up the binding on disposal." },
+        { "id": "collision-policy", "description": "Does not create an independent document listener or duplicate same-scope binding." }
+      ]
+    },
+    {
+      "id": "14-streaming-metrics",
+      "prompt": "Display twelve streaming metric series with a bounded history. Producers may burst faster than paint; expose dropped/rejected counts and keep the newest samples without blocking ingestion.",
+      "rubric": [
+        { "id": "ring-buffer", "description": "Uses the columnar ring buffer, newest-sample retention, and explicit dropped/rejected counters." },
+        { "id": "frame-coalescing", "description": "Coalesces redraw work to animation frames without deferring sample ingestion." },
+        { "id": "series-encoding", "description": "Uses non-color encodings when the palette cannot uniquely encode all twelve series." }
+      ]
+    },
+    {
+      "id": "15-continuous-table",
+      "prompt": "Build a non-paginated table for a complete local dataset of 1,500 audit events. It needs sorting, filtering, virtualization, and client export without pretending virtualization limits memory.",
+      "rubric": [
+        { "id": "bounded-continuous", "description": "Uses pagination=false only because the complete bounded result is already local." },
+        { "id": "virtualization-boundary", "description": "Treats virtualization as a DOM optimization, independent of transfer and retained memory." },
+        { "id": "client-export", "description": "Exports the complete accepted client view rather than only mounted rows." }
+      ]
+    },
+    {
+      "id": "16-refreshing-search",
+      "prompt": "Build a search results pane with a 300 ms response, a 2 second response, an error, and a superseded request. Existing results must never flash blank or masquerade as the new query.",
+      "rubric": [
+        { "id": "previous-query-state", "description": "Retains accepted results but marks them as belonging to the previous query until atomic acceptance." },
+        { "id": "delay-feedback", "description": "Avoids loading treatment for fast refresh and adds non-destructive pending feedback for slow refresh." },
+        { "id": "stale-rejection", "description": "Uses both abort and monotonic response identity." }
+      ]
+    },
+    {
+      "id": "17-rtl-toolbar",
+      "prompt": "Build an RTL-capable data toolbar with search, filters, column controls, export, and pagination. Keyboard arrows must retain their physical versus logical meanings correctly.",
+      "rubric": [
+        { "id": "logical-layout", "description": "Uses logical CSS and Sheen layout primitives rather than left/right layout assumptions." },
+        { "id": "keyboard-direction", "description": "Applies each component's documented physical or logical arrow-key contract under RTL." }
+      ]
+    },
+    {
+      "id": "18-dialog-workflow",
+      "prompt": "Add a destructive delete flow opened from a row context menu. It needs explicit confirmation, nested-overlay focus restoration, pending suppression, safe error reporting, and the native menu when no replacement can open.",
+      "rubric": [
+        { "id": "context-menu-fallback", "description": "Suppresses the native context menu only after a Sheen replacement successfully opens." },
+        { "id": "dialog-focus", "description": "Uses the scoped dialog/confirmation owner and restores the surviving origin." },
+        { "id": "pending-action", "description": "Prevents duplicate destructive activation without replacing the accepted row." }
+      ]
+    },
+    {
+      "id": "19-private-theme",
+      "prompt": "Create a private corporate theme derived from a bundled theme, override surface geometry and colors in both modes, validate it, emit CSS, and make it available without forking Sheen.",
+      "rubric": [
+        { "id": "public-theme-api", "description": "Uses exported defineTheme/buildTheme contracts and the current schema version." },
+        { "id": "both-modes", "description": "Supplies and validates both dark and light modes including contrast and categorical palette gates." }
+      ]
+    },
+    {
+      "id": "20-hydrated-form-refresh",
+      "prompt": "Server-render a form with a textarea draft, select, radio group, and save action. Delay JavaScript and data, interact before hydration, then refresh options without replacing surviving controls or losing the draft.",
+      "rubric": [
+        { "id": "complete-server-form", "description": "Renders labeled native controls and initial values in the server document." },
+        { "id": "event-replay", "description": "Carries the documented theme and keyboard hydration bootstrap plus the qualified Solid patch or successor." },
+        { "id": "identity-refresh", "description": "Preserves surviving native nodes, focus, draft, and accepted selection through hydration and refresh." }
+      ]
+    }
+  ]
+}

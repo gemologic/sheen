@@ -1,0 +1,89 @@
+name: Check
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24.19.0'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Require a reviewed Changeset
+        if: github.event_name == 'pull_request'
+        run: pnpm changeset status --since="origin/${{ github.base_ref }}"
+      - run: pnpm check
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm test:consumer-browser
+      - run: pnpm test:browser
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: failure()
+        with:
+          name: chromium-failures
+          path: test-results
+          retention-days: 7
+  webkit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24.19.0'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - run: pnpm exec playwright install --with-deps webkit
+      - run: pnpm test:webkit
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: failure()
+        with:
+          name: webkit-failures
+          path: test-results/webkit
+          retention-days: 7
+  benchmark:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24.19.0'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm build
+      - run: pnpm exec playwright test --config bench/playwright.config.ts
+      - run: pnpm exec playwright test --config bench/playwright.config.ts
+        env:
+          SHEEN_ADMIN_BENCHMARK: 'true'
+          SHEEN_BENCHMARK_PORT: '4174'
+      - run: pnpm exec playwright test --config bench/playwright.config.ts
+        env:
+          SHEEN_DATE_BENCHMARK: 'true'
+          SHEEN_BENCHMARK_PORT: '4175'
+      - run: pnpm exec playwright test --config bench/playwright.config.ts
+        env:
+          SHEEN_CHART_BENCHMARK: 'true'
+          SHEEN_BENCHMARK_PORT: '4176'
+      - run: pnpm exec playwright test --config bench/playwright.config.ts
+        env:
+          SHEEN_COMPOSER_BENCHMARK: 'true'
+          SHEEN_BENCHMARK_PORT: '4177'
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always()
+        with:
+          name: application-benchmarks-${{ github.sha }}
+          path: test-results/bench
+          retention-days: 30

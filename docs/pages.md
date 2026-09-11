@@ -1,0 +1,25 @@
+# GitHub Pages
+
+The public workbench is deployed to `https://sheen.gemologic.dev` from the static Nitro output at `apps/loupe/.output/public`. The build prerenders the landing page, AdminApp starter, component inventory and playgrounds, Composer, laboratory, theme editor, and token explorer. Loupe's API routes, server bundle, and API-dependent gallery are intentionally absent.
+
+Run the production boundary locally:
+
+```sh
+pnpm build:pages
+pnpm check:pages
+pnpm test:pages
+```
+
+`check:pages` requires complete HTML for every declared public route, the canonical production URL, the public GitHub link, `.nojekyll`, and no server or API output. `test:pages` serves that built artifact and exercises real Chromium hydration, theme changes, accessibility, component documentation, Composer and laboratory iframes, and AdminApp navigation.
+
+The `Pages` GitHub Actions workflow builds and tests pull requests without deploying them. Pushes to `main` and manual dispatches from `main` additionally upload the static artifact and deploy through the protected `github-pages` environment. The workflow has read-only repository access until the isolated deploy job receives `pages:write` and `id-token:write`.
+
+Repository administration remains external to the source tree:
+
+1. Make the reviewed repository public and select **GitHub Actions** as the Pages source.
+2. Verify `gemologic.dev` for the Gemologic GitHub organization.
+3. In the repository's Pages settings, set the custom domain to `sheen.gemologic.dev` before changing DNS.
+4. Create a DNS `CNAME` for `sheen.gemologic.dev` pointing directly to `gemologic.github.io`, without `/sheen`.
+5. After DNS and certificate provisioning settle, enable **Enforce HTTPS**.
+
+Do not add a wildcard DNS record for this deployment. GitHub Actions publishing ignores a repository `CNAME` file, so the configured Pages setting is authoritative.

@@ -1,0 +1,167 @@
+diff --git a/dist/chunk/V25KEN4T.jsx b/dist/chunk/V25KEN4T.jsx
+--- a/dist/chunk/V25KEN4T.jsx
++++ b/dist/chunk/V25KEN4T.jsx
+@@ -144,3 +144,4 @@
+   const onCloseAutoFocus = (e) => {
+     local.onCloseAutoFocus?.(e);
++    if (e.defaultPrevented) return;
+     if (context.modal()) {
+diff --git a/dist/chunk/27MLNS66.js b/dist/chunk/27MLNS66.js
+--- a/dist/chunk/27MLNS66.js
++++ b/dist/chunk/27MLNS66.js
+@@ -93,3 +93,4 @@
+   const onCloseAutoFocus = (e) => {
+     local.onCloseAutoFocus?.(e);
++    if (e.defaultPrevented) return;
+     if (context.modal()) {
+diff --git a/dist/chunk/LP6E37CW.jsx b/dist/chunk/LP6E37CW.jsx
+--- a/dist/chunk/LP6E37CW.jsx
++++ b/dist/chunk/LP6E37CW.jsx
+@@ -114,1 +114,1 @@
+-    direction: () => props.locale ? getReadingDirection(props.locale) : defaultLocale.direction()
++    direction: () => props.direction ?? (props.locale ? getReadingDirection(props.locale) : defaultLocale.direction())
+diff --git a/dist/chunk/7TPOQ36Z.js b/dist/chunk/7TPOQ36Z.js
+--- a/dist/chunk/7TPOQ36Z.js
++++ b/dist/chunk/7TPOQ36Z.js
+@@ -106,1 +106,1 @@
+-    direction: () => props.locale ? getReadingDirection(props.locale) : defaultLocale.direction()
++    direction: () => props.direction ?? (props.locale ? getReadingDirection(props.locale) : defaultLocale.direction())
+diff --git a/dist/i18n/index.d.ts b/dist/i18n/index.d.ts
+--- a/dist/i18n/index.d.ts
++++ b/dist/i18n/index.d.ts
+@@ -60,1 +60,3 @@
+ interface I18nProviderProps {
++    /** Explicit layout direction, independent of the formatting locale. */
++    direction?: Direction;
+diff --git a/dist/chunk/3ARTUDH2.jsx b/dist/chunk/3ARTUDH2.jsx
+--- a/dist/chunk/3ARTUDH2.jsx
++++ b/dist/chunk/3ARTUDH2.jsx
+@@ -886,3 +886,4 @@
+   const onEscapeKeyDown = (e) => {
+     local.onEscapeKeyDown?.(e);
++    if (e.defaultPrevented) return;
+     optionalMenubarContext?.setAutoFocusMenu(false);
+diff --git a/dist/chunk/BK63AFY4.js b/dist/chunk/BK63AFY4.js
+--- a/dist/chunk/BK63AFY4.js
++++ b/dist/chunk/BK63AFY4.js
+@@ -316,3 +316,8 @@
+-    queueMicrotask(() => {
+-      positioner.style.zIndex = getComputedStyle(content).zIndex;
+-    });
++    let disposed = false;
++    const syncZIndex = () => { if (!disposed) positioner.style.zIndex = getComputedStyle(content).zIndex; };
++    queueMicrotask(syncZIndex);
++    const observer = new MutationObserver(syncZIndex);
++    observer.observe(content, { attributes: true, attributeFilter: ["style", "class"] });
++    onCleanup(() => {
++      disposed = true; observer.disconnect();
++    });
+diff --git a/dist/chunk/OGE3DKII.jsx b/dist/chunk/OGE3DKII.jsx
+--- a/dist/chunk/OGE3DKII.jsx
++++ b/dist/chunk/OGE3DKII.jsx
+@@ -379,3 +379,8 @@
+-    queueMicrotask(() => {
+-      positioner.style.zIndex = getComputedStyle(content).zIndex;
+-    });
++    let disposed = false;
++    const syncZIndex = () => { if (!disposed) positioner.style.zIndex = getComputedStyle(content).zIndex; };
++    queueMicrotask(syncZIndex);
++    const observer = new MutationObserver(syncZIndex);
++    observer.observe(content, { attributes: true, attributeFilter: ["style", "class"] });
++    onCleanup(() => {
++      disposed = true; observer.disconnect();
++    });
+diff --git a/dist/chunk/WHII6HHI.js b/dist/chunk/WHII6HHI.js
+--- a/dist/chunk/WHII6HHI.js
++++ b/dist/chunk/WHII6HHI.js
+@@ -83,3 +83,14 @@
+     layerStack.disableBodyPointerEvents(ref);
++    const node = ref;
++    const observer = new MutationObserver(() => {
++      if (!node.hasAttribute("data-expanded")) return;
++      const layer = layerStack.find(node);
++      if (!layer) return;
++      layerStack.removeLayer(node);
++      layerStack.addLayer(layer);
++      layerStack.assignPointerEventToLayers();
++    });
++    observer.observe(node, { attributes: true, attributeFilter: ["data-expanded"] });
+     onCleanup(() => {
++      observer.disconnect();
+       if (!ref) {
+diff --git a/dist/chunk/XNF3WGZ2.jsx b/dist/chunk/XNF3WGZ2.jsx
+--- a/dist/chunk/XNF3WGZ2.jsx
++++ b/dist/chunk/XNF3WGZ2.jsx
+@@ -113,3 +113,14 @@
+     layerStack.disableBodyPointerEvents(ref);
++    const node = ref;
++    const observer = new MutationObserver(() => {
++      if (!node.hasAttribute("data-expanded")) return;
++      const layer = layerStack.find(node);
++      if (!layer) return;
++      layerStack.removeLayer(node);
++      layerStack.addLayer(layer);
++      layerStack.assignPointerEventToLayers();
++    });
++    observer.observe(node, { attributes: true, attributeFilter: ["data-expanded"] });
+     onCleanup(() => {
++      observer.disconnect();
+       if (!ref) {
+diff --git a/dist/chunk/G3KI2B4X.js b/dist/chunk/G3KI2B4X.js
+--- a/dist/chunk/G3KI2B4X.js
++++ b/dist/chunk/G3KI2B4X.js
+@@ -88,2 +88,8 @@
+     focusScopeStack.add(focusScope);
++    const activationObserver = new MutationObserver(() => {
++      if (!container.hasAttribute("data-expanded")) return;
++      focusScopeStack.add(focusScope);
++      focusScope.resume();
++    });
++    activationObserver.observe(container, { attributes: true, attributeFilter: ["data-expanded"] });
+     const previouslyFocusedElement = getActiveElement(container);
+@@ -106,2 +112,3 @@
+     onCleanup(() => {
++      activationObserver.disconnect();
+       container.removeEventListener(AUTOFOCUS_ON_MOUNT_EVENT, onMountAutoFocus);
+diff --git a/dist/chunk/KEL2LLJM.jsx b/dist/chunk/KEL2LLJM.jsx
+--- a/dist/chunk/KEL2LLJM.jsx
++++ b/dist/chunk/KEL2LLJM.jsx
+@@ -100,2 +100,8 @@
+     focusScopeStack.add(focusScope);
++    const activationObserver = new MutationObserver(() => {
++      if (!container.hasAttribute("data-expanded")) return;
++      focusScopeStack.add(focusScope);
++      focusScope.resume();
++    });
++    activationObserver.observe(container, { attributes: true, attributeFilter: ["data-expanded"] });
+     const previouslyFocusedElement = getActiveElement(
+@@ -121,2 +127,3 @@
+     onCleanup(() => {
++      activationObserver.disconnect();
+       container.removeEventListener(AUTOFOCUS_ON_MOUNT_EVENT, onMountAutoFocus);
+diff --git a/dist/chunk/RFN6X5VH.jsx b/dist/chunk/RFN6X5VH.jsx
+--- a/dist/chunk/RFN6X5VH.jsx
++++ b/dist/chunk/RFN6X5VH.jsx
+@@ -451,3 +451,5 @@
+     const manager = access3(mergedProps.selectionManager);
++    const container = ref();
++    if (manager.isFocused() && manager.focusedKey() != null && container?.contains(container.ownerDocument.activeElement)) return;
+     const delegate = access3(mergedProps.keyboardDelegate);
+     let focusedKey;
+diff --git a/dist/chunk/3D6FM2PJ.js b/dist/chunk/3D6FM2PJ.js
+--- a/dist/chunk/3D6FM2PJ.js
++++ b/dist/chunk/3D6FM2PJ.js
+@@ -419,3 +419,5 @@
+     const manager = access(mergedProps.selectionManager);
++    const container = ref();
++    if (manager.isFocused() && manager.focusedKey() != null && container?.contains(container.ownerDocument.activeElement)) return;
+     const delegate = access(mergedProps.keyboardDelegate);
+     let focusedKey;
+diff --git a/dist/chunk/HGKTPMYY.js b/dist/chunk/HGKTPMYY.js
+--- a/dist/chunk/HGKTPMYY.js
++++ b/dist/chunk/HGKTPMYY.js
+@@ -726,3 +726,4 @@
+   const onEscapeKeyDown = (e) => {
+     local.onEscapeKeyDown?.(e);
++    if (e.defaultPrevented) return;
+     optionalMenubarContext?.setAutoFocusMenu(false);

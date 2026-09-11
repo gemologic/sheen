@@ -1,0 +1,126 @@
+name: Publish npm packages
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Exact fixed package version already present on main
+        required: true
+        type: string
+      distribution_tag:
+        description: Prereleases use next; stable releases use latest
+        required: true
+        default: next
+        type: choice
+        options:
+          - next
+          - latest
+      publication_mode:
+        description: Bootstrap creates packages with a temporary token; stage uses npm OIDC
+        required: true
+        default: stage
+        type: choice
+        options:
+          - stage
+          - bootstrap
+
+concurrency:
+  group: npm-publication
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  prepare:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24.19.0'
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm check
+      - run: pnpm test:npm-consumer
+      - name: Verify requested package version
+        run: pnpm check:packages
+        env:
+          SHEEN_EXPECTED_RELEASE_VERSION: ${{ inputs.version }}
+      - name: Pack exact publication artifacts
+        run: node tools/release-artifacts.ts pack "$SHEEN_RELEASE_DIRECTORY" "$SHEEN_RELEASE_VERSION" "$SHEEN_DISTRIBUTION_TAG" "$SHEEN_PUBLICATION_MODE"
+        env:
+          SHEEN_RELEASE_DIRECTORY: ${{ runner.temp }}/sheen-release
+          SHEEN_RELEASE_VERSION: ${{ inputs.version }}
+          SHEEN_DISTRIBUTION_TAG: ${{ inputs.distribution_tag }}
+          SHEEN_PUBLICATION_MODE: ${{ inputs.publication_mode }}
+      - name: Recheck artifact manifest and digests
+        run: node tools/release-artifacts.ts verify "$SHEEN_RELEASE_DIRECTORY" "$SHEEN_RELEASE_VERSION" "$SHEEN_DISTRIBUTION_TAG" "$SHEEN_PUBLICATION_MODE"
+        env:
+          SHEEN_RELEASE_DIRECTORY: ${{ runner.temp }}/sheen-release
+          SHEEN_RELEASE_VERSION: ${{ inputs.version }}
+          SHEEN_DISTRIBUTION_TAG: ${{ inputs.distribution_tag }}
+          SHEEN_PUBLICATION_MODE: ${{ inputs.publication_mode }}
+      - name: Upload exact release artifacts
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: sheen-release-${{ github.run_id }}
+          path: ${{ runner.temp }}/sheen-release
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 7
+
+  publish:
+    needs: prepare
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      id-token: write
+    environment:
+      name: npm
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24.19.0'
+      - run: npm install --global npm@11.17.0
+      - name: Download approved release artifacts
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: sheen-release-${{ github.run_id }}
+          path: ${{ runner.temp }}/sheen-release
+      - name: Verify approved artifact manifest and digests
+        run: node tools/release-artifacts.ts verify "$SHEEN_RELEASE_DIRECTORY" "$SHEEN_RELEASE_VERSION" "$SHEEN_DISTRIBUTION_TAG" "$SHEEN_PUBLICATION_MODE"
+        env:
+          SHEEN_RELEASE_DIRECTORY: ${{ runner.temp }}/sheen-release
+          SHEEN_RELEASE_VERSION: ${{ inputs.version }}
+          SHEEN_DISTRIBUTION_TAG: ${{ inputs.distribution_tag }}
+          SHEEN_PUBLICATION_MODE: ${{ inputs.publication_mode }}
+      - name: Bootstrap brand-new packages
+        if: inputs.publication_mode == 'bootstrap'
+        run: |
+          test -n "$NODE_AUTH_TOKEN"
+          npm config set //registry.npmjs.org/:_authToken "$NODE_AUTH_TOKEN" --location=user
+          node tools/bootstrap-npm.ts "$SHEEN_RELEASE_DIRECTORY" "$SHEEN_RELEASE_VERSION" "$SHEEN_DISTRIBUTION_TAG"
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_CONFIG_USERCONFIG: ${{ runner.temp }}/bootstrap.npmrc
+          SHEEN_RELEASE_DIRECTORY: ${{ runner.temp }}/sheen-release
+          SHEEN_RELEASE_VERSION: ${{ inputs.version }}
+          SHEEN_DISTRIBUTION_TAG: ${{ inputs.distribution_tag }}
+      - name: Stage existing packages through npm OIDC
+        if: inputs.publication_mode == 'stage'
+        run: |
+          for tarball in "$SHEEN_RELEASE_DIRECTORY"/*.tgz; do
+            npm stage publish "$tarball" --tag "$SHEEN_DISTRIBUTION_TAG" --access public --provenance
+          done
+        env:
+          SHEEN_RELEASE_DIRECTORY: ${{ runner.temp }}/sheen-release
+          SHEEN_DISTRIBUTION_TAG: ${{ inputs.distribution_tag }}

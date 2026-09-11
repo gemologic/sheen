@@ -1,0 +1,15 @@
+# Sheen agent assay v1
+
+`prompts.json` freezes twenty implementation prompts and their per-prompt rubrics. Do not tune prompts or thresholds after looking at candidate outputs. A baseline run must record the exact model, model snapshot when available, reasoning configuration, agent harness version, `AGENTS.md` digest, `llms.txt` digest, and each raw generated artifact.
+
+Each report supplies generated nonblank line count, lint errors, total interactive elements, interactive elements sourced from public Sheen components, hallucinated component/prop names, and one boolean for every universal and prompt-specific rubric ID. `tools/agent-evals.ts` rejects missing prompts, duplicate IDs, incomplete rubrics, impossible counts, and unrecognized report keys.
+
+Hard gates are any hallucinated prop, any failed rubric item, more than one lint error per 100 generated lines in aggregate, or less than 80% Sheen coverage across interactive elements. After the baseline is sealed, lint density may not increase, and coverage or rubric pass ratio may not decrease, by more than 5% relative to that baseline. Hard thresholds still apply even when the baseline is worse.
+
+The prompt/rubric fixtures and scoring math are executable. Diagnostic Codex CLI 0.153.4 runs with `gpt-5.6-sol` did not produce a complete baseline: xhigh reasoning timed out on the first prompt, and medium reasoning completed six of seven attempted prompts while the remote-orders prompt timed out. The completed medium samples exposed an `exactOptionalPropertyTypes` guidance gap that has been corrected in the generated context. These diagnostic artifacts are not a baseline. The M5 baseline and regression gate remain incomplete until all twenty raw outputs and audited reports exist for one pinned model/configuration.
+
+## Baseline contract
+
+The accepted run lives in `baseline/`: `metadata.json`, `reports.json`, and one untouched `outputs/<prompt-id>.json` artifact per frozen prompt. `baseline.schema.json` documents the metadata shape. Metadata records the CLI, version, model and snapshot when exposed, reasoning, sandbox, timeout, timestamp, aggregate, and SHA-256 identities for every artifact. It also binds the exact `AGENTS.md`, `llms.txt`, manifest, prompt suite, and output schema presented to the harness.
+
+`pnpm check:agent-evals` fails when the baseline is missing or invalid. The normal `pnpm check` uses `check:agent-evals:if-present` until the first baseline is accepted; from that point the same command verifies it automatically. Context drift, missing or renamed prompts, output/report tampering, inaccurate line counts, hard rubric failures, threshold misses, and aggregate mismatch all fail. It also typechecks every raw module against the real Loupe consumer environment, runs the repository ESLint configuration, rejects non-public dependency imports, and derives interaction and hallucinated-prop counts from the TSX plus exhaustive manifest instead of trusting handwritten metrics. A context change therefore requires a deliberate complete rerun and newly audited rubric reports, not a digest-only update.

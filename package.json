@@ -1,0 +1,62 @@
+{
+  "name": "sheen-workspace",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gemologic/sheen.git"
+  },
+  "homepage": "https://sheen.gemologic.dev",
+  "bugs": {
+    "url": "https://github.com/gemologic/sheen/issues"
+  },
+  "packageManager": "pnpm@11.25.0",
+  "engines": {
+    "node": ">=24 <25"
+  },
+  "scripts": {
+    "build:packages": "pnpm --filter @gemologic/sheen-tokens build && pnpm --filter @gemologic/sheen-icons build && pnpm --filter @gemologic/sheen build && pnpm --filter @gemologic/sheen-code build && pnpm --filter @gemologic/sheen-date build && pnpm --filter @gemologic/sheen-table build && pnpm --filter @gemologic/sheen-patterns build && pnpm --filter @gemologic/sheen-charts build && pnpm --filter eslint-plugin-sheen build && pnpm --filter @gemologic/sheen-cli build",
+    "build": "pnpm build:packages && pnpm --filter loupe build",
+    "build:pages": "pnpm manifest && pnpm build:packages && pnpm --filter loupe build:pages",
+    "dev": "pnpm --filter loupe dev",
+    "test:browser": "playwright test",
+    "test:webkit": "playwright test --config playwright.webkit.config.ts",
+    "test:pages": "playwright test --config playwright.pages.config.ts",
+    "benchmark:table": "pnpm build && playwright test --config bench/playwright.config.ts",
+    "benchmark:admin": "pnpm build && SHEEN_ADMIN_BENCHMARK=true playwright test --config bench/playwright.config.ts",
+    "benchmark:date": "pnpm build && SHEEN_DATE_BENCHMARK=true playwright test --config bench/playwright.config.ts",
+    "benchmark:composer": "pnpm build && SHEEN_COMPOSER_BENCHMARK=true playwright test --config bench/playwright.config.ts",
+    "benchmark:chart": "pnpm build && SHEEN_CHART_BENCHMARK=true playwright test --config bench/playwright.config.ts",
+    "typecheck": "tsc --noEmit && pnpm --filter loupe typecheck",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "check:consumers": "node tools/check-consumers.ts && node tools/check-icon-consumers.ts",
+    "test:npm-consumer": "node tools/check-npm-consumer.ts",
+    "test:release-artifacts": "node tools/check-release-artifacts.ts",
+    "test:consumer-browser": "node tools/check-consumers.ts --browser",
+    "manifest": "node tools/build-manifest.ts && node tools/build-llms.ts && node tools/build-composer-fixtures.ts",
+    "check:agent-evals": "node tools/agent-eval-baseline.ts",
+    "check:agent-evals:if-present": "node tools/agent-eval-baseline.ts --if-present",
+    "composer:generate": "node tools/build-composer-fixtures.ts",
+    "changeset": "changeset",
+    "version-packages": "changeset version",
+    "check:packages": "node tools/check-package-contents.ts",
+    "check:pages": "node tools/check-pages.ts",
+    "check": "pnpm manifest && pnpm build && pnpm lint && pnpm typecheck && pnpm test && pnpm check:agent-evals:if-present && pnpm check:packages && pnpm check:consumers"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "4.13.0",
+    "@changesets/cli": "3.0.2",
+    "@eslint-community/eslint-plugin-eslint-comments": "4.7.2",
+    "@playwright/test": "1.63.0",
+    "@types/node": "24.13.3",
+    "eslint": "10.10.0",
+    "ts-morph": "28.0.0",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.69.0",
+    "vite": "8.2.2",
+    "vite-plugin-solid": "2.11.14",
+    "vitest": "5.0.0"
+  }
+}

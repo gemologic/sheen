@@ -1,0 +1,23 @@
+{
+  "name": "@gemologic/sheen-table",
+  "version": "0.0.0",
+  "description": "Compact accessible data tables and query-building components for Sheen SolidJS applications.",
+  "type": "module",
+  "license": "MIT",
+  "repository": { "type": "git", "url": "git+https://github.com/gemologic/sheen.git", "directory": "packages/table" },
+  "homepage": "https://sheen.gemologic.dev",
+  "bugs": { "url": "https://github.com/gemologic/sheen/issues" },
+  "publishConfig": { "access": "public", "provenance": true },
+  "files": ["dist", "src", "!dist/**/*.test.*", "!dist/**/*.demo.*", "!dist/**/*.meta.*", "!src/**/*.test.*", "!src/**/*.demo.*", "!src/**/*.meta.*"],
+  "sideEffects": ["**/*.css"],
+  "exports": {
+    ".": { "types": "./dist/index.d.ts", "solid": "./src/index.ts", "import": "./dist/index.js" },
+    "./core": { "types": "./dist/core.d.ts", "solid": "./src/core.ts", "import": "./dist/core.js" },
+    "./query-builder": { "types": "./dist/QueryBuilder.d.ts", "solid": "./src/QueryBuilder.tsx", "import": "./dist/QueryBuilder.js" },
+    "./styles.css": "./src/styles.css"
+  },
+  "scripts": { "build": "vite build && tsc -p tsconfig.build.json" },
+  "peerDependencies": { "@gemologic/sheen": "workspace:*", "solid-js": "1.9.15" },
+  "dependencies": { "@tanstack/solid-virtual": "3.13.37" },
+  "devDependencies": { "@gemologic/sheen": "workspace:*", "solid-js": "1.9.15", "vite-plugin-solid": "2.11.14" }
+}

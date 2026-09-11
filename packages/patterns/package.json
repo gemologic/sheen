@@ -1,0 +1,83 @@
+{
+  "name": "@gemologic/sheen-patterns",
+  "version": "0.0.0",
+  "description": "Application layouts and the customizable AdminApp baseline for Sheen SolidJS applications.",
+  "type": "module",
+  "license": "MIT",
+  "repository": { "type": "git", "url": "git+https://github.com/gemologic/sheen.git", "directory": "packages/patterns" },
+  "homepage": "https://sheen.gemologic.dev",
+  "bugs": { "url": "https://github.com/gemologic/sheen/issues" },
+  "publishConfig": { "access": "public", "provenance": true },
+  "files": [
+    "dist",
+    "src",
+    "!dist/**/*.test.*",
+    "!dist/**/*.demo.*",
+    "!dist/**/*.meta.*",
+    "!src/**/*.test.*",
+    "!src/**/*.demo.*",
+    "!src/**/*.meta.*"
+  ],
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "solid": "./src/index.ts",
+      "import": "./dist/index.js"
+    },
+    "./auth": {
+      "types": "./dist/auth.d.ts",
+      "solid": "./src/auth.ts",
+      "import": "./dist/auth.js"
+    },
+    "./admin": {
+      "types": "./dist/admin.d.ts",
+      "solid": "./src/admin.ts",
+      "import": "./dist/admin.js"
+    },
+    "./admin-config": {
+      "types": "./dist/admin-config.d.ts",
+      "solid": "./src/admin-config.ts",
+      "import": "./dist/admin-config.js"
+    },
+    "./solid-router": {
+      "types": "./dist/solid-router.d.ts",
+      "solid": "./src/solid-router.ts",
+      "import": "./dist/solid-router.js"
+    },
+    "./tanstack-router": {
+      "types": "./dist/tanstack-router.d.ts",
+      "solid": "./src/tanstack-router.ts",
+      "import": "./dist/tanstack-router.js"
+    },
+    "./styles.css": "./src/styles.css",
+    "./admin/styles.css": "./src/admin.css"
+  },
+  "scripts": {
+    "build": "vite build && tsc -p tsconfig.build.json"
+  },
+  "peerDependencies": {
+    "@gemologic/sheen": "workspace:*",
+    "@solidjs/meta": "0.29.4",
+    "@solidjs/router": "1.0.0",
+    "@tanstack/solid-router": ">=1.170 <2",
+    "solid-js": "1.9.15"
+  },
+  "peerDependenciesMeta": {
+    "@solidjs/router": {
+      "optional": true
+    },
+    "@tanstack/solid-router": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@gemologic/sheen": "workspace:*",
+    "@solidjs/meta": "0.29.4",
+    "@solidjs/router": "1.0.0",
+    "@tanstack/solid-router": "1.170.31",
+    "solid-js": "1.9.15"
+  }
+}

@@ -1,0 +1,200 @@
+# Sheen component index
+
+Generated from sheen.manifest.json. Import public @gemologic/sheen entries. Link changes URLs; Button acts. Omit absent optional props instead of passing undefined. Use semantic tokens, explicit locale, complete SSR, and retained refresh content.
+Aliases: s=string, b=boolean, n=number, v=void, ro=readonly, node=JSX.Element, P=Promise, Abort=AbortSignal, size="sm"|"md"|"lg", mute="muted"|"inherit". Native props, defaults, and referenced examples are in the full context.
+
+## @gemologic/sheen-charts
+- AreaChart(label:s,summary:s,xLabel:s,series:ro ChartSeries[],data:ChartData,x:ChartTimeAxis|ChartNumberAxis,height:n,+10 optional): Renders bounded SVG area series with honest NaN gaps and optional positive/negative stacking; See full example.
+- BarChart(label:s,summary:s,categoryLabel:s,valueLabel:s,series:ro ChartSeries[],data:ChartCategoricalData,height:n,+9 optional): Renders bounded grouped or stacked categorical bars in vertical or horizontal responsive SVG layouts; See full example.
+- ChartDataTable(label:s,summary:s,xLabel:s,series:ro ChartSeries[],data:ChartData,x:ChartTimeAxis|ChartNumberAxis,y?:ChartValueAxis,pageSize?:n,viewLabel?:s,loading?:b,class?:s): Provides a bounded, localized native-table alternative and narrative summary for a chart; See full example.
+- LineChart(label:s,summary:s,xLabel:s,series:ro ChartSeries[],data:ChartData,x:ChartTimeAxis|ChartNumberAxis,height:n,+9 optional): Renders a responsive token-themed SVG line chart for bounded time or numeric data with explicit gaps; See full example.
+- Sparkline(values:Float64Array<ArrayBufferLike>,label:s,color?:ChartColorToken,width?:n,height?:n): Renders a dependency-free inline trend path while preserving NaN gaps; <Sparkline values={latency} label="Latency over five samples" color="chart-3"/>
+- Stat(label:s,value:s|n,trend?:StatTrend,trendLabel?:s,class?:s): Presents one tabular metric with an optional text-labeled directional trend; See full example.
+- StatGroup(label:s,stats:ro StatProps[],class?:s): Groups related tabular metrics under one accessible label; <StatGroup label="Service health" stats={health}/>
+- TimeSeries(x:ChartTimeAxis,label:s,summary:s,xLabel:s,series:ro ChartSeries[],data:ChartData,height:n,+11 optional): Progressively enhances a deterministic time-series fallback with a responsive themed uPlot canvas and native data alternative; See full example.
+
+## @gemologic/sheen-code
+- CodeBlock(code:s,language:s,+12 optional): Renders accessible source with an optional file header, copy and wrap actions, line emphasis, and serializable Shiki tokens; See full example.
+- DiffViewer(oldText:s,newText:s,label:s,oldLabel?:s,newLabel?:s,searchable?:b,copyable?:b,initialHeight?:n,lineHeight?:n,onCopyError?:(error:unknown)=>v): Shows a searchable, copyable unified line diff with bounded computation and virtualized large-content DOM; See full example.
+- JSONViewer(value:unknown,label:s,indent?:2|4,sortKeys?:b,maxDepth?:n,searchable?:b,copyable?:b,initialHeight?:n,lineHeight?:n,onCopyError?:(error:unknown)=>v): Validates and deterministically formats JSON into a searchable, copyable, virtualized line view; <JSONViewer value={response} label="API response"/>
+- LogViewer(entries:ro LogEntry[],label:s,searchable?:b,copyable?:b,initialHeight?:n,lineHeight?:n,onCopyError?:(error:unknown)=>v): Renders structured logs as a searchable, copyable, virtualized line stream with non-color level labels; <LogViewer entries={entries} label="Deployment logs"/>
+
+## @gemologic/sheen-date
+- Calendar(label:s,+14 optional): An always-visible locale-aware calendar with Ark-backed grid keyboard interaction; See full example.
+- DateField(label:s,+16 optional): A locale-ordered segmented date editor with an ISO form projection; See full example.
+- DatePicker(label:s,+18 optional): A typed date input with a responsive calendar mounted in the nearest theme portal; See full example.
+- DateRangePicker(label:s,+19 optional): A two-ended date picker that keeps its incomplete range draft while accepted state refreshes; See full example.
+- DateTimePicker(label:s,timeZoneOptions:ro TimeZoneOption[],+26 optional): A date, wall-time, and IANA-zone editor that resolves instants without hiding DST ambiguity; See full example.
+- TimeField(label:s,+16 optional): A locale-ordered segmented wall-clock editor with a timezone-free ISO projection; <TimeField label="Cutoff time" name="cutoff" defaultValue={createTime(16,30)}/>
+- TimePicker(label:s,+15 optional): A contextual list of Sheen wall-clock values with deterministic interval generation; See full example.
+- TimeZoneSelect(label:s,options:ro TimeZoneOption[],+14 optional): An app-bounded IANA timezone combobox with stable SSR and hydration options; See full example.
+
+## @gemologic/sheen-icons
+- AddIcon(decorative?:b,label?:s,size?:size,tone?:mute): The statically importable add semantic icon with Radix and Phosphor artwork; <AddIcon decorative={false} label="add"/>
+- ArrowDownIcon(decorative?:b,label?:s,size?:size,tone?:mute): The statically importable arrowDown semantic icon with Radix and Phosphor artwork; <ArrowDownIcon decorative={false} label="arrowDown"/>
+- ArrowLeftIcon(decorative?:b,label?:s,size?:size,tone?:mute): The statically importable arrowLeft semantic icon with Radix and Phosphor artwork; <ArrowLeftIcon decorative={false} label="arrowLeft"/>
+- ArrowRightIcon(decorative?:b,label?:s,size?:size,tone?:mute): The statically importable arrowRight semantic icon with Radix and Phosphor artwork; <ArrowRightIcon decorative={false} label="arrowRight"/>
+- ArrowUpIcon(decorative?:b,label?:s,size?:size,tone?:mute): The statically importable arrowUp semantic icon with Radix and Phosphor artwork; <ArrowUpIcon decorative={false} label="arrowUp"/>
+- CalendarIcon(decorative?:b,label?:s,size?:size,tone?:mute): The statically importable calendar semantic icon with Radix and Phosphor artwork; <CalendarIcon decorative={false} label="calendar"/>
+- CheckIcon(decorative?:b,label?:s,size?:size,tone?:mute): The statically importable check semantic icon with Radix and Phosphor artwork; <CheckIcon decorative={false} label="check"/>
+- ChevronDownIcon(decorative?:b,label?:s,size?:size,tone?:mute): The statically importable chevronDown semantic icon with Radix and Phosphor artwork; <ChevronDownIcon decorative={false} label="chevronDown"/>
+- ChevronLeftIcon(decorative?:b,label?:s,size?:size,tone?:mute): The statically importable chevronLeft semantic icon with Radix and Phosphor artwork; <ChevronLeftIcon decorative={false} label="chevronLeft"/>
+- ChevronRightIcon(decorative?:b,label?:s,size?:size,tone?:mute): The statically importable chevronRight semantic icon with Radix and Phosphor artwork; <ChevronRightIcon decorative={false} label="chevronRight"/>
+- ChevronUpIcon(decorative?:b,label?:s,size?:size,tone?:mute): The statically importable chevronUp semantic icon with Radix and Phosphor artwork; <ChevronUpIcon decorative={false} label="chevronUp"/>
+- ClockIcon(decorative?:b,label?:s,size?:size,tone?:mute): The statically importable clock semantic icon with Radix and Phosphor artwork; <ClockIcon decorative={false} label="clock"/>
+- CloseIcon(decorative?:b,label?:s,size?:size,tone?:mute): The statically importable close semantic icon with Radix and Phosphor artwork; <CloseIcon decorative={false} label="close"/>
+- CopyIcon(decorative?:b,label?:s,size?:size,tone?:mute): The statically importable copy semantic icon with Radix and Phosphor artwork; <CopyIcon decorative={false} label="copy"/>
+- DownloadIcon(decorative?:b,label?:s,size?:size,tone?:mute): The statically importable download semantic icon with Radix and Phosphor artwork; <DownloadIcon decorative={false} label="download"/>
+- DynamicIcon(decorative?:b,label?:s,size?:size,tone?:mute,name:s): An explicit full-registry icon lookup for names that are genuinely known only at runtime; <DynamicIcon name="search" decorative={false} label="Search"/>
+- EditIcon(decorative?:b,label?:s,size?:size,tone?:mute): The statically importable edit semantic icon with Radix and Phosphor artwork; <EditIcon decorative={false} label="edit"/>
+- ErrorIcon(decorative?:b,label?:s,size?:size,tone?:mute): The statically importable error semantic icon with Radix and Phosphor artwork; <ErrorIcon decorative={false} label="error"/>
+- ExternalLinkIcon(decorative?:b,label?:s,size?:size,tone?:mute): The statically importable externalLink semantic icon with Radix and Phosphor artwork; <ExternalLinkIcon decorative={false} label="externalLink"/>
+- FilterIcon(decorative?:b,label?:s,size?:size,tone?:mute): The statically importable filter semantic icon with Radix and Phosphor artwork; <FilterIcon decorative={false} label="filter"/>
+- HiddenIcon(decorative?:b,label?:s,size?:size,tone?:mute): The statically importable hidden semantic icon with Radix and Phosphor artwork; <HiddenIcon decorative={false} label="hidden"/>
+- HomeIcon(decorative?:b,label?:s,size?:size,tone?:mute): The statically importable home semantic icon with Radix and Phosphor artwork; <HomeIcon decorative={false} label="home"/>
+- Icon(name:"add"|"remove"|"close"|"check"|"settings"|"search"|"chevronDown"|"chevronUp"|"chevronLeft"|"chevronRight"|"arrowLeft"|"arrowRight"|"arrowUp"|"arrowDown"|"menu"|"moreHorizontal"|"moreVertical"|"filter"|"sortAscending"|"sortDescending"|"refresh"|"download"|"upload"|"edit"|"trash"|"copy"|"externalLink"|"info"|"warning"|"error"|"success"|"calendar"|"clock"|"user"|"users"|"home"|"inbox"|"notifications"|"lock"|"unlock"|"visible"|"hidden",+4 optional): A statically analyzable semantic icon marker replaced by the Sheen Vite integration; <Icon name="search" decorative={false} label="Search"/>
+- InboxIcon(decorative?:b,label?:s,size?:size,tone?:mute): The statically importable inbox semantic icon with Radix and Phosphor artwork; <InboxIcon decorative={false} label="inbox"/>
+- InfoIcon(decorative?:b,label?:s,size?:size,tone?:mute): The statically importable info semantic icon with Radix and Phosphor artwork; <InfoIcon decorative={false} label="info"/>
+- LockIcon(decorative?:b,label?:s,size?:size,tone?:mute): The statically importable lock semantic icon with Radix and Phosphor artwork; <LockIcon decorative={false} label="lock"/>
+- MenuIcon(decorative?:b,label?:s,size?:size,tone?:mute): The statically importable menu semantic icon with Radix and Phosphor artwork; <MenuIcon decorative={false} label="menu"/>
+- MoreHorizontalIcon(decorative?:b,label?:s,size?:size,tone?:mute): The statically importable moreHorizontal semantic icon with Radix and Phosphor artwork; <MoreHorizontalIcon decorative={false} label="moreHorizontal"/>
+- MoreVerticalIcon(decorative?:b,label?:s,size?:size,tone?:mute): The statically importable moreVertical semantic icon with Radix and Phosphor artwork; <MoreVerticalIcon decorative={false} label="moreVertical"/>
+- NotificationsIcon(decorative?:b,label?:s,size?:size,tone?:mute): The statically importable notifications semantic icon with Radix and Phosphor artwork; <NotificationsIcon decorative={false} label="notifications"/>
+- RefreshIcon(decorative?:b,label?:s,size?:size,tone?:mute): The statically importable refresh semantic icon with Radix and Phosphor artwork; <RefreshIcon decorative={false} label="refresh"/>
+- RemoveIcon(decorative?:b,label?:s,size?:size,tone?:mute): The statically importable remove semantic icon with Radix and Phosphor artwork; <RemoveIcon decorative={false} label="remove"/>
+- SearchIcon(decorative?:b,label?:s,size?:size,tone?:mute): The statically importable search semantic icon with Radix and Phosphor artwork; <SearchIcon decorative={false} label="search"/>
+- SettingsIcon(decorative?:b,label?:s,size?:size,tone?:mute): The statically importable settings semantic icon with Radix and Phosphor artwork; <SettingsIcon decorative={false} label="settings"/>
+- SortAscendingIcon(decorative?:b,label?:s,size?:size,tone?:mute): The statically importable sortAscending semantic icon with Radix and Phosphor artwork; <SortAscendingIcon decorative={false} label="sortAscending"/>
+- SortDescendingIcon(decorative?:b,label?:s,size?:size,tone?:mute): The statically importable sortDescending semantic icon with Radix and Phosphor artwork; <SortDescendingIcon decorative={false} label="sortDescending"/>
+- SuccessIcon(decorative?:b,label?:s,size?:size,tone?:mute): The statically importable success semantic icon with Radix and Phosphor artwork; <SuccessIcon decorative={false} label="success"/>
+- TrashIcon(decorative?:b,label?:s,size?:size,tone?:mute): The statically importable trash semantic icon with Radix and Phosphor artwork; <TrashIcon decorative={false} label="trash"/>
+- UnlockIcon(decorative?:b,label?:s,size?:size,tone?:mute): The statically importable unlock semantic icon with Radix and Phosphor artwork; <UnlockIcon decorative={false} label="unlock"/>
+- UploadIcon(decorative?:b,label?:s,size?:size,tone?:mute): The statically importable upload semantic icon with Radix and Phosphor artwork; <UploadIcon decorative={false} label="upload"/>
+- UserIcon(decorative?:b,label?:s,size?:size,tone?:mute): The statically importable user semantic icon with Radix and Phosphor artwork; <UserIcon decorative={false} label="user"/>
+- UsersIcon(decorative?:b,label?:s,size?:size,tone?:mute): The statically importable users semantic icon with Radix and Phosphor artwork; <UsersIcon decorative={false} label="users"/>
+- VisibleIcon(decorative?:b,label?:s,size?:size,tone?:mute): The statically importable visible semantic icon with Radix and Phosphor artwork; <VisibleIcon decorative={false} label="visible"/>
+- WarningIcon(decorative?:b,label?:s,size?:size,tone?:mute): The statically importable warning semantic icon with Radix and Phosphor artwork; <WarningIcon decorative={false} label="warning"/>
+
+## @gemologic/sheen-patterns
+- AccountMenu(account:AdminAccountModel,target?:"topbar-end"|"sidebar-header"|"sidebar-footer",collapsed?:b): An app-owned account identity and action menu that aligns to its topbar or sidebar placement; See full example.
+- AdminApp(label:s,pathname:s,children:node,+30 optional): The Sheen application baseline with placement-safe chrome, scoped services, retained content, and responsive details; See full example.
+- AdminTopbar(label?:s,start?:node,center?:node,end?:node): A compact, named application control region with deterministic start, center, and end zones; See full example.
+- AppShell(label:s,+13 optional): A viewport-constrained application grid with persistent chrome and a native content pane; See full example.
+- AuthLayout(label:s,brand:node,children:node,+7 optional): A deterministic authentication page frame with focused and responsive brand-split presentations; See full example.
+- BrandSplitAuthLayout(aside:node,asideLabel:s,brand:node,title:s,children:node,+6 optional): A branded two-pane authentication starter that collapses to the focused card without replacing content; See full example.
+- DataTablePage(title:s,toolbarLabel:s,loadingFallback:node,children:node,+12 optional): Composes page header, app actions, saved-view controls, table-owned query and selection chrome, and explicit regional states; See full example.
+- DetailsPanel(panelId:s,title:s,open:b,onOpenChange:(open:b)=>v,children:node,+9 optional): One retained detail-content owner with docked, accessible-resizable, and modal Sheet presentations; See full example.
+- ErrorState(kind?:"not-found"|"server"|"permission-denied",title?:s,headingLevel?:1|2|3|4|5|6,description?:s,onRetry?:()=>v|P<v>): A regional error presentation with app-owned retry and safe rejection feedback; See full example.
+- FocusedAuthLayout(ref?:HTMLElement|((element:HTMLElement)=>v),brand:node,title:s,description?:node,children:node,footer?:node,headingLevel?:1|2|3|4|5|6,contentWidth?:AuthLayoutContentWidth): A centered authentication card for concise OAuth, OIDC, SSO, or credential flows; See full example.
+- ListDetailLayout(router:RouterAdapter,items:ro ListDetailItem[],listLabel:s,detailLabel:s,listHref:s,backLabel:s,detail:node,emptyDetail?:node,detailReady?:b,detailPaneId?:s): A persistent URL-driven list and detail workspace with phone focus handoff and pane scroll continuity; See full example.
+- LoadingState(label:s,phase:"idle"|"cold"|"refresh",fallback:node): Layout-reserving cold skeletons and delayed refresh progress without remounting content; See full example.
+- NotificationCenter(notifications:AdminNotificationModel,target?:"topbar-end"|"sidebar-footer"): A compact app-owned notification trigger and contextual list with non-color unread state; See full example.
+- PageHeader(title:s,headingLevel?:1|2|3|4|5|6,breadcrumb?:node,actions?:node,tabs?:node): A compact page heading with persistent breadcrumb, action, and tabs slots; <PageHeader title="Orders" actions={<Button>Export orders</Button>}/>
+- SettingsLayout(label:s,sections:ro SettingsLayoutSection[],dirty:b,onSave:()=>v|P<v>,+5 optional): A sectioned settings workspace with stable in-page navigation, app-owned dirty data, and one persistent asynchronous save bar; See full example.
+- SidebarNav(sections:ro SidebarNavSection[],pathname:s,headingLevel?:2|3|4|5|6,collapsed?:b,header?:node,footer?:node): Sectioned native navigation with nested disclosure groups and app-supplied active pathname; See full example.
+- SplitLayout(label:s,startLabel:s,endLabel:s,handleLabel:s,start:node,end:node,+12 optional): Composes two labeled, persisted resizable panes that retain one content owner while stacking in a narrow container; See full example.
+- StatusBar(label?:s,connection?:ConnectionState,tasks?:n,counts?:ro StatusCount[]): App-owned connection and background task status with localized counts and persistent actions; See full example.
+- Toolbar(label:s,groups:ro ToolbarGroup[],filter?:node): Measured whole-group actions with scoped overflow and independent filter controls; See full example.
+- TopNav(navigation:AdminNavigationModel,pathname:s,compact?:b): Compact horizontal native navigation with active-route matching and roving keyboard focus; See full example.
+- WorkspaceSwitcher(workspace:AdminWorkspaceModel,target?:"topbar-start"|"topbar-end"|"sidebar-header"|"sidebar-footer",collapsed?:b): An app-owned workspace selector with consistent topbar, sidebar-header, and sidebar-footer presentations; See full example.
+
+## @gemologic/sheen-table
+- DataTable(columns:SheenColumns<Row>,getRowId:(row:Row)=>s,caption:s,+28 optional): Virtualized continuous or paginated data with phone cards, selection, layouts, groups, and trees; See full example.
+- FilterBar(columns:SheenColumns<Row>,value:FilterNode,onChange:(filter:FilterNode)=>v,facets?:Readonly<Record<s,Readonly<Record<s,n>>>>,disabled?:b,class?:s,dateEditor?:FilterDateEditor): Edits the accepted serializable filter AST through removable condition chips and typed draft popovers; See full example.
+- QueryBuilder(columns:ro QueryBuilderColumn[],value:FilterNode,onChange:(filter:FilterNode)=>v,label?:s,disabled?:b): Builds nested, typed, serializable table filters with complete keyboard alternatives to structural editing; See full example.
+
+## @gemologic/sheen
+- Accordion(value?:s[],defaultValue?:s[],onValueChange?:(value:s[])=>v,multiple?:b,collapsible?:b): Coordinates expansion and keyboard navigation for related disclosure sections; See full example.
+- AccordionItem(value:s,label:s,disabled?:b,headingLevel?:2|3|4|5|6): A heading, disclosure trigger, and retained panel inside Accordion; See full example.
+- ActivityTimeline(ref?:HTMLOListElement|((element:HTMLOListElement)=>v),label:s,items:ro ActivityTimelineItem[],density?:"compact"|"default",refreshing?:b): A stable chronological list with complete, current, upcoming, and error states encoded by text and shape; See full example.
+- Alert(tone?:"info"|"success"|"warning"|"danger",heading?:s): An urgent, persistent message that does not move focus or dismiss itself; <Alert heading="Save failed">Your draft is retained. Try saving again.</Alert>
+- AlertDialog(description:s,title:s,+12 optional): An interrupting modal with required explanation and explicit dismissal; See full example.
+- Avatar(label:s,src?:s,fallback?:s,size?:AvatarSize): Shows a labeled identity image with a deterministic text fallback; <Avatar label="Ada Lovelace"/>
+- AvatarGroup(label:s,avatars:ro AvatarItem[],max?:n,size?:AvatarSize): Presents a labeled bounded set of identities and a localized overflow count; <AvatarGroup label="Reviewers" avatars={reviewers}/>
+- Badge(tone?:StatusTone,variant?:"soft"|"solid"|"outline",size?:"sm"|"md"): A non-interactive status label with independently themed status and market roles; <Badge tone="success">Healthy</Badge>
+- Breadcrumb(items:ro BreadcrumbEntry[],label?:s): A labeled hierarchy of native ancestor links ending in the current page; See full example.
+- Button(,+5 optional): Triggers an action. Use a link for navigation; <Button>Cancel</Button>
+- ButtonGroup(label:s,orientation?:"horizontal"|"vertical"): A labeled group of related native actions with horizontal or vertical layout; See full example.
+- Callout(tone?:"info"|"success"|"warning"|"danger",heading?:s): Static contextual information, not an urgent live-region announcement; <Callout heading="Retention policy">History is retained for 30 days.</Callout>
+- Card(variant?:"base"|"subtle"|"raised"|"inset",padding?:Spacing,bordered?:b,elevated?:b): A bordered raised surface, without a shadow unless explicitly requested; See full example.
+- Center(): Centers content within the space allocated by its parent; <Center><Button>Continue</Button></Center>
+- Checkbox(label:s,+16 optional): A labeled native checkbox with controlled, uncontrolled, and mixed presentation; See full example.
+- CheckboxGroup(label:s,options:ro CheckboxOption[],value?:ro s[],defaultValue?:ro s[],onValueChange?:(value:s[])=>v,description?:s,error?:s,readOnly?:b): A native fieldset of independent choices with shared selection ownership; See full example.
+- Cluster(wrap?:b,gap?:Spacing,align?:Alignment,justify?:Justification): Row alias for wrapping groups of related controls; <Cluster><Button>One</Button><Button>Two</Button></Cluster>
+- Code(): Inline code, rendered as code with the mono type role. Syntax highlighting belongs to CodeBlock; <Code>workspace.id</Code>
+- Collapsible(label:s,open?:b,defaultOpen?:b,onOpenChange?:(open:b)=>v,disabled?:b): A native disclosure button with persistent, inert-when-closed content; <Collapsible label="Advanced settings"><Input label="Timeout"/></Collapsible>
+- Combobox(label:s,options:ro ComboboxOption[],+17 optional): Editable single selection with retained async results; See full example.
+- CommandPalette(sources:ro CommandPaletteSource[],+8 optional): Searches static, remote and registered shortcut commands with retained refresh results and app-owned recents; See full example.
+- ConfirmDialog(open:b,onConfirm:()=>v,onCancel:()=>v,title:s,description:s,+7 optional): A controlled confirmation decision with safe initial focus; See full example.
+- Container(padding?:Spacing): Full-width content boundary with token padding, without centering or imposing a document width; <Container><Stack><Input label="Name"/><Button>Save</Button></Stack></Container>
+- ContextMenu(as?:"div"|"tr"|"li",items:ro MenuItem[],disabled?:b,onOpenChange?:(open:b)=>v,menuClass?:s): Adds a scope-aware action menu without suppressing the native menu when no replacement is available; See full example.
+- DescriptionDetails(numeric?:b): A semantic value in a description list, optionally using tabular figures; See full example.
+- DescriptionList(layout?:"stacked"|"columns"): A native description list for related names and values; See full example.
+- DescriptionTerm(): A semantic name in a description list; See full example.
+- Dialog(title:s,+13 optional): Opens a scoped modal with a focus trap and focus restoration; See full example.
+- Drawer(title:s,+14 optional): Opens a modal panel from a logical viewport side using the scoped overlay stack; <Drawer title="Filters" trigger="Open filters"><Input label="Query"/></Drawer>
+- DropdownMenu(trigger:node,items:ro MenuItem[],+9 optional): A scoped action menu with nested, checkbox, and radio items; See full example.
+- EditableTextField(value:s,label:s,onCommit:(value:s,signal:Abort)=>v|P<v>,validate?:(value:s)=>s,onCommitError?:(error:unknown)=>v,emptyLabel?:s,disabled?:b): Edits uncontrolled local text while committed form state stays app-owned and refresh-safe; See full example.
+- EmptyState(kind?:"empty"|"no-results",heading?:s,description?:s): A named region distinguishing an empty dataset from a query with no matches; See full example.
+- Field(label:s,controlId?:s,description?:s,error?:s,required?:b,disabled?:b,children:(control:FieldControlProps)=>node): A visible label, description, and validation message associated with one native labelable control; See full example.
+- FileDropzone(label:s,onFilesSelected:(files:ro File[])=>v,+17 optional): A native-picker-first file intake surface with drag parity, validation, and app-owned upload state; See full example.
+- Grid(columns?:1|2|3|4|5|6|7|8|9|10|11|12,gap?:Spacing,align?:Alignment): One to twelve equal-width columns with role-based row and column gaps; <Grid columns={2}><Input label="First name"/><Input label="Last name"/></Grid>
+- Heading(level:1|2|3|4|5|6,size?:"h1"|"h2"|"h3"|"h4"): A real h1 through h6 with independently selectable heading typography; <Heading level={2} size="h3">Workspace settings</Heading>
+- IconButton(label:s,children:node,+9 optional): A square native icon action with a required accessible name and matching tooltip; <IconButton label="More actions"><span>⋯</span></IconButton>
+- Input(label:s,description?:s,error?:s): A text input with a required visible label and stable accessible identity; <Input label="Workspace name" placeholder="Enter a name"/>
+- InputGroup(startContent?:node,endContent?:node,label:s,description?:s,error?:s): A labeled input with logical start/end content, keeping native control and action behavior; <InputGroup label="Amount (USD)" inputMode="decimal" endContent="USD"/>
+- Kbd(): Semantic keyboard-input notation. Shortcut registration and platform formatting are separate concerns; <Kbd aria-label="Control K">Ctrl K</Kbd>
+- Link(href:s,variant?:"text"|"button"): Navigates to a native anchor destination, with text or quiet button styling; <Link href="/orders">Orders</Link>
+- LinkTooltip(href:s,content:s,tooltipDisabled?:b,placement?:"top"|"bottom"|"left"|"right",openDelay?:n,closeDelay?:n): A native destination anchor with scoped hover/focus help; <LinkTooltip href="/orders" content="Browse orders">Orders</LinkTooltip>
+- Meter(label:s,value:n,min?:n,max?:n,low?:n,high?:n,optimum?:n): Uses the native meter element for a scalar value within a known range; See full example.
+- MultiCombobox(label:s,options:ro ComboboxOption[],+17 optional): Editable tagged selection with retained async results; See full example.
+- NavItem(href:s,label:s,current?:b,icon?:node,badge?:node,tooltip?:s,tooltipDisabled?:b,actions?:node): A native destination link with explicit current-page presentation inside NavList; See full example.
+- NavList(label:s): A named navigation landmark containing a native list of destination links; See full example.
+- NumberField(label:s,+16 optional): A locale-aware spinbutton with numeric app state, step controls, and native form submission; See full example.
+- Pagination(pageIndex:n,pageCount:n,onPageChange:(pageIndex:n)=>v,pending?:b,disabled?:b,label?:s): Requests pages while announcing only controlled, accepted results; See full example.
+- Popover(trigger:node,title:s,+6 optional): A labeled nonmodal contextual layer for interactive content; See full example.
+- Progress(label:s,max?:n,value?:n): Uses the native progress element for determinate or indeterminate task completion; <Progress label="Upload progress" value={42} max={100}/>
+- RadioGroup(name:s,label:s,options:ro CheckboxOption[],+10 optional): A named native group of mutually exclusive choices; See full example.
+- RangeSlider(label:s,+18 optional): A two-thumb slider with an ordered tuple contract, minimum separation, and distinct accessible thumb names; See full example.
+- Resizable(children:node,orientation?:"horizontal"|"vertical",sizes?:ro n[],defaultSizes?:ro n[],onSizesChange?:(sizes:ro n[])=>v,keyboardStep?:n,persistence?:ResizablePersistence): Hydration-stable panes with pointer, keyboard and persisted sizing; See full example.
+- ResizableHandle(label:s,index:n): Labeled pointer and keyboard separator between panels; See full example.
+- ResizablePanel(children:node,index:n,+10 optional): Defines a bounded, optionally collapsible pane inside Resizable; See full example.
+- Row(wrap?:b,gap?:Spacing,align?:Alignment,justify?:Justification): Logical horizontal flow, wrapping by default; <Row><Button>Save</Button><Button>Cancel</Button></Row>
+- ScrollArea(label:s,orientation?:"vertical"|"horizontal"|"both"): A named, keyboard-accessible native scrolling viewport that retains content and scroll ownership; See full example.
+- SearchInput(value?:s,defaultValue?:s,onValueChange?:(value:s)=>v,clearLabel?:s,shortcut?:ShortcutAction,description?:s,label:s,error?:s): Labeled search input with a localized clear action; <SearchInput label="Search orders" defaultValue="BTC"/>
+- SegmentedControl(name:s,label:s,options:ro SegmentedControlOption[],+12 optional): A compact single-selection control with native radio submission and bounded overflow; See full example.
+- Select(label:s,options:ro SelectOption[],+11 optional): A single choice with a scope-aware listbox and native form participation; See full example.
+- Separator(orientation?:"horizontal"|"vertical",decorative?:b): A structural divider with native separator semantics and an explicit decorative mode; <Stack><Text>First section</Text><Separator/><Text>Second section</Text></Stack>
+- Sheet(title:s,+14 optional): Provides the Drawer contract under the common Sheet name for task and detail panels; See full example.
+- ShortcutPending(label?:s): Persistent single-line live status for pending shortcut sequences; See full example.
+- ShortcutProvider(children?:node,platform?:"mac"|"other",development:b,activeScopes?:ro s[],characterShortcuts?:b,onError?:(error:unknown)=>v): Owner-scoped chord and sequence dispatcher with usePendingShortcut feedback; <ShortcutProvider development={true}><p>Workspace</p></ShortcutProvider>
+- ShortcutScope(scope:s): DOM-bound view or pane scope activated by keyboard focus in its descendants; See full example.
+- ShortcutSheet(title:s,+13 optional): Generated modal inventory of registered shortcuts, grouped by their application labels; See full example.
+- Skeleton(shape?:"text"|"rectangle"|"circle"): A static decorative placeholder for a region's genuine first load; <Skeleton shape="rectangle" style={{"block-size":"var(--sheen-control-h-lg)"}}/>
+- Slider(label:s,+17 optional): A single-value accessible slider with scoped locale formatting and native range input semantics; See full example.
+- Spacer(): Decorative flexible space in a Row or Stack; use gap for fixed spacing; <Row><Button>Back</Button><Spacer/><Button>Next</Button></Row>
+- Spinner(size?:size,label?:s,decorative?:b): A compact loading status with localized text and an optional decorative presentation; <Spinner label="Saving changes"/>
+- Stack(gap?:Spacing,align?:Alignment,justify?:Justification): Vertical flow with density-aware block spacing; <Stack><Input label="Name"/><Button>Save</Button></Stack>
+- Stepper(ref?:HTMLElement|((element:HTMLElement)=>v),label:s,steps:ro StepperStep[],orientation?:"horizontal"|"vertical",density?:"compact"|"default",refreshing?:b): A responsive workflow progress list with native link, action, and status steps; See full example.
+- Surface(variant?:"base"|"subtle"|"raised"|"inset",padding?:Spacing,bordered?:b,elevated?:b): Semantic surface with role padding and an inherited focus-ring offset; <Surface variant="raised" padding="md"><Input label="Name"/></Surface>
+- Switch(label:s,+15 optional): A labeled binary setting with native form participation and switch semantics; See full example.
+- Table(striped?:b): Native table semantics and token styling for bounded, non-virtualized tables; See full example.
+- TableBody(): Native tbody semantics and token styling for bounded, non-virtualized tables; See full example.
+- TableCaption(): Native caption semantics and token styling for bounded, non-virtualized tables; See full example.
+- TableCell(numeric?:b): Native td semantics and token styling for bounded, non-virtualized tables; See full example.
+- TableFoot(): Native tfoot semantics and token styling for bounded, non-virtualized tables; See full example.
+- TableHead(): Native thead semantics and token styling for bounded, non-virtualized tables; See full example.
+- TableHeaderCell(numeric?:b): Native th semantics and token styling for bounded, non-virtualized tables; See full example.
+- TableRow(): Native tr semantics and token styling for bounded, non-virtualized tables; See full example.
+- Tabs(label:s,items:ro TabOption[],value?:s,defaultValue?:s,onValueChange?:(value:s)=>v,orientation?:"horizontal"|"vertical",activationMode?:"automatic"|"manual",children:(value:s)=>node): Named tab panels with stable identities, retained drafts, and scoped keyboard navigation; See full example.
+- Tag(label:s,onRemove?:()=>v,removeLabel?:s,disabled?:b,tone?:StatusTone,variant?:"soft"|"solid"|"outline",size?:"sm"|"md"): A labeled chip with optional native-button removal; collection state remains app-owned; <Tag label="In review" tone="info"/>
+- TagInput(label:s,+17 optional): An ordered free-form tag editor with native multi-value submission and stale-safe async validation; See full example.
+- Text(size?:"caption"|"ui-sm"|"ui"|"body",tone?:"default"|"muted",numeric?:b): Inline text with semantic type roles, accessible muted color, and optional tabular figures; <Text tone="muted" size="caption">Updated recently</Text>
+- Textarea(label:s,description?:s,error?:s,autoResize?:b): A labeled native multiline input with optional frame-batched autosizing; See full example.
+- ThemeProvider(,+16 optional): Owns application theme state, scoped overlays, messages, and root-only persistence; See full example.
+- ThemeScope(,+11 optional): Overrides theme axes locally, with inherited messages and a contextual overlay target; See full example.
+- Toast(notification:ToastNotification,onAction:()=>v,onDismiss:()=>v,class?:s): A notification card with stable action, pending, retry, and dismissal controls; See full example.
+- Toaster(controller:ToastController,limit?:n,label?:s,class?:s): A scoped, bounded notification queue with live announcements and paused visible-time expiry; See full example.
+- Tooltip(content:s,+9 optional): An action button with hover/focus help and optional shortcut display; See full example.
+- Tree(label:s,+8 optional): A hierarchical treeview with explicit selection, retained expansion state, roving focus, and typeahead; See full example.
+- TreeItem(value:s,label:s,disabled?:b,children?:node): A stable leaf or retained branch within a Tree; See full example.
