@@ -70,6 +70,11 @@ function median(values: readonly number[]): number {
   return percentile(values, 0.5);
 }
 
+function measuredScrollIntervals(sample: TraceFrameSample): readonly number[] {
+  // Scrolling starts after two settling frames, so their CDP intervals are outside the measured operation.
+  return sample.intervals.slice(2);
+}
+
 function summarizeTrace(events: readonly TraceEvent[], dataLoss: boolean): TraceFrameSample {
   const eventCounts: Record<string, number> = {};
   for (const event of events) eventCounts[event.name] = (eventCounts[event.name] ?? 0) + 1;
@@ -447,7 +452,7 @@ test("calibrated table workloads stay within normalized and absolute frame gates
   }
 
   const resizeCdp = runs.flatMap(run => run.resize.cdp.intervals);
-  const scrollCdp = runs.flatMap(run => run.scroll.cdp.intervals);
+  const scrollCdp = runs.flatMap(run => measuredScrollIntervals(run.scroll.cdp));
   const resizeBrowser = runs.flatMap(run => run.resize.browser.intervals);
   const scrollBrowser = runs.flatMap(run => run.scroll.browser.intervals);
   const resizeLongTasks = runs.flatMap(run => run.resize.browser.longTasks);

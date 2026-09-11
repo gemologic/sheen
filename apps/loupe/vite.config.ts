@@ -8,6 +8,10 @@ import { pagesRoutes } from "./src/pages-routes.ts";
 const pages = process.env.SHEEN_PAGES === "1";
 
 export default defineConfig({
+  resolve: { dedupe: ["solid-js"] },
+  optimizeDeps: {
+    entries: ["src/**/*.tsx", "!src/entry-server.tsx"],
+  },
   plugins: [
     sheenIcons({ sets: ["radix", "phosphor"] }),
     solidStart({ devOverlay: false }),

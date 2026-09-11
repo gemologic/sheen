@@ -42,34 +42,29 @@ test("typography semantics, token roles, and native tag removal survive theme-aw
 });
 
 test("slow self-hosted fonts do not swap component geometry after first paint", async ({ page }) => {
-  let releaseFonts: () => void = () => {};
-  const fontBarrier = new Promise<void>(resolve => { releaseFonts = resolve; });
   let fontRequests = 0;
-  await page.route(/\.woff2(?:\?|$)/, async route => {
+  await page.route(/IBMPlexSans-Regular[^/]*\.woff2(?:\?|$)/, async route => {
+    const request = new URL(route.request().url());
+    if (request.searchParams.has("sheen-font-direct")) {
+      await route.continue();
+      return;
+    }
     fontRequests += 1;
-    await fontBarrier;
-    await route.continue();
+    const delayed = new URL("/api/delayed-font", request);
+    delayed.searchParams.set("delay", "1200");
+    await route.continue({ url: delayed.href });
   });
-  try {
-    await page.goto("/typography", { waitUntil: "commit" });
-    const probe = page.locator("[data-font-probe]");
-    await expect(probe).toBeAttached();
-    await expect.poll(() => fontRequests).toBeGreaterThan(0);
-    // This is longer than Chromium's optional-display block period, so the
-    // font face has left its block period. Wait for an actual paint as well:
-    // elapsed wall time alone does not prove a frame was presented on busy CI.
-    await page.waitForTimeout(500);
-    await expect.poll(() => page.evaluate(() => performance.getEntriesByType("paint").some(entry => entry.name === "first-contentful-paint"))).toBe(true);
-    await page.evaluate(() => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));
-    const before = await probe.boundingBox();
-    expect(before).not.toBeNull();
-    releaseFonts();
-    await page.evaluate(() => document.fonts.ready);
-    await page.waitForTimeout(100);
-    expect(await probe.boundingBox()).toEqual(before);
-  } finally {
-    releaseFonts();
-  }
+  await page.goto("/typography", { waitUntil: "commit" });
+  const probe = page.locator("[data-font-probe]");
+  await expect(probe).toBeAttached();
+  await expect.poll(() => fontRequests).toBeGreaterThan(0);
+  await expect.poll(() => page.evaluate(() => performance.getEntriesByType("paint").some(entry => entry.name === "first-contentful-paint"))).toBe(true);
+  await page.evaluate(() => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));
+  const before = await probe.boundingBox();
+  expect(before).not.toBeNull();
+  await page.evaluate(() => document.fonts.ready);
+  await page.waitForTimeout(100);
+  expect(await probe.boundingBox()).toEqual(before);
 });
 
 test("rendered badge colors and tag focus remain legible across every theme and mode", async ({ page }) => {

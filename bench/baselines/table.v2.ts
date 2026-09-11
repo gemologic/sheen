@@ -45,5 +45,11 @@ export const tableBenchmarkBaseline: TableBenchmarkBaseline = Object.freeze({
       source: "GitHub Actions five-run production capture: ubuntu24 20260907.300.1, AMD EPYC 7763, Chromium 153.0.8010.12, Playwright 1.63.0, commit 62427831b2474d8cceec73af29d61d4e0c1da157",
       normalized: Object.freeze({ render: 2.1232492997206003, multiSort: 1.8948106591865186, search: 1.8835904628332438, filter: 0.7030812324935042, refresh: 1.0434782608700621 }),
     }),
+    Object.freeze({
+      version: 4,
+      recordedAt: "2026-09-11",
+      source: "GitHub Actions five-run production capture after stable-row subscription consolidation: ubuntu24 20260907.300.1, AMD EPYC 9V74, Chromium 153.0.8010.12, Playwright 1.63.0, commit ba961d9aa8f3ec57f1a71058bb9ae45aa94c0ee2",
+      normalized: Object.freeze({ render: 2.1520270270275637, multiSort: 1.9104729729726957, search: 1.500000000000245, filter: 0.599662162162339, refresh: 1.202360876897173 }),
+    }),
   ]),
 });

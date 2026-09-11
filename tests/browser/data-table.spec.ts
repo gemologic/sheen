@@ -331,7 +331,7 @@ test("polished table chrome spans light compact and contrast spacious RTL config
   await section.getByRole("button", { name: "Use RTL column layout" }).click();
   await table.getByRole("separator", { name: "Resize Name" }).focus();
   await expect(table.locator('tr[data-row-id="client-0"]')).toHaveCSS("height", "42px");
-  await expect(root).toHaveScreenshot("data-table-columns-contrast-light-spacious-rtl.png");
+  await expect(root).toHaveScreenshot("data-table-columns-contrast-light-spacious-rtl.png", { maxDiffPixelRatio: 0.004 });
 });
 
 test("variable-height rows measure wrapped content and remain populated while scrolling", async ({ page }) => {

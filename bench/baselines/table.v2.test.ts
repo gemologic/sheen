@@ -4,10 +4,11 @@ import { tableBenchmarkBaseline } from "./table.v2.ts";
 describe("table benchmark baseline", () => {
   it("pins the expanded finite five-run gate instead of a placeholder", () => {
     expect(tableBenchmarkBaseline).toMatchObject({ schema: 2, runner: "ubuntu-24.04", playwright: "1.63.0", runs: 5, maximumRegression: 0.1 });
-    expect(tableBenchmarkBaseline.history).toHaveLength(2);
+    expect(tableBenchmarkBaseline.history).toHaveLength(3);
     const latest = tableBenchmarkBaseline.history.at(-1);
     expect(latest?.source).toContain("GitHub Actions five-run production capture");
     expect(latest?.recordedAt).toBe("2026-09-11");
+    expect(latest?.version).toBe(4);
     const normalized = latest?.normalized;
     if (!normalized) throw new Error("Missing table benchmark baseline");
     const values = [normalized.render, normalized.multiSort, normalized.search, normalized.filter, normalized.refresh];
