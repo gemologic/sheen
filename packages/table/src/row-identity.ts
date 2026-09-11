@@ -8,10 +8,10 @@ export interface IdentifiedRow<Row extends object> {
 export function createRowIdentity<Row extends object>(getRowId: (row: Row) => string) {
   if (typeof getRowId !== "function") throw new Error("getRowId must be a function");
   let known = new WeakMap<Row, string>();
-  function resolve(rows: readonly Row[]): readonly IdentifiedRow<Row>[] {
+  function resolveIds(rows: readonly Row[]): readonly string[] {
     if (!Array.isArray(rows)) throw new Error("Table rows must be an array");
     const ids = new Set<string>();
-    const result: IdentifiedRow<Row>[] = [];
+    const result: string[] = [];
     let index = 0;
     for (const row of rows) {
       if (typeof row !== "object" || row === null) throw new Error(`rows[${index}] must be an object`);
@@ -22,13 +22,18 @@ export function createRowIdentity<Row extends object>(getRowId: (row: Row) => st
       if (prior !== undefined && prior !== id) throw new Error(`rows[${index}] changed stable ID from ${prior} to ${id}`);
       ids.add(id);
       known.set(row, id);
-      result.push(Object.freeze({ id, row, index }));
+      result.push(id);
       index++;
     }
     return Object.freeze(result);
   }
+  function resolve(rows: readonly Row[]): readonly IdentifiedRow<Row>[] {
+    const ids = resolveIds(rows);
+    return Object.freeze(rows.map((row, index) => Object.freeze({ id: ids[index]!, row, index })));
+  }
   return {
     resolve,
+    resolveIds,
     clear(): void { known = new WeakMap<Row, string>(); },
   };
 }

@@ -264,18 +264,23 @@ function createStableRows<Row extends object>(getRowId: (row: Row) => string): (
   const cache = new Map<string, StableRow<Row>>();
   const [revision, setRevision] = createSignal(0);
   return rows => {
+    const ids = identity.resolveIds(rows);
     const retained = new Set<string>();
+    const resolved: StableRow<Row>[] = [];
     let changed = false;
-    const resolved = identity.resolve(rows).map(item => {
-      retained.add(item.id);
-      const existing = cache.get(item.id);
+    for (let index = 0; index < rows.length; index++) {
+      const row = rows[index]!;
+      const id = ids[index]!;
+      retained.add(id);
+      const existing = cache.get(id);
       if (existing) {
-        changed = existing.update(item.row) || changed;
-        return existing;
+        changed = existing.update(row) || changed;
+        resolved.push(existing);
+        continue;
       }
-      let current = item.row;
+      let current = row;
       const record: StableRow<Row> = Object.freeze({
-        id: item.id,
+        id,
         value: (): Row => {
           revision();
           return current;
@@ -286,13 +291,75 @@ function createStableRows<Row extends object>(getRowId: (row: Row) => string): (
           return true;
         },
       });
-      cache.set(item.id, record);
-      return record;
-    });
+      cache.set(id, record);
+      resolved.push(record);
+    }
     for (const id of cache.keys()) if (!retained.has(id)) cache.delete(id);
     if (changed) setRevision(value => value + 1);
-    return resolved;
+    return Object.freeze(resolved);
   };
+}
+
+interface ClientStableRows<Row extends object> {
+  readonly update: (rows: readonly Row[]) => void;
+  readonly resolve: (row: Row, index: number) => StableRow<Row>;
+  readonly has: (id: string) => boolean;
+}
+
+function createClientStableRows<Row extends object>(getRowId: (row: Row) => string): ClientStableRows<Row> {
+  const cache = new Map<string, StableRow<Row>>();
+  let retained: ReadonlySet<string> = new Set();
+  const known = new WeakMap<Row, string>();
+  const [revision, setRevision] = createSignal(0);
+  function create(id: string, row: Row): StableRow<Row> {
+    let current = row;
+    const record: StableRow<Row> = Object.freeze({
+      id,
+      value: (): Row => {
+        revision();
+        return current;
+      },
+      update: (next: Row): boolean => {
+        if (Object.is(current, next)) return false;
+        current = next;
+        return true;
+      },
+    });
+    cache.set(id, record);
+    known.set(row, id);
+    return record;
+  }
+  return Object.freeze({
+    update(rows: readonly Row[]): void {
+      if (!Array.isArray(rows)) throw new Error("Table rows must be an array");
+      const ids = new Set<string>();
+      let changed = false;
+      for (let index = 0; index < rows.length; index++) {
+        const row = rows[index];
+        if (typeof row !== "object" || row === null) throw new Error(`rows[${index}] must be an object`);
+        const id = getRowId(row);
+        if (typeof id !== "string" || !id || id.trim() !== id) throw new Error(`rows[${index}] has an invalid stable ID`);
+        if (ids.has(id)) throw new Error(`rows[${index}] duplicates row ID ${id}`);
+        const prior = known.get(row);
+        if (prior !== undefined && prior !== id) throw new Error(`rows[${index}] changed stable ID from ${prior} to ${id}`);
+        ids.add(id);
+        const existing = cache.get(id);
+        if (existing) {
+          known.set(row, id);
+          changed = existing.update(row) || changed;
+        }
+      }
+      for (const id of cache.keys()) if (!ids.has(id)) cache.delete(id);
+      retained = ids;
+      if (changed) setRevision(value => value + 1);
+    },
+    resolve(row: Row, index: number): StableRow<Row> {
+      const id = getRowId(row);
+      if (!retained.has(id)) throw new Error(`Client result row at index ${index} is not part of the supplied data`);
+      return cache.get(id) ?? create(id, row);
+    },
+    has: (id: string) => retained.has(id),
+  });
 }
 
 function defaultCell(value: ColumnValue): JSX.Element {
@@ -799,32 +866,19 @@ export function DataTable<Row extends object>(props: DataTableProps<Row>): JSX.E
   }
 
   const reconcileRows = createStableRows(props.getRowId);
-  const reconcileClientSourceRows = createStableRows(props.getRowId);
+  const clientStableRows = createClientStableRows(props.getRowId);
   const flatDisplayCache = new Map<string, DisplayDataRow<Row>>();
   const clientRowIndex = createMemo(() => {
     if (props.mode === "server") return undefined;
     const source = props.data ?? [];
-    const stable = reconcileClientSourceRows(source);
-    const byObject = new WeakMap<Row, StableRow<Row>>();
-    const retained = new Set<string>();
-    for (let index = 0; index < source.length; index++) {
-      const row = source[index];
-      const resolved = stable[index];
-      if (!row || !resolved) throw new Error(`Missing client row at index ${index}`);
-      byObject.set(row, resolved);
-      retained.add(resolved.id);
-    }
-    for (const id of flatDisplayCache.keys()) if (!retained.has(id)) flatDisplayCache.delete(id);
-    return Object.freeze({ byObject });
+    clientStableRows.update(source);
+    for (const id of flatDisplayCache.keys()) if (!clientStableRows.has(id)) flatDisplayCache.delete(id);
+    return clientStableRows;
   });
   function stableResultRows(rows: readonly Row[]): readonly StableRow<Row>[] {
     const client = clientRowIndex();
     if (!client) return reconcileRows(rows);
-    return rows.map((row, index) => {
-      const resolved = client.byObject.get(row);
-      if (!resolved) throw new Error(`Client result row at index ${index} is not part of the supplied data`);
-      return resolved;
-    });
+    return rows.map((row, index) => client.resolve(row, index));
   }
   function flatDisplayRow(row: StableRow<Row>, index: number, setSize: number): DisplayDataRow<Row> {
     const existing = flatDisplayCache.get(row.id);
@@ -906,7 +960,7 @@ export function DataTable<Row extends object>(props: DataTableProps<Row>): JSX.E
     const row = flatResultRows()[index];
     if (!row) return undefined;
     const client = clientRowIndex();
-    if (client) return client.byObject.get(row);
+    if (client) return client.resolve(row, index);
     return serverFlatStableRows()[index];
   }
   const rowCount = (): number => hierarchy || props.grouping ? structuredRows().length : flatResultRows().length;

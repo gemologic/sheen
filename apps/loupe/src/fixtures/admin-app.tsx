@@ -15,7 +15,7 @@ import { DataTable, defineColumns } from "@gemologic/sheen-table";
 import type { TablePagination } from "@gemologic/sheen-table";
 import { For, Match, Switch, batch, createEffect, createMemo, createSignal, on, onCleanup } from "solid-js";
 import { createAdminWorkload, refreshAdminWorkload, regionCapacity, regionSeries, trafficSeries } from "./admin-app-data.ts";
-import type { AdminAccountRow, AdminWorkload, AdminWorkloadSnapshot } from "./admin-app-data.ts";
+import type { AdminAccountRow, AdminWorkload, AdminWorkloadSnapshot, AdminWorkloadSummary } from "./admin-app-data.ts";
 
 const columns = defineColumns<AdminAccountRow>([
   { id: "name", header: "Account", accessor: row => row.name, search: true, filter: { type: "text" }, sort: "text", width: "fill", cell: (value, row) => <span class="loupe-admin-account-cell"><strong>{String(value)}</strong><small>{row.id}</small></span> },
@@ -33,6 +33,7 @@ const themeOptions = [{ value: "inherit", label: "Inherit root theme" }, ...bund
 const accentOptions = [{ value: "inherit", label: "Inherit root accent" }, ...accentNames.map(accent => ({ value: accent, label: accent[0]?.toUpperCase() + accent.slice(1) }))];
 const modeOptions = [{ value: "inherit", label: "Inherit root mode" }, { value: "dark", label: "Dark" }, { value: "light", label: "Light" }, { value: "system", label: "System" }];
 const directionOptions = [{ value: "inherit", label: "Inherit root direction" }, { value: "ltr", label: "Left to right" }, { value: "rtl", label: "Right to left" }];
+const emptyWorkloadSummary: AdminWorkloadSummary = Object.freeze({ active: 0, review: 0, balance: 0, requests: 0, utilization: 0 });
 
 interface PlacementControl {
   readonly zone: AdminChromeZone;
@@ -381,7 +382,7 @@ export function AdminAppFixture(props: AdminAppFixtureProps) {
       { id: "refresh", label: "Refresh accepted data", group: "Operations", run: refresh },
     ] }] } : undefined} details={details()} refreshing={refreshing()} authorizationKey={authorized() ? "operator" : "revoked"}
     statusBar={<StatusBar connection={authorized() ? "connected" : "disconnected"} tasks={refreshing() ? 1 : 0} counts={[{ label: "Rows", value: authorized() ? snapshot().rowCount : 0 }, { label: "Chart points", value: authorized() ? snapshot().chartPoints : 0 }]}><span>{workspaceName()} workspace</span><span>Revision {revision()}</span></StatusBar>}>
-    <AdminStarterPage view={view()} rows={state() === "empty" ? [] : snapshot().rows} traffic={snapshot().traffic} workload={workload()} chartPoints={snapshot().chartPoints}
+    <AdminStarterPage view={view()} rows={state() === "empty" ? [] : snapshot().rows} summary={state() === "empty" ? emptyWorkloadSummary : snapshot().summary} traffic={snapshot().traffic} workload={workload()} chartPoints={snapshot().chartPoints}
       pagination={pagination()} state={state()} refreshing={refreshing()} revision={revision()} preset={preset()}
       appearance={resolvedAppearance()} theme={parameters().get("theme") ?? "inherit"} mode={parameters().get("mode") ?? "inherit"}
       accent={parameters().get("accent") ?? "inherit"} direction={parameters().get("direction") ?? "inherit"} table={parameters().get("table") === "continuous" ? "continuous" : "paged"}
@@ -417,6 +418,7 @@ function AccountDetails(props: { readonly row: () => AdminAccountRow | undefined
 interface AdminStarterPageProps {
   readonly view: AdminView;
   readonly rows: readonly AdminAccountRow[];
+  readonly summary: AdminWorkloadSummary;
   readonly traffic: ChartData;
   readonly workload: AdminWorkload;
   readonly chartPoints: number;
@@ -463,30 +465,15 @@ function StarterConfiguration(props: Pick<AdminStarterPageProps, "preset" | "app
     </div></details>;
 }
 
-function OverviewContent(props: Pick<AdminStarterPageProps, "rows" | "traffic" | "chartPoints" | "workload" | "pagination" | "refreshing" | "onOpenDetails">) {
-  const summary = createMemo(() => {
-    let active = 0;
-    let review = 0;
-    let balance = 0;
-    let requests = 0;
-    let utilization = 0;
-    for (const row of props.rows) {
-      if (row.status === "Active") active += 1;
-      if (row.status === "Review") review += 1;
-      balance += row.balance;
-      requests += row.requests;
-      utilization += row.utilization;
-    }
-    return Object.freeze({ active, review, balance, requests, utilization: props.rows.length === 0 ? 0 : utilization / props.rows.length });
-  });
+function OverviewContent(props: Pick<AdminStarterPageProps, "rows" | "summary" | "traffic" | "chartPoints" | "workload" | "pagination" | "refreshing" | "onOpenDetails">) {
   return <div class="loupe-admin-overview" data-admin-workload={props.workload} data-admin-row-count={props.rows.length} data-admin-chart-points={props.chartPoints}>
     <StatGroup class="loupe-admin-stat-group" label="Operational summary" stats={[
       { label: "Accounts", value: props.rows.length.toLocaleString("en-US"), trend: "up", trendLabel: "3.8% this quarter" },
-      { label: "Active", value: summary().active.toLocaleString("en-US"), trend: "flat", trendLabel: "Within target" },
-      { label: "Needs review", value: summary().review.toLocaleString("en-US"), trend: "down", trendLabel: "12 fewer today" },
-      { label: "Managed balance", value: new Intl.NumberFormat("en-US", { notation: "compact", style: "currency", currency: "USD" }).format(summary().balance), trend: "up", trendLabel: "6.1% this month" },
-      { label: "Monthly requests", value: new Intl.NumberFormat("en-US", { notation: "compact" }).format(summary().requests), trend: "up", trendLabel: "9.4% over forecast" },
-      { label: "Utilization", value: `${summary().utilization.toFixed(1)}%`, trend: "flat", trendLabel: "Capacity healthy" },
+      { label: "Active", value: props.summary.active.toLocaleString("en-US"), trend: "flat", trendLabel: "Within target" },
+      { label: "Needs review", value: props.summary.review.toLocaleString("en-US"), trend: "down", trendLabel: "12 fewer today" },
+      { label: "Managed balance", value: new Intl.NumberFormat("en-US", { notation: "compact", style: "currency", currency: "USD" }).format(props.summary.balance), trend: "up", trendLabel: "6.1% this month" },
+      { label: "Monthly requests", value: new Intl.NumberFormat("en-US", { notation: "compact" }).format(props.summary.requests), trend: "up", trendLabel: "9.4% over forecast" },
+      { label: "Utilization", value: `${props.summary.utilization.toFixed(1)}%`, trend: "flat", trendLabel: "Capacity healthy" },
     ]} />
     <section class="loupe-admin-dashboard-grid" aria-label="Traffic and capacity">
       <div class="loupe-admin-chart-card loupe-admin-chart-card-wide">
@@ -576,7 +563,7 @@ function AdminStarterPage(props: AdminStarterPageProps) {
         <Button onClick={() => { void confirmReset(); }}>Reset view</Button>
       </div>} />
       <Switch>
-        <Match when={props.view === "overview"}><OverviewContent rows={props.rows} traffic={props.traffic} chartPoints={props.chartPoints} workload={props.workload} pagination={props.pagination} refreshing={props.refreshing} onOpenDetails={props.onOpenDetails} /></Match>
+        <Match when={props.view === "overview"}><OverviewContent rows={props.rows} summary={props.summary} traffic={props.traffic} chartPoints={props.chartPoints} workload={props.workload} pagination={props.pagination} refreshing={props.refreshing} onOpenDetails={props.onOpenDetails} /></Match>
         <Match when={props.view === "accounts"}><AccountsTable rows={props.rows} pagination={props.pagination} onOpenDetails={props.onOpenDetails} /></Match>
         <Match when={props.view === "inbox"}><div class="loupe-admin-content"><InboxContent unread={props.inboxUnread} /></div></Match>
         <Match when={props.view === "settings"}><div class="loupe-admin-content"><SettingsContent /></div></Match>

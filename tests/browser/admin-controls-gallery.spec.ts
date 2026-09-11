@@ -42,6 +42,9 @@ test("notification gallery exposes per-item unread text, native destinations, an
 });
 
 test("accepted control refresh retains open notification, item, trigger, and focus identities", async ({ page }) => {
+  let release: () => void = () => {};
+  const barrier = new Promise<void>(resolve => { release = resolve; });
+  await page.route("**/api/admin-controls?revision=1&delay=400", async route => { await barrier; await route.continue(); });
   await page.goto("/gallery/admin-controls");
   const account = page.locator(".loupe-admin-controls-grid > .sheen-card").nth(0).locator("[data-sheen-menu-trigger]");
   const workspace = page.locator(".loupe-admin-control-sidebar [data-sheen-menu-trigger]");
@@ -55,20 +58,27 @@ test("accepted control refresh retains open notification, item, trigger, and foc
   await trigger.evaluate(element => element.setAttribute("data-notification-trigger-owner", "retained"));
   await item.evaluate(element => element.setAttribute("data-notification-owner", "retained"));
   await link.focus();
-  await page.getByRole("button", { name: "Refresh controls", exact: true }).evaluate(element => element.dispatchEvent(new MouseEvent("click", { bubbles: true })));
-  await expect(page.getByLabel("Control operation")).toHaveText("pending");
-  for (let frame = 0; frame < 12; frame += 1) {
-    await page.evaluate(() => new Promise<void>(resolve => requestAnimationFrame(() => resolve())));
-    await expect(item).toContainText("Deploy finished");
+  try {
+    const refreshResponse = page.waitForResponse(response => response.url().includes("/api/admin-controls?revision=1&delay=400"));
+    await page.getByRole("button", { name: "Refresh controls", exact: true }).evaluate(element => element.dispatchEvent(new MouseEvent("click", { bubbles: true })));
+    await expect(page.getByLabel("Control operation")).toHaveText("pending");
+    for (let frame = 0; frame < 12; frame += 1) {
+      await page.evaluate(() => new Promise<void>(resolve => requestAnimationFrame(() => resolve())));
+      await expect(item).toContainText("Deploy finished");
+      await expect(item).toHaveAttribute("data-notification-owner", "retained");
+    }
+    release();
+    expect((await refreshResponse).ok()).toBe(true);
+    await expect(item).toContainText("Deploy evidence verified");
     await expect(item).toHaveAttribute("data-notification-owner", "retained");
+    await expect(link).toBeFocused();
+    await expect(account).toHaveAttribute("data-account-owner", "retained");
+    await expect(account).toContainText("ada+verified@gemologic.dev");
+    await expect(workspace).toHaveAttribute("data-workspace-owner", "retained");
+    await expect(trigger).toHaveAttribute("data-notification-trigger-owner", "retained");
+  } finally {
+    release();
   }
-  await expect(item).toContainText("Deploy evidence verified");
-  await expect(item).toHaveAttribute("data-notification-owner", "retained");
-  await expect(link).toBeFocused();
-  await expect(account).toHaveAttribute("data-account-owner", "retained");
-  await expect(account).toContainText("ada+verified@gemologic.dev");
-  await expect(workspace).toHaveAttribute("data-workspace-owner", "retained");
-  await expect(trigger).toHaveAttribute("data-notification-trigger-owner", "retained");
 });
 
 test("admin-control gallery is accessible with scoped RTL footer overlays", async ({ page }) => {

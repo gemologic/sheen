@@ -9,6 +9,7 @@ export interface TableNormalizedBaseline {
 export interface TableBaselineHistoryEntry {
   readonly version: number;
   readonly recordedAt: string;
+  readonly cpuModelIncludes: string;
   readonly source: string;
   readonly normalized: TableNormalizedBaseline;
 }
@@ -36,20 +37,29 @@ export const tableBenchmarkBaseline: TableBenchmarkBaseline = Object.freeze({
     Object.freeze({
       version: 2,
       recordedAt: "2026-09-08",
+      cpuModelIncludes: "AMD Ryzen Threadripper 9960X",
       source: "local five-run production capture: WSL2 6.6.87.2, AMD Ryzen Threadripper 9960X, Chromium 153.0.8010.12, Playwright 1.63.0",
       normalized: Object.freeze({ render: 2.58177570381095, multiSort: 2.331775702418318, search: 1.4532710252000585, filter: 0.6224256297026121, refresh: 1.3418013904626611 }),
     }),
     Object.freeze({
       version: 3,
       recordedAt: "2026-09-11",
+      cpuModelIncludes: "AMD EPYC 7763",
       source: "GitHub Actions five-run production capture: ubuntu24 20260907.300.1, AMD EPYC 7763, Chromium 153.0.8010.12, Playwright 1.63.0, commit 62427831b2474d8cceec73af29d61d4e0c1da157",
       normalized: Object.freeze({ render: 2.1232492997206003, multiSort: 1.8948106591865186, search: 1.8835904628332438, filter: 0.7030812324935042, refresh: 1.0434782608700621 }),
     }),
     Object.freeze({
       version: 4,
       recordedAt: "2026-09-11",
+      cpuModelIncludes: "AMD EPYC 9V74",
       source: "GitHub Actions five-run production capture after stable-row subscription consolidation: ubuntu24 20260907.300.1, AMD EPYC 9V74, Chromium 153.0.8010.12, Playwright 1.63.0, commit ba961d9aa8f3ec57f1a71058bb9ae45aa94c0ee2",
       normalized: Object.freeze({ render: 2.1520270270275637, multiSort: 1.9104729729726957, search: 1.500000000000245, filter: 0.599662162162339, refresh: 1.202360876897173 }),
     }),
   ]),
 });
+
+export function compatibleTableBenchmarkHistory(cpuModel: string): readonly TableBaselineHistoryEntry[] {
+  const matches = tableBenchmarkBaseline.history.filter(entry => cpuModel.includes(entry.cpuModelIncludes));
+  if (matches.length === 0) throw new Error(`No table benchmark baseline matches CPU model ${JSON.stringify(cpuModel)}; capture and review a baseline for this runner before applying performance gates`);
+  return Object.freeze(matches);
+}

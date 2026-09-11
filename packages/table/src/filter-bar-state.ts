@@ -91,17 +91,21 @@ export function appendFilterCondition(filter: FilterNode, condition: FilterCondi
 
 function withoutColumn(node: FilterNode, column: string): FilterNode | null {
   if (node.kind === "and" || node.kind === "or") {
-    const children = node.children.flatMap(child => {
+    const children: FilterNode[] = [];
+    let changed = false;
+    for (const child of node.children) {
       const next = withoutColumn(child, column);
-      return next ? [next] : [];
-    });
+      if (next) children.push(next);
+      if (next !== child) changed = true;
+    }
+    if (!changed) return node;
     if (children.length === 0) return null;
     if (children.length === 1) return children[0]!;
     return Object.freeze({ kind: node.kind, children: Object.freeze(children) });
   }
   if (node.kind === "not") {
     const child = withoutColumn(node.child, column);
-    return child ? Object.freeze({ kind: "not", child }) : null;
+    return child === node.child ? node : child ? Object.freeze({ kind: "not", child }) : null;
   }
   if (!isCondition(node)) throw new Error("Facet traversal reached a non-leaf node");
   return node.column === column ? null : node;

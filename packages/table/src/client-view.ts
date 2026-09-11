@@ -45,9 +45,16 @@ export function createClientView<Row>(rows: readonly Row[], state: ClientViewSta
     exactMatch: options.exactMatch ?? false,
   });
   const filtered = filterClientRows(searched, state.filter, options.filterColumns, options);
-  const facets = Object.freeze(options.filterColumns.flatMap(column => column.type === "enum"
-    ? countClientFacets(filterClientRows(searched, removeFilterColumnConditions(state.filter, column.id), options.filterColumns, options), [column], options)
-    : []));
+  const facetGroups = new Map<FilterNode, FilterColumn[]>();
+  for (const column of options.filterColumns) {
+    if (column.type !== "enum") continue;
+    const filter = removeFilterColumnConditions(state.filter, column.id);
+    const columns = facetGroups.get(filter);
+    if (columns) columns.push(column);
+    else facetGroups.set(filter, [column]);
+  }
+  const facets = Object.freeze([...facetGroups].flatMap(([filter, columns]) =>
+    countClientFacets(filterClientRows(searched, filter, options.filterColumns, options), columns, options)));
   const view = sortClientRows(filtered, state.sorting, options.sortColumns, options);
   const page = paginateClientRows(view, pagination);
   return { view, rows: page.rows, total: page.total, pagination: page.pagination, facets };

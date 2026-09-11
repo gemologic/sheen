@@ -23,11 +23,16 @@ describe("self-hosted IBM Plex assets", () => {
 
   it("declares only the token weights and prevents late font swaps", async () => {
     const css = await readFile(new URL("fonts.css", assets), "utf8");
+    const sources = [...css.matchAll(/src:\s*url\("(?<path>[^"]+)"\)/g)].flatMap(match => match.groups?.path ? [match.groups.path] : []);
     expect([...css.matchAll(/@font-face/g)]).toHaveLength(3);
     expect([...css.matchAll(/font-display: optional/g)]).toHaveLength(3);
     expect(css).toMatch(/IBM Plex Sans[\s\S]*font-weight: 400/);
     expect(css).toMatch(/IBM Plex Sans[\s\S]*font-weight: 600/);
     expect(css).toMatch(/IBM Plex Mono[\s\S]*font-weight: 400/);
-    for (const name of Object.keys(expectedHashes)) expect(css).toContain(`./fonts/${name}`);
+    expect(sources).toEqual([
+      "./fonts/IBMPlexSans-Regular.woff2",
+      "./fonts/IBMPlexSans-SemiBold.woff2",
+      "./fonts/IBMPlexMono-Regular.woff2",
+    ]);
   });
 });

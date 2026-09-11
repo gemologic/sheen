@@ -54,6 +54,7 @@ describe("FilterBar expression edits", () => {
     expect(removeFilterColumnConditions(filter, "status")).toEqual({ kind: "not", child: { kind: "or", children: [text, amount] } });
     expect(removeFilterColumnConditions(filter, "name")).toEqual({ kind: "and", children: [status, { kind: "not", child: amount }] });
     expect(removeFilterColumnConditions(status, "status")).toEqual({ kind: "and", children: [] });
+    expect(removeFilterColumnConditions(filter, "missing")).toBe(filter);
     expect(() => removeFilterColumnConditions(filter, "")).toThrow("nonempty");
   });
 });

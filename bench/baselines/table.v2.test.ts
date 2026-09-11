@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { tableBenchmarkBaseline } from "./table.v2.ts";
+import { compatibleTableBenchmarkHistory, tableBenchmarkBaseline } from "./table.v2.ts";
 
 describe("table benchmark baseline", () => {
   it("pins the expanded finite five-run gate instead of a placeholder", () => {
@@ -14,5 +14,12 @@ describe("table benchmark baseline", () => {
     const values = [normalized.render, normalized.multiSort, normalized.search, normalized.filter, normalized.refresh];
     expect(values).toHaveLength(5);
     for (const value of values) expect(Number.isFinite(value) && value > 0 && value < 50).toBe(true);
+  });
+
+  it("compares only baselines captured on the current CPU family", () => {
+    expect(compatibleTableBenchmarkHistory("AMD EPYC 7763 64-Core Processor").map(entry => entry.version)).toEqual([3]);
+    expect(compatibleTableBenchmarkHistory("AMD EPYC 9V74 96-Core Processor").map(entry => entry.version)).toEqual([4]);
+    expect(compatibleTableBenchmarkHistory("AMD Ryzen Threadripper 9960X 24-Cores").map(entry => entry.version)).toEqual([2]);
+    expect(() => compatibleTableBenchmarkHistory("unknown runner")).toThrow("No table benchmark baseline matches CPU model");
   });
 });

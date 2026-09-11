@@ -21,8 +21,17 @@ export interface AdminWorkloadSnapshot {
   readonly kind: AdminWorkload;
   readonly rows: readonly AdminAccountRow[];
   readonly traffic: ChartData;
+  readonly summary: AdminWorkloadSummary;
   readonly rowCount: number;
   readonly chartPoints: number;
+}
+
+export interface AdminWorkloadSummary {
+  readonly active: number;
+  readonly review: number;
+  readonly balance: number;
+  readonly requests: number;
+  readonly utilization: number;
 }
 
 const workloadSizes: Readonly<Record<AdminWorkload, { readonly rows: number; readonly chartPoints: number }>> = Object.freeze({
@@ -54,20 +63,38 @@ export const regionCapacity: ChartCategoricalData = Object.freeze({
   }),
 });
 
-function accountRows(count: number, revision: number, refreshed: boolean): readonly AdminAccountRow[] {
-  return Object.freeze(Array.from({ length: count }, (_, index) => Object.freeze({
-    id: `account-${String(index + 1).padStart(4, "0")}`,
-    name: `${accountNames[index % accountNames.length] ?? "Northstar"} ${String(index + 1).padStart(3, "0")}`,
-    owner: owners[index % owners.length] ?? "Operations",
-    status: index % 17 === 0 ? "Paused" : index % 7 === 0 ? "Review" : "Active",
-    plan: plans[index % plans.length] ?? "Core",
-    region: regions[index % regions.length] ?? "US East",
-    balance: 1_250 + index * 173.25 + (refreshed ? revision * 11.25 : 0),
-    requests: 18_000 + ((index * 7_919) % 920_000) + (refreshed ? revision * 101 + (index % 29) : 0),
-    utilization: 35 + ((index * 37) % 61),
-    updated: revision === 1 ? `${(index % 23) + 1} min ago` : "just now",
-    revision,
-  })));
+function accountData(count: number, revision: number, refreshed: boolean): { readonly rows: readonly AdminAccountRow[]; readonly summary: AdminWorkloadSummary } {
+  let active = 0;
+  let review = 0;
+  let balance = 0;
+  let requests = 0;
+  let utilization = 0;
+  const rows = Object.freeze(Array.from({ length: count }, (_, index): AdminAccountRow => {
+    const status: AdminAccountRow["status"] = index % 17 === 0 ? "Paused" : index % 7 === 0 ? "Review" : "Active";
+    const row = Object.freeze({
+      id: `account-${String(index + 1).padStart(4, "0")}`,
+      name: `${accountNames[index % accountNames.length] ?? "Northstar"} ${String(index + 1).padStart(3, "0")}`,
+      owner: owners[index % owners.length] ?? "Operations",
+      status,
+      plan: plans[index % plans.length] ?? "Core",
+      region: regions[index % regions.length] ?? "US East",
+      balance: 1_250 + index * 173.25 + (refreshed ? revision * 11.25 : 0),
+      requests: 18_000 + ((index * 7_919) % 920_000) + (refreshed ? revision * 101 + (index % 29) : 0),
+      utilization: 35 + ((index * 37) % 61),
+      updated: revision === 1 ? `${(index % 23) + 1} min ago` : "just now",
+      revision,
+    });
+    if (row.status === "Active") active += 1;
+    if (row.status === "Review") review += 1;
+    balance += row.balance;
+    requests += row.requests;
+    utilization += row.utilization;
+    return row;
+  }));
+  return Object.freeze({
+    rows,
+    summary: Object.freeze({ active, review, balance, requests, utilization: count === 0 ? 0 : utilization / count }),
+  });
 }
 
 function trafficData(points: number, revision: number): ChartData {
@@ -90,10 +117,12 @@ const initialSnapshots = new Map<AdminWorkload, AdminWorkloadSnapshot>();
 
 function createSnapshot(kind: AdminWorkload, revision: number, refreshed: boolean): AdminWorkloadSnapshot {
   const size = workloadSizes[kind];
+  const accounts = accountData(size.rows, revision, refreshed);
   return Object.freeze({
     kind,
-    rows: accountRows(size.rows, revision, refreshed),
+    rows: accounts.rows,
     traffic: trafficData(size.chartPoints, revision),
+    summary: accounts.summary,
     rowCount: size.rows,
     chartPoints: size.chartPoints,
   });

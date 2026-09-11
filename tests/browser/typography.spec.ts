@@ -3,12 +3,18 @@ import { contrastRatio } from "../../packages/tokens/src/color";
 import { themes } from "../../packages/tokens/src/themes";
 
 test("typography semantics, token roles, and native tag removal survive theme-aware hydration", async ({ page }) => {
+  const fontRequests: string[] = [];
+  page.on("request", request => {
+    if (request.resourceType() === "font") fontRequests.push(request.url());
+  });
   await page.goto("/typography");
   await expect.poll(() => page.evaluate(() => ({
     sans: document.fonts.check('400 13px "IBM Plex Sans"'),
     semibold: document.fonts.check('600 16px "IBM Plex Sans"'),
     mono: document.fonts.check('400 12px "IBM Plex Mono"'),
   }))).toEqual({ sans: true, semibold: true, mono: true });
+  expect(fontRequests).toHaveLength(3);
+  expect(fontRequests.every(url => new URL(url).origin === new URL(page.url()).origin)).toBe(true);
   await expect(page.locator("[data-class-override]")).toHaveCSS("font-size", "20px");
   const mutedColor = await page.locator('.typography-sample[data-sheen-theme="obsidian"][data-sheen-mode="dark"] [data-muted]').evaluate(element => getComputedStyle(element).color);
   await expect(page.locator("[data-class-override]")).toHaveCSS("color", mutedColor);
@@ -43,6 +49,8 @@ test("typography semantics, token roles, and native tag removal survive theme-aw
 
 test("slow self-hosted fonts do not swap component geometry after first paint", async ({ page }) => {
   let fontRequests = 0;
+  let release: () => void = () => {};
+  const barrier = new Promise<void>(resolve => { release = resolve; });
   await page.route(/IBMPlexSans-Regular[^/]*\.woff2(?:\?|$)/, async route => {
     const request = new URL(route.request().url());
     if (request.searchParams.has("sheen-font-direct")) {
@@ -50,21 +58,25 @@ test("slow self-hosted fonts do not swap component geometry after first paint", 
       return;
     }
     fontRequests += 1;
-    const delayed = new URL("/api/delayed-font", request);
-    delayed.searchParams.set("delay", "1200");
-    await route.continue({ url: delayed.href });
+    await barrier;
+    await route.continue();
   });
-  await page.goto("/typography", { waitUntil: "commit" });
-  const probe = page.locator("[data-font-probe]");
-  await expect(probe).toBeAttached();
-  await expect.poll(() => fontRequests).toBeGreaterThan(0);
-  await expect.poll(() => page.evaluate(() => performance.getEntriesByType("paint").some(entry => entry.name === "first-contentful-paint"))).toBe(true);
-  await page.evaluate(() => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));
-  const before = await probe.boundingBox();
-  expect(before).not.toBeNull();
-  await page.evaluate(() => document.fonts.ready);
-  await page.waitForTimeout(100);
-  expect(await probe.boundingBox()).toEqual(before);
+  try {
+    await page.goto("/typography", { waitUntil: "commit" });
+    const probe = page.locator("[data-font-probe]");
+    await expect(probe).toBeAttached();
+    await expect.poll(() => fontRequests).toBeGreaterThan(0);
+    await expect.poll(() => page.evaluate(() => performance.getEntriesByType("paint").some(entry => entry.name === "first-contentful-paint"))).toBe(true);
+    await page.evaluate(() => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));
+    const before = await probe.boundingBox();
+    expect(before).not.toBeNull();
+    release();
+    await page.evaluate(() => document.fonts.ready);
+    await page.waitForTimeout(100);
+    expect(await probe.boundingBox()).toEqual(before);
+  } finally {
+    release();
+  }
 });
 
 test("rendered badge colors and tag focus remain legible across every theme and mode", async ({ page }) => {

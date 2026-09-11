@@ -3,7 +3,7 @@ import type { Browser, CDPSession, Locator, Page } from "@playwright/test";
 import { cpus, platform, release, totalmem } from "node:os";
 import { mkdir, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
-import { tableBenchmarkBaseline } from "./baselines/table.v2.ts";
+import { compatibleTableBenchmarkHistory, tableBenchmarkBaseline } from "./baselines/table.v2.ts";
 import type { TableNormalizedBaseline } from "./baselines/table.v2.ts";
 import { tableBenchmarkFixture } from "./fixtures/table.ts";
 
@@ -426,11 +426,11 @@ function normalizedSummary(runs: readonly TableBenchmarkRun[]): TableNormalizedB
   });
 }
 
-function driftFailures(current: TableNormalizedBaseline): readonly string[] {
+function driftFailures(current: TableNormalizedBaseline, history: readonly { readonly normalized: TableNormalizedBaseline }[]): readonly string[] {
   const names: readonly (keyof TableNormalizedBaseline)[] = ["render", "multiSort", "search", "filter", "refresh"];
   const failures: string[] = [];
   for (const name of names) {
-    const values = [...tableBenchmarkBaseline.history.map(entry => entry.normalized[name]), current[name]].slice(-4);
+    const values = [...history.map(entry => entry.normalized[name]), current[name]].slice(-4);
     if (values.length === 4 && values.slice(1).every((value, index) => value > (values[index] ?? value))) failures.push(`${name} increased in three consecutive baselines`);
   }
   return Object.freeze(failures);
@@ -438,11 +438,13 @@ function driftFailures(current: TableNormalizedBaseline): readonly string[] {
 
 test("calibrated table workloads stay within normalized and absolute frame gates", async ({ browser }) => {
   test.setTimeout(300_000);
+  const cpuModel = cpus()[0]?.model ?? "unknown";
+  const compatibleHistory = compatibleTableBenchmarkHistory(cpuModel);
   const runs: TableBenchmarkRun[] = [];
   for (let run = 0; run < tableBenchmarkBaseline.runs; run++) runs.push(await runOnce(browser));
 
   const normalized = normalizedSummary(runs);
-  const latest = tableBenchmarkBaseline.history.at(-1);
+  const latest = compatibleHistory.at(-1);
   if (!latest) throw new Error("Table benchmark baseline history must not be empty");
   const metricNames: readonly (keyof TableNormalizedBaseline)[] = ["render", "multiSort", "search", "filter", "refresh"];
   const failures: string[] = [];
@@ -478,14 +480,15 @@ test("calibrated table workloads stay within normalized and absolute frame gates
     if (!retained?.node || !retained.focus || !retained.scroll || !retained.content) failures.push(`accepted-content identity failed in run ${index + 1}: ${JSON.stringify(retained)}`);
   }
 
-  failures.push(...driftFailures(normalized));
+  failures.push(...driftFailures(normalized, compatibleHistory));
   const artifact = Object.freeze({
     schema: 2,
     recordedAt: new Date().toISOString(),
     commit: process.env.GITHUB_SHA ?? null,
-    environment: Object.freeze({ runner: process.env.RUNNER_NAME ?? "local", runnerOS: process.env.RUNNER_OS ?? platform(), runnerImage: process.env.ImageOS ?? null, runnerImageVersion: process.env.ImageVersion ?? null, node: process.version, osRelease: release(), cpuCount: cpus().length, cpuModel: cpus()[0]?.model ?? "unknown", memoryBytes: totalmem(), browser: browser.version(), playwright: tableBenchmarkBaseline.playwright }),
+    environment: Object.freeze({ runner: process.env.RUNNER_NAME ?? "local", runnerOS: process.env.RUNNER_OS ?? platform(), runnerImage: process.env.ImageOS ?? null, runnerImageVersion: process.env.ImageVersion ?? null, node: process.version, osRelease: release(), cpuCount: cpus().length, cpuModel, memoryBytes: totalmem(), browser: browser.version(), playwright: tableBenchmarkBaseline.playwright }),
     fixture: tableBenchmarkFixture,
     baseline: tableBenchmarkBaseline,
+    selectedBaselineVersion: latest.version,
     runs: Object.freeze(runs),
     summary: Object.freeze({ rawMedianMs: Object.freeze({ calibration: median(runs.map(run => run.calibrationMs)), render: median(runs.map(run => run.renderMs)), multiSort: median(runs.map(run => run.multiSortMs)), search: median(runs.map(run => run.searchMs)), filter: median(runs.map(run => run.filterMs)), refresh: median(runs.map(run => run.refreshMs)) }), normalized, frames: frameSummary }),
     failures: Object.freeze(failures),

@@ -2,18 +2,18 @@ import { describe, expect, it } from "vitest";
 import { createClientView } from "./client-view.ts";
 import type { ClientViewOptions, ClientViewState } from "./client-view.ts";
 
-interface Row { readonly name: string; readonly status: string; readonly amount: number }
+interface Row { readonly name: string; readonly status: string; readonly segment: string; readonly amount: number }
 const rows: readonly Row[] = [
-  { name: "Alpha second", status: "open", amount: 2 },
-  { name: "Alpha", status: "closed", amount: 1 },
-  { name: "Beta", status: "open", amount: 10 },
-  { name: "Alpha third", status: "open", amount: 3 },
+  { name: "Alpha second", status: "open", segment: "retail", amount: 2 },
+  { name: "Alpha", status: "closed", segment: "enterprise", amount: 1 },
+  { name: "Beta", status: "open", segment: "enterprise", amount: 10 },
+  { name: "Alpha third", status: "open", segment: "retail", amount: 3 },
 ];
 const options: ClientViewOptions<Row> = {
   locale: "en-US", searchColumns: ["name"],
-  filterColumns: [{ id: "status", type: "enum", options: ["open", "closed", "archived"] }, { id: "amount", type: "number" }],
+  filterColumns: [{ id: "status", type: "enum", options: ["open", "closed", "archived"] }, { id: "segment", type: "enum", options: ["retail", "enterprise"] }, { id: "amount", type: "number" }],
   sortColumns: [{ id: "amount", type: "number" }],
-  getValue: (row, column) => column === "name" ? row.name : column === "status" ? row.status : row.amount,
+  getValue: (row, column) => column === "name" ? row.name : column === "status" ? row.status : column === "segment" ? row.segment : row.amount,
 };
 const state: ClientViewState = { search: "alpha", filter: { kind: "and", children: [] }, sorting: [], pagination: { pageIndex: 0, pageSize: 1 } };
 
@@ -29,6 +29,7 @@ describe("complete client view", () => {
     expect(result.rows).toEqual([rows[3]]);
     expect(result.rows[0]).toBe(rows[3]);
     expect(result.facets[0]?.options).toEqual([{ value: "open", count: 2 }, { value: "closed", count: 0 }, { value: "archived", count: 0 }]);
+    expect(result.facets[1]?.options).toEqual([{ value: "retail", count: 2 }, { value: "enterprise", count: 0 }]);
     expect(rows[0]?.name).toBe("Alpha second");
   });
 
@@ -44,6 +45,7 @@ describe("complete client view", () => {
     }, options);
     expect(result.rows.map(row => row.name)).toEqual(["Alpha second", "Beta", "Alpha third"]);
     expect(result.facets[0]?.options).toEqual([{ value: "open", count: 3 }, { value: "closed", count: 1 }, { value: "archived", count: 0 }]);
+    expect(result.facets[1]?.options).toEqual([{ value: "retail", count: 2 }, { value: "enterprise", count: 1 }]);
   });
   it("keeps relevance order without explicit sort and uses it for equal-key ties", () => {
     expect(createClientView(rows, state, options).view).toEqual([rows[1], rows[0], rows[3]]);

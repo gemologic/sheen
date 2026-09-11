@@ -14,6 +14,8 @@ describe("stable table row identities", () => {
     expect(result[0]?.row).toBe(rows[0]);
     expect(Object.isFrozen(result)).toBe(true);
     expect(Object.isFrozen(result[0])).toBe(true);
+    expect(identity.resolveIds(rows)).toEqual(["a", "b"]);
+    expect(Object.isFrozen(identity.resolveIds(rows))).toBe(true);
     expect(identity.resolve([{ id: "a", value: 3 }])[0]?.id).toBe("a");
   });
 

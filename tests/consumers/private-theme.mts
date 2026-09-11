@@ -28,6 +28,7 @@ for (const entry of ["core.css", "fonts.css", "preset.css", "themes.css", "theme
 }
 const fontCssUrl = import.meta.resolve("@gemologic/sheen-tokens/fonts.css");
 const fontCss = await readFile(new URL(fontCssUrl), "utf8");
+assert.doesNotMatch(fontCss, /(?:https?:)?\/\//, "font CSS must not load cross-origin assets");
 const fontUrls = [...fontCss.matchAll(/url\("(?<path>\.\/fonts\/[^\"]+\.woff2)"\)/g)].flatMap(match => match.groups?.path ? [match.groups.path] : []);
 assert.equal(fontUrls.length, 3);
 for (const path of fontUrls) {
