@@ -618,6 +618,7 @@ test("keyboard traversal reaches shell, navigation, table, pagination, and detai
   await tableSearch.fill("Aperture");
   await expect(page.locator(".sheen-data-table-result-count")).toContainText("40 results");
   await tableSearch.fill("");
+  await expect(page.locator(".sheen-data-table-result-count")).toContainText("240 results");
   const accountSort = page.getByRole("columnheader", { name: /Account/u });
   await accountSort.locator(".sheen-data-table-sort").focus();
   await page.keyboard.press("Enter");

@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { contrastRatio } from "../../packages/tokens/src/color";
+import { themes } from "../../packages/tokens/src/themes";
 
 test("typography semantics, token roles, and native tag removal survive theme-aware hydration", async ({ page }) => {
   await page.goto("/typography");
@@ -55,8 +56,11 @@ test("slow self-hosted fonts do not swap component geometry after first paint", 
     await expect(probe).toBeAttached();
     await expect.poll(() => fontRequests).toBeGreaterThan(0);
     // This is longer than Chromium's optional-display block period, so the
-    // fallback has painted before the font response is allowed to finish.
+    // font face has left its block period. Wait for an actual paint as well:
+    // elapsed wall time alone does not prove a frame was presented on busy CI.
     await page.waitForTimeout(500);
+    await expect.poll(() => page.evaluate(() => performance.getEntriesByType("paint").some(entry => entry.name === "first-contentful-paint"))).toBe(true);
+    await page.evaluate(() => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));
     const before = await probe.boundingBox();
     expect(before).not.toBeNull();
     releaseFonts();
@@ -95,7 +99,7 @@ test("rendered badge colors and tag focus remain legible across every theme and 
       };
     });
   });
-  expect(samples).toHaveLength(12 * (9 * 3 + 5));
+  expect(samples).toHaveLength(themes.length * 2 * (9 * 3 + 5));
   for (const sample of samples) {
     expect(contrastRatio(sample.fg, sample.bg), sample.name).toBeGreaterThanOrEqual(sample.threshold);
     if (sample.focus) {

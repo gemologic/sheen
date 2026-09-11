@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { contrastRatio } from "../../packages/tokens/src/color";
+import { themes } from "../../packages/tokens/src/themes";
 
 test("surfaces set focus offsets to their actual fill in every theme and mode", async ({ page }) => {
   await page.goto("/surfaces");
@@ -28,7 +29,7 @@ test("surfaces set focus offsets to their actual fill in every theme and mode", 
       };
     });
   });
-  expect(samples).toHaveLength(12 * 14);
+  expect(samples).toHaveLength(themes.length * 2 * 14);
   for (const sample of samples) {
     expect(sample.offset, `${sample.name}: offset`).toBe(sample.background);
     expect(sample.outline, sample.name).toBe("solid");
@@ -44,7 +45,7 @@ test("alerts do not steal focus, separators preserve semantics, and surface chan
   await page.keyboard.press("Enter");
   await expect(toggle).toBeFocused();
   await expect(page.getByRole("alert")).toContainText("Refresh failed");
-  await expect(page.getByRole("note")).toHaveCount(12 * 4);
+  await expect(page.getByRole("note")).toHaveCount(themes.length * 2 * 4);
   const sample = page.locator('.surface-sample[data-sheen-theme="paper"][data-sheen-mode="light"]');
   await expect(sample.getByRole("separator")).toHaveCount(2);
   await expect(sample.getByRole("separator", { name: "Vertical section" })).toHaveAttribute("aria-orientation", "vertical");

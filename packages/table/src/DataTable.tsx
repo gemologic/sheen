@@ -208,7 +208,7 @@ export type DataTableProps<Row extends object> = ClientDataTableProps<Row> | Ser
 interface StableRow<Row extends object> {
   readonly id: string;
   readonly value: Accessor<Row>;
-  readonly update: (row: Row) => void;
+  readonly update: (row: Row) => boolean;
 }
 
 interface ScrollAnchor {
@@ -262,21 +262,35 @@ function displayGroupRow<Row extends object>(row: DisplayRow<Row>): DisplayGroup
 function createStableRows<Row extends object>(getRowId: (row: Row) => string): (rows: readonly Row[]) => readonly StableRow<Row>[] {
   const identity = createRowIdentity(getRowId);
   const cache = new Map<string, StableRow<Row>>();
+  const [revision, setRevision] = createSignal(0);
   return rows => {
     const retained = new Set<string>();
+    let changed = false;
     const resolved = identity.resolve(rows).map(item => {
       retained.add(item.id);
       const existing = cache.get(item.id);
       if (existing) {
-        existing.update(item.row);
+        changed = existing.update(item.row) || changed;
         return existing;
       }
-      const [value, update] = createSignal(item.row);
-      const record = Object.freeze({ id: item.id, value, update });
+      let current = item.row;
+      const record: StableRow<Row> = Object.freeze({
+        id: item.id,
+        value: (): Row => {
+          revision();
+          return current;
+        },
+        update: (next: Row): boolean => {
+          if (Object.is(current, next)) return false;
+          current = next;
+          return true;
+        },
+      });
       cache.set(item.id, record);
       return record;
     });
     for (const id of cache.keys()) if (!retained.has(id)) cache.delete(id);
+    if (changed) setRevision(value => value + 1);
     return resolved;
   };
 }

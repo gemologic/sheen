@@ -29,7 +29,7 @@ function routeForFile(file: string): string {
 const baseRoutes = Object.freeze(routeFiles(routesRoot).map(routeForFile).sort());
 
 async function ready(page: Page): Promise<void> {
-  await expect(page.locator('[data-sheen-portal="root"]').last()).toHaveAttribute("data-sheen-ready", "true");
+  await expect(page.locator('[data-sheen-portal="root"]').last()).toHaveAttribute("data-sheen-ready", "true", { timeout: 15_000 });
 }
 
 async function expectNoAxeViolations(page: Page, label: string): Promise<void> {

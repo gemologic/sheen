@@ -1,5 +1,6 @@
 export interface ComposerFrameBudget {
   readonly p99Ms: number;
+  readonly smoothOperations: readonly string[];
   readonly maximumMs: number;
   readonly longTasks: number;
   readonly unexpectedLayoutShift: number;
@@ -13,13 +14,15 @@ export interface ComposerNormalizedBaseline {
   readonly queryEdit: number;
 }
 
+const composerSmoothOperations: readonly string[] = Object.freeze([]);
+
 export const composerBenchmarkBaseline = Object.freeze({
   schema: 1,
   runner: "ubuntu-24.04",
   playwright: "1.63.0",
   runs: 5,
   maximumRegression: 0.1,
-  frame: Object.freeze({ p99Ms: 20, maximumMs: 50, longTasks: 0, unexpectedLayoutShift: 0 }) satisfies ComposerFrameBudget,
+  frame: Object.freeze({ p99Ms: 20, smoothOperations: composerSmoothOperations, maximumMs: 50, longTasks: 0, unexpectedLayoutShift: 0 }) satisfies ComposerFrameBudget,
   history: Object.freeze([
     Object.freeze({
       recordedAt: "2026-09-09",

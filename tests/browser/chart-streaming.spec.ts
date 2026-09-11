@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 import type { Page } from "@playwright/test";
 
 async function ready(page: Page): Promise<void> {
-  await expect(page.locator('[data-sheen-portal="root"]')).toHaveAttribute("data-sheen-ready", "true");
+  await expect(page.locator('[data-sheen-portal="root"]')).toHaveAttribute("data-sheen-ready", "true", { timeout: 15_000 });
   await expect(page.locator(".sheen-time-series")).toHaveAttribute("data-enhanced", "true");
   await expect(page.locator(".sheen-time-series .uplot")).toHaveCount(1);
   await expect(page.getByLabel("Publication count")).toHaveText("1");

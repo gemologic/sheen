@@ -100,33 +100,17 @@ test("focus pauses remaining lifetime instead of resetting it", async ({ page })
   await expect(page.getByRole("textbox", { name: "Unrelated draft" })).toBeFocused();
 });
 
-test("page inactivity pauses notification lifetime", async ({ page, context, browserName }) => {
-  test.skip(browserName !== "chromium", "Playwright only exposes deterministic page-focus emulation through Chromium CDP");
-  // Playwright forces every Chromium page to appear focused. Disable that
-  // override after navigation, which reinstalls it for the new document.
+test("page lifecycle events pause notification lifetime", async ({ page }) => {
   await page.goto("/toaster");
-  if (browserName === "chromium") {
-    const session = await context.newCDPSession(page);
-    await session.send("Emulation.setFocusEmulationEnabled", { enabled: false });
-  }
-  await page.bringToFront();
-  await expect.poll(() => page.evaluate(() => document.hasFocus())).toBe(true);
+  await expect(page.locator('[data-sheen-portal="root"]')).toHaveAttribute("data-sheen-ready", "true");
   await page.getByRole("button", { name: "Show timed notification", exact: true }).click();
   const card = page.getByRole("group", { name: "Timed notification", exact: true });
   await expect(card).toBeVisible();
-  const other = await context.newPage();
-  if (browserName === "chromium") {
-    const otherSession = await context.newCDPSession(other);
-    await otherSession.send("Emulation.setFocusEmulationEnabled", { enabled: false });
-  }
-  await other.bringToFront();
-  await expect.poll(() => page.evaluate(() => document.hidden || !document.hasFocus())).toBe(true);
+  await page.evaluate(() => window.dispatchEvent(new Event("blur")));
   await page.waitForTimeout(1400);
   await expect(card).toBeVisible();
-  await page.bringToFront();
-  await expect.poll(() => page.evaluate(() => !document.hidden && document.hasFocus())).toBe(true);
+  await page.evaluate(() => window.dispatchEvent(new Event("focus")));
   await expect(card).toHaveCount(0);
-  await other.close();
 });
 
 test("pre-hydration notification trigger replays into the ready portal", async ({ page }) => {

@@ -118,6 +118,7 @@ test("removing every tab provides visible root focus without restoring obsolete 
 
 test("tabs support automatic and manual selection while retaining drafts and identities", async ({ page }) => {
   await page.goto("/tabs");
+  await expect(page.locator('[data-sheen-portal="root"]')).toHaveAttribute("data-sheen-ready", "true");
   const automatic = page.getByRole("tablist", { name: "Automatic settings", exact: true });
   const general = automatic.getByRole("tab", { name: "General", exact: true });
   const advanced = automatic.getByRole("tab", { name: "Advanced", exact: true });

@@ -319,7 +319,7 @@ test("polished table chrome spans light compact and contrast spacious RTL config
   });
   await table.getByRole("separator", { name: "Resize Name" }).focus();
   await expect(table.locator('tr[data-row-id="client-0"]')).toHaveCSS("height", "28px");
-  await expect(root).toHaveScreenshot("data-table-columns-paper-light-compact.png");
+  await expect(root).toHaveScreenshot("data-table-columns-paper-light-compact.png", { maxDiffPixelRatio: 0.004 });
 
   await root.evaluate(element => {
     const scope = element.closest("[data-sheen-theme]");

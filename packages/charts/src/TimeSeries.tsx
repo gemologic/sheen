@@ -261,7 +261,14 @@ export function TimeSeries(props: TimeSeriesProps): JSX.Element {
   const messages = createMemo(() => resolveChartMessages(theme.messages()));
   const formatters = createMemo(() => createChartTableFormatters(theme.state().locale, props.x, props.y));
   const annotations = createMemo(() => validateAnnotations(props.annotations));
-  const fallback = createMemo(() => staticPaths(data(), definitions(), visibility.values()));
+  const [enhanced, setEnhanced] = createSignal(false);
+  const [rendererPending, setRendererPending] = createSignal(false);
+  let fallbackSnapshot: readonly StaticPath[] | undefined;
+  const fallback = createMemo(() => {
+    if (enhanced() && fallbackSnapshot !== undefined) return fallbackSnapshot;
+    fallbackSnapshot = staticPaths(data(), definitions(), visibility.values());
+    return fallbackSnapshot;
+  });
   const zoomAvailable = createMemo(() => data().t.length > 1);
   const summaryId = createUniqueId();
   const instructionId = createUniqueId();
@@ -274,7 +281,6 @@ export function TimeSeries(props: TimeSeriesProps): JSX.Element {
     tooltip: props.tooltip,
     locale: theme.state().locale,
   }));
-  const [enhanced, setEnhanced] = createSignal(false);
   const [zoomed, setZoomed] = createSignal(false);
   let plotHost: HTMLDivElement | undefined;
   let tooltip: HTMLDivElement | undefined;
@@ -287,6 +293,8 @@ export function TimeSeries(props: TimeSeriesProps): JSX.Element {
   let resizeObserver: ResizeObserver | undefined;
   let resizeFrame: number | undefined;
   let initializationFrame: number | undefined;
+  let rendererFrame: number | undefined;
+  let pendingRendererUpdate: { readonly data: ChartData; readonly definitions: readonly ChartSeries[] } | undefined;
   let currentTokens: ThemeTokenValues = Object.freeze({});
   let currentConfiguration: string | undefined;
   let currentRendererSource: ChartData | undefined;
@@ -420,6 +428,9 @@ export function TimeSeries(props: TimeSeriesProps): JSX.Element {
   function disposePlot(): void {
     if (initializationFrame !== undefined) window.cancelAnimationFrame(initializationFrame);
     initializationFrame = undefined;
+    if (rendererFrame !== undefined) window.cancelAnimationFrame(rendererFrame);
+    rendererFrame = undefined;
+    pendingRendererUpdate = undefined;
     if (resizeFrame !== undefined) window.cancelAnimationFrame(resizeFrame);
     resizeFrame = undefined;
     resizeObserver?.disconnect();
@@ -429,6 +440,7 @@ export function TimeSeries(props: TimeSeriesProps): JSX.Element {
     plotReady = false;
     keyboardIndex = -1;
     hideTooltip();
+    setRendererPending(false);
     setEnhanced(false);
     setZoomed(false);
   }
@@ -438,13 +450,43 @@ export function TimeSeries(props: TimeSeriesProps): JSX.Element {
     initializationFrame = window.requestAnimationFrame(() => {
       initializationFrame = undefined;
       if (plot || !plotHost || !currentTokens["--sheen-chart-axis"] || !currentTokens["--sheen-chart-1"]) return;
-      const resolvedDefinitions = untrack(definitions);
-      const resolvedData = untrack(data);
-      currentConfiguration = untrack(configuration);
-      plot = new uPlot(options(props, resolvedDefinitions, untrack(visibility.values), () => currentTokens, theme.state().locale, measuredWidth(), height(), lifecycle), alignedData(resolveRendererData(resolvedData, resolvedDefinitions), resolvedDefinitions), plotHost);
-      resizeObserver = new ResizeObserver(scheduleResize);
-      resizeObserver.observe(plotHost);
-      setEnhanced(true);
+      const preparedDefinitions = untrack(definitions);
+      const preparedSource = untrack(data);
+      const preparedConfiguration = untrack(configuration);
+      const preparedData = alignedData(resolveRendererData(preparedSource, preparedDefinitions), preparedDefinitions);
+      initializationFrame = window.requestAnimationFrame(() => {
+        initializationFrame = undefined;
+        if (plot || !plotHost || !currentTokens["--sheen-chart-axis"] || !currentTokens["--sheen-chart-1"]) return;
+        if (preparedDefinitions !== untrack(definitions) || preparedSource !== untrack(data) || preparedConfiguration !== untrack(configuration)) {
+          scheduleInitialization();
+          return;
+        }
+        currentConfiguration = preparedConfiguration;
+        plot = new uPlot(options(props, preparedDefinitions, untrack(visibility.values), () => currentTokens, theme.state().locale, measuredWidth(), height(), lifecycle), preparedData, plotHost);
+        resizeObserver = new ResizeObserver(scheduleResize);
+        resizeObserver.observe(plotHost);
+        setEnhanced(true);
+      });
+    });
+  }
+
+  function scheduleRendererUpdate(): void {
+    if (rendererFrame !== undefined) return;
+    setRendererPending(true);
+    rendererFrame = window.requestAnimationFrame(() => {
+      rendererFrame = undefined;
+      const current = plot;
+      const update = pendingRendererUpdate;
+      pendingRendererUpdate = undefined;
+      if (!current || !update) {
+        setRendererPending(false);
+        return;
+      }
+      suppressScale = true;
+      current.batch(() => current.setData(alignedData(resolveRendererData(update.data, update.definitions), update.definitions), !zoomed()), true);
+      suppressScale = false;
+      if (keyboardIndex >= update.data.t.length) keyboardIndex = update.data.t.length - 1;
+      setRendererPending(false);
     });
   }
 
@@ -578,10 +620,8 @@ export function TimeSeries(props: TimeSeriesProps): JSX.Element {
       const resolvedDefinitions = definitions();
       const resolvedData = data();
       if (!plot) return;
-      suppressScale = true;
-      plot.batch(() => plot?.setData(alignedData(resolveRendererData(resolvedData, resolvedDefinitions), resolvedDefinitions), !zoomed()), true);
-      suppressScale = false;
-      if (keyboardIndex >= resolvedData.t.length) keyboardIndex = resolvedData.t.length - 1;
+      pendingRendererUpdate = Object.freeze({ data: resolvedData, definitions: resolvedDefinitions });
+      scheduleRendererUpdate();
     });
     createEffect(() => {
       const resolvedVisibility = visibility.values();
@@ -603,7 +643,7 @@ export function TimeSeries(props: TimeSeriesProps): JSX.Element {
     onCleanup(disposePlot);
   });
 
-  return <figure class={cn("sheen-time-series", props.class)} aria-busy={props.loading || undefined} data-enhanced={enhanced() || undefined} data-zoomed={zoomed() || undefined}>
+  return <figure class={cn("sheen-time-series", props.class)} aria-busy={props.loading || rendererPending() || undefined} data-enhanced={enhanced() || undefined} data-zoomed={zoomed() || undefined}>
     <figcaption class="sheen-chart-caption"><span class="sheen-chart-title">{label()}</span><span id={summaryId} class="sheen-chart-summary">{summary()}</span></figcaption>
     <div ref={plotHost} class="sheen-time-series-plot" role="img" aria-label={label()} aria-describedby={`${summaryId} ${instructionId}`}
       aria-keyshortcuts={props.tooltip === false ? undefined : "ArrowLeft ArrowRight Home End Escape"} tabIndex={props.tooltip === false ? undefined : 0}

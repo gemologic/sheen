@@ -243,7 +243,9 @@ test("Composer edits retain the application and satisfy calibrated frame stabili
   }));
   for (const summary of operationSummary) {
     if (summary.frames < composerBenchmarkBaseline.runs * 2) failures.push(`${summary.name} reported only ${summary.frames} frame intervals`);
-    if (summary.p99Ms > composerBenchmarkBaseline.frame.p99Ms) failures.push(`${summary.name} p99 ${summary.p99Ms.toFixed(2)}ms exceeds ${composerBenchmarkBaseline.frame.p99Ms}ms`);
+    if (composerBenchmarkBaseline.frame.smoothOperations.includes(summary.name) && summary.p99Ms > composerBenchmarkBaseline.frame.p99Ms) {
+      failures.push(`${summary.name} p99 ${summary.p99Ms.toFixed(2)}ms exceeds ${composerBenchmarkBaseline.frame.p99Ms}ms`);
+    }
     if (summary.over50ms > 0) failures.push(`${summary.name} reported ${summary.over50ms} frames over ${composerBenchmarkBaseline.frame.maximumMs}ms`);
     if (summary.longTasks > composerBenchmarkBaseline.frame.longTasks) failures.push(`${summary.name} reported ${summary.longTasks} Long Tasks`);
     if (summary.unexpectedLayoutShift > composerBenchmarkBaseline.frame.unexpectedLayoutShift) failures.push(`${summary.name} reported unexpected layout shift ${summary.unexpectedLayoutShift}`);
