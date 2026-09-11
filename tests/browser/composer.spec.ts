@@ -4,12 +4,14 @@ import type { Locator, Page } from "@playwright/test";
 
 async function ready(page: Page): Promise<void> {
   await expect(page.locator('[data-sheen-portal="root"]')).toHaveAttribute("data-sheen-ready", "true", { timeout: 15_000 });
+  const frame = page.locator('iframe[title="Editable AdminApp preview"]');
+  await expect(frame).toHaveAttribute("data-composer-ready", "true", { timeout: 15_000 });
   await expect(page.frameLocator('iframe[title="Editable AdminApp preview"]').locator(".sheen-admin-app")).toBeVisible();
 }
 
 async function choose(page: Page, label: string, option: string): Promise<void> {
   await page.getByRole("button", { name: new RegExp(`^${label} `, "u") }).click();
-  await page.getByRole("option", { name: option, exact: true }).click();
+  await page.getByRole("listbox").getByRole("option", { name: option, exact: true }).click();
 }
 
 test("Composer server starter and iframe owners hydrate without blank or replacement frames", async ({ page }) => {

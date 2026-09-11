@@ -225,6 +225,7 @@ export default function ComposerRoute(): JSX.Element {
   const [themeEdited, setThemeEdited] = createSignal(false);
   const [dragActive, setDragActive] = createSignal(false);
   const [dragReady, setDragReady] = createSignal(false);
+  const [previewReady, setPreviewReady] = createSignal(false);
   const [focusId, setFocusId] = createSignal<string>();
   const document = () => history().present;
   const selected = createMemo(() => {
@@ -242,6 +243,7 @@ export default function ComposerRoute(): JSX.Element {
   const sendPreview = (): void => {
     const targetWindow = frame?.contentWindow;
     if (!targetWindow) return;
+    setPreviewReady(false);
     const selectedNodeId = selectedId();
     const requestedFocusId = focusId();
     const state: ComposerPreviewState = {
@@ -390,8 +392,11 @@ export default function ComposerRoute(): JSX.Element {
       if (event.origin !== window.location.origin || event.source !== frame?.contentWindow) return;
       const message = readComposerPreviewMessage(event.data);
       if (!message) return;
-      if (message.kind === "sheen-composer-ready") sendPreview();
-      else if (message.kind === "sheen-composer-select") setSelectedId(message.id);
+      if (message.kind === "sheen-composer-ready") {
+        sendPreview();
+      } else if (message.kind === "sheen-composer-applied") {
+        if (message.revision === revision) setPreviewReady(true);
+      } else if (message.kind === "sheen-composer-select") setSelectedId(message.id);
       else safely(() => commit(moveComposerNode(document(), message.sourceId, message.destination), "Moved block with pointer drag.", message.sourceId));
     };
     window.addEventListener("message", receive);
@@ -514,7 +519,7 @@ export default function ComposerRoute(): JSX.Element {
         </div>
         <div class="loupe-composer-canvas-scroll" role="region" aria-label="Scrollable preview canvas" tabIndex={0}>
           <div class="loupe-composer-viewport" style={`--loupe-composer-width:${width() ?? 1440}px;--loupe-composer-height:${height() ?? 900}px`}>
-            <iframe ref={frame} title="Editable AdminApp preview" src="/composer-preview" onLoad={sendPreview} />
+            <iframe ref={frame} title="Editable AdminApp preview" src="/composer-preview" data-composer-ready={previewReady() || undefined} onLoad={sendPreview} />
             <div ref={dropTargets} class="loupe-composer-drop-targets" data-active={dragActive() || undefined} aria-hidden="true">
               <For each={contentRegions}>{region => <div data-composer-drop-region={region}><span>{regionLabels[region]}</span></div>}</For>
             </div>

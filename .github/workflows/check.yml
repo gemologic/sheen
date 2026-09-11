@@ -65,20 +65,35 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm build
-      - run: pnpm exec playwright test --config bench/playwright.config.ts
-      - run: pnpm exec playwright test --config bench/playwright.config.ts
+      - name: Table benchmark
+        id: benchmark_table
+        continue-on-error: true
+        run: pnpm exec playwright test --config bench/playwright.config.ts
+      - name: AdminApp benchmark
+        id: benchmark_admin
+        continue-on-error: true
+        run: pnpm exec playwright test --config bench/playwright.config.ts
         env:
           SHEEN_ADMIN_BENCHMARK: 'true'
           SHEEN_BENCHMARK_PORT: '4174'
-      - run: pnpm exec playwright test --config bench/playwright.config.ts
+      - name: Date benchmark
+        id: benchmark_date
+        continue-on-error: true
+        run: pnpm exec playwright test --config bench/playwright.config.ts
         env:
           SHEEN_DATE_BENCHMARK: 'true'
           SHEEN_BENCHMARK_PORT: '4175'
-      - run: pnpm exec playwright test --config bench/playwright.config.ts
+      - name: Chart benchmark
+        id: benchmark_chart
+        continue-on-error: true
+        run: pnpm exec playwright test --config bench/playwright.config.ts
         env:
           SHEEN_CHART_BENCHMARK: 'true'
           SHEEN_BENCHMARK_PORT: '4176'
-      - run: pnpm exec playwright test --config bench/playwright.config.ts
+      - name: Composer benchmark
+        id: benchmark_composer
+        continue-on-error: true
+        run: pnpm exec playwright test --config bench/playwright.config.ts
         env:
           SHEEN_COMPOSER_BENCHMARK: 'true'
           SHEEN_BENCHMARK_PORT: '4177'
@@ -88,3 +103,14 @@ jobs:
           name: application-benchmarks-${{ github.sha }}
           path: test-results/bench
           retention-days: 30
+      - name: Require every benchmark gate
+        if: >-
+          always() &&
+          (steps.benchmark_table.outcome != 'success' ||
+          steps.benchmark_admin.outcome != 'success' ||
+          steps.benchmark_date.outcome != 'success' ||
+          steps.benchmark_chart.outcome != 'success' ||
+          steps.benchmark_composer.outcome != 'success')
+        run: |
+          echo "::error::Benchmark outcomes: table=${{ steps.benchmark_table.outcome }}, admin=${{ steps.benchmark_admin.outcome }}, date=${{ steps.benchmark_date.outcome }}, chart=${{ steps.benchmark_chart.outcome }}, composer=${{ steps.benchmark_composer.outcome }}"
+          exit 1

@@ -31,7 +31,7 @@ test("dark default, live controls, and scoped dialog hydration", async ({ page }
   await expect(page.locator("html")).toHaveAttribute("data-sheen-accent", "jade");
   await expect(page.locator("html")).toHaveAttribute("data-sheen-icon-set", "radix");
   await expect(page.getByLabel("Theme", { exact: true })).toHaveCount(1);
-  await expect(page.getByLabel("Theme", { exact: true }).first().locator("option")).toHaveCount(6);
+  await expect(page.getByLabel("Theme", { exact: true }).first().locator("option")).toHaveCount(7);
   await expect(page.getByLabel("Accent", { exact: true })).toHaveCount(1);
   await expect(page.getByLabel("Accent", { exact: true }).first().locator("option")).toHaveCount(12);
   await expect(page.locator('.preview[data-sheen-accent="jade"]')).toHaveCount(1);

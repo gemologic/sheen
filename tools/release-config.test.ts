@@ -64,6 +64,16 @@ describe("release configuration", () => {
     assert.match(check, /changeset status --since="origin\/\$\{\{ github\.base_ref \}\}"/u);
   });
 
+  it("collects every benchmark result before failing the combined gate", async () => {
+    const check = await readFile(join(root, ".github", "workflows", "check.yml"), "utf8");
+    const profiles = ["table", "admin", "date", "chart", "composer"];
+    for (const profile of profiles) {
+      assert.ok(check.includes(`id: benchmark_${profile}\n        continue-on-error: true`));
+      assert.ok(check.includes(`steps.benchmark_${profile}.outcome != 'success'`));
+    }
+    assert.ok(check.indexOf("name: application-benchmarks-") < check.indexOf("name: Require every benchmark gate"));
+  });
+
   it("keeps npm publication manual, artifact-bound, and separately approved", async () => {
     const publish = await readFile(join(root, ".github", "workflows", "publish.yml"), "utf8");
     assert.match(publish, /^  workflow_dispatch:$/mu);

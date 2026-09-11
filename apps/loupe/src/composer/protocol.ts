@@ -21,6 +21,11 @@ export interface ComposerReadyMessage {
   readonly kind: "sheen-composer-ready";
 }
 
+export interface ComposerAppliedMessage {
+  readonly kind: "sheen-composer-applied";
+  readonly revision: number;
+}
+
 export interface ComposerSelectMessage {
   readonly kind: "sheen-composer-select";
   readonly id: string;
@@ -32,7 +37,7 @@ export interface ComposerDropMessage {
   readonly destination: ComposerDestination;
 }
 
-export type ComposerPreviewMessage = ComposerReadyMessage | ComposerSelectMessage | ComposerDropMessage;
+export type ComposerPreviewMessage = ComposerReadyMessage | ComposerAppliedMessage | ComposerSelectMessage | ComposerDropMessage;
 
 function record(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -60,6 +65,9 @@ export function readComposerStateMessage(value: unknown): ComposerPreviewState |
 export function readComposerPreviewMessage(value: unknown): ComposerPreviewMessage | undefined {
   if (!record(value) || typeof value.kind !== "string") return undefined;
   if (value.kind === "sheen-composer-ready") return { kind: "sheen-composer-ready" };
+  if (value.kind === "sheen-composer-applied" && typeof value.revision === "number" && Number.isSafeInteger(value.revision) && value.revision >= 0) {
+    return { kind: "sheen-composer-applied", revision: value.revision };
+  }
   if (value.kind === "sheen-composer-select" && typeof value.id === "string" && value.id.trim()) return { kind: "sheen-composer-select", id: value.id };
   if (value.kind !== "sheen-composer-drop" || typeof value.sourceId !== "string" || !record(value.destination) || !region(value.destination.region)
     || !Number.isSafeInteger(value.destination.index) || typeof value.destination.index !== "number"

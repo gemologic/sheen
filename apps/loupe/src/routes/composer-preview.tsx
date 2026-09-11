@@ -39,6 +39,7 @@ export default function ComposerPreviewRoute() {
       setTheme(state.theme);
       setSelectedId(state.selectedId);
       if (state.focusId) focusNode(state.focusId);
+      send({ kind: "sheen-composer-applied", revision: state.revision });
     };
     window.addEventListener("message", receive);
     send({ kind: "sheen-composer-ready" });

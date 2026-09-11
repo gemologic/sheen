@@ -140,7 +140,11 @@ describe("scaffold filesystem contract", () => {
 
 describe("scaffold generated output", () => {
   it("typechecks the component and theme templates against the real workspace contracts", () => {
-    const project = new Project({ tsConfigFilePath: new URL("tsconfig.json", workspace).pathname, compilerOptions: { noEmit: true } });
+    const project = new Project({
+      tsConfigFilePath: new URL("tsconfig.json", workspace).pathname,
+      skipAddingFilesFromTsConfig: true,
+      compilerOptions: { noEmit: true },
+    });
     const sources = [
       ...componentScaffold("CliContractProbe").map(file => project.createSourceFile(new URL(file.path, workspace).pathname, file.content, { overwrite: true })),
       ...themeScaffold("cli-contract-probe").map(file => project.createSourceFile(new URL(`apps/loupe/${file.path}`, workspace).pathname, file.content, { overwrite: true })),
@@ -161,7 +165,11 @@ describe("scaffold generated output", () => {
     const appRoot = join(root, "contract-app");
     await linkBuildDependencies(appRoot);
 
-    const project = new Project({ tsConfigFilePath: new URL("apps/loupe/tsconfig.json", workspace).pathname, compilerOptions: { noEmit: true } });
+    const project = new Project({
+      tsConfigFilePath: new URL("apps/loupe/tsconfig.json", workspace).pathname,
+      skipAddingFilesFromTsConfig: true,
+      compilerOptions: { noEmit: true },
+    });
     const sources = plan.filter(file => /(?:^|\/)(?:vite\.config|[^/]+)\.tsx?$/u.test(file.path)).map(file =>
       project.createSourceFile(new URL(`apps/loupe/.generated-contract/${file.path}`, workspace).pathname, file.content, { overwrite: true }));
     const generatedPaths = new Set(sources.map(source => source.getFilePath()));
