@@ -1,6 +1,6 @@
 {
   "name": "@gemologic/sheen-charts",
-  "version": "0.0.0",
+  "version": "0.1.0-rc.0",
   "description": "Accessible SVG and canvas chart components for the Sheen SolidJS design system.",
   "type": "module",
   "license": "MIT",
