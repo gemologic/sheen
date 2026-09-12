@@ -439,7 +439,8 @@ function driftFailures(current: TableNormalizedBaseline, history: readonly { rea
 test("calibrated table workloads stay within normalized and absolute frame gates", async ({ browser }) => {
   test.setTimeout(300_000);
   const cpuModel = cpus()[0]?.model ?? "unknown";
-  const compatibleHistory = compatibleTableBenchmarkHistory(cpuModel);
+  const runnerClass = process.env.GITHUB_ACTIONS === "true" ? process.env.SHEEN_BENCHMARK_RUNNER_CLASS ?? "github:unconfigured" : `local:${cpuModel}`;
+  const compatibleHistory = compatibleTableBenchmarkHistory(runnerClass);
   const runs: TableBenchmarkRun[] = [];
   for (let run = 0; run < tableBenchmarkBaseline.runs; run++) runs.push(await runOnce(browser));
 
@@ -485,7 +486,7 @@ test("calibrated table workloads stay within normalized and absolute frame gates
     schema: 2,
     recordedAt: new Date().toISOString(),
     commit: process.env.GITHUB_SHA ?? null,
-    environment: Object.freeze({ runner: process.env.RUNNER_NAME ?? "local", runnerOS: process.env.RUNNER_OS ?? platform(), runnerImage: process.env.ImageOS ?? null, runnerImageVersion: process.env.ImageVersion ?? null, node: process.version, osRelease: release(), cpuCount: cpus().length, cpuModel, memoryBytes: totalmem(), browser: browser.version(), playwright: tableBenchmarkBaseline.playwright }),
+    environment: Object.freeze({ runner: process.env.RUNNER_NAME ?? "local", runnerClass, runnerOS: process.env.RUNNER_OS ?? platform(), runnerImage: process.env.ImageOS ?? null, runnerImageVersion: process.env.ImageVersion ?? null, node: process.version, osRelease: release(), cpuCount: cpus().length, cpuModel, memoryBytes: totalmem(), browser: browser.version(), playwright: tableBenchmarkBaseline.playwright }),
     fixture: tableBenchmarkFixture,
     baseline: tableBenchmarkBaseline,
     selectedBaselineVersion: latest.version,

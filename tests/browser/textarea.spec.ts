@@ -47,6 +47,9 @@ test("textarea remeasures wrapping and restores native reset geometry", async ({
   await page.getByRole("button", { name: "Toggle width" }).click();
   await expect.poll(height).toBeGreaterThan(wide);
   await page.getByRole("button", { name: "Toggle density" }).click();
+  const compactScope = page.locator('[data-sheen-density="compact"]');
+  await expect(compactScope.getByRole("textbox", { name: "Reset notes" })).toBeVisible();
+  await page.evaluate(() => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));
   await expect(textarea).toHaveValue("A long sentence that wraps across the available width. ".repeat(5));
   const resettable = page.getByRole("textbox", { name: "Reset notes" });
   const resetHeight = () => resettable.evaluate(element => element.getBoundingClientRect().height);

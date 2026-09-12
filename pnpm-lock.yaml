@@ -5,7 +5,7 @@ settings:
   excludeLinksFromLockfile: false
 
 patchedDependencies:
-  '@kobalte/core@0.13.13': 693bf7913af5977cae28696ca55ba3aea36352304bfe31341b08ecbd3f43865c
+  '@kobalte/core@0.13.13': 2df04162d37a481acd8350ebf750d510a2582d00610f29441e36e10e0a87abcb
   '@kobalte/utils@0.9.2': 28f4fc8fe813b69191dd388bed07f79c2f836d95a2780d4b10d847123a0a5b95
   solid-js@1.9.15: 81363d487d52081be46982e56d8a2bde11c4e032ac4b5899bd93e5aa55788720
 
@@ -243,13 +243,13 @@ importers:
         version: link:../tokens
       '@kobalte/core':
         specifier: 0.13.13
-        version: 0.13.13(patch_hash=693bf7913af5977cae28696ca55ba3aea36352304bfe31341b08ecbd3f43865c)(solid-js@1.9.15(patch_hash=81363d487d52081be46982e56d8a2bde11c4e032ac4b5899bd93e5aa55788720))
+        version: 0.13.13(patch_hash=2df04162d37a481acd8350ebf750d510a2582d00610f29441e36e10e0a87abcb)(solid-js@1.9.15(patch_hash=81363d487d52081be46982e56d8a2bde11c4e032ac4b5899bd93e5aa55788720))
       clsx:
         specifier: 2.1.1
         version: 2.1.1
       cmdk-solid:
         specifier: 1.2.0
-        version: 1.2.0(@kobalte/core@0.13.13(patch_hash=693bf7913af5977cae28696ca55ba3aea36352304bfe31341b08ecbd3f43865c)(solid-js@1.9.15(patch_hash=81363d487d52081be46982e56d8a2bde11c4e032ac4b5899bd93e5aa55788720)))(solid-js@1.9.15(patch_hash=81363d487d52081be46982e56d8a2bde11c4e032ac4b5899bd93e5aa55788720))
+        version: 1.2.0(@kobalte/core@0.13.13(patch_hash=2df04162d37a481acd8350ebf750d510a2582d00610f29441e36e10e0a87abcb)(solid-js@1.9.15(patch_hash=81363d487d52081be46982e56d8a2bde11c4e032ac4b5899bd93e5aa55788720)))(solid-js@1.9.15(patch_hash=81363d487d52081be46982e56d8a2bde11c4e032ac4b5899bd93e5aa55788720))
     devDependencies:
       '@formisch/solid':
         specifier: 1.0.0
@@ -3108,7 +3108,7 @@ snapshots:
 
   '@keyv/serialize@1.1.1': {}
 
-  '@kobalte/core@0.13.13(patch_hash=693bf7913af5977cae28696ca55ba3aea36352304bfe31341b08ecbd3f43865c)(solid-js@1.9.15(patch_hash=81363d487d52081be46982e56d8a2bde11c4e032ac4b5899bd93e5aa55788720))':
+  '@kobalte/core@0.13.13(patch_hash=2df04162d37a481acd8350ebf750d510a2582d00610f29441e36e10e0a87abcb)(solid-js@1.9.15(patch_hash=81363d487d52081be46982e56d8a2bde11c4e032ac4b5899bd93e5aa55788720))':
     dependencies:
       '@floating-ui/dom': 1.8.0
       '@internationalized/number': 3.6.8
@@ -4360,9 +4360,9 @@ snapshots:
 
   clsx@2.1.1: {}
 
-  cmdk-solid@1.2.0(@kobalte/core@0.13.13(patch_hash=693bf7913af5977cae28696ca55ba3aea36352304bfe31341b08ecbd3f43865c)(solid-js@1.9.15(patch_hash=81363d487d52081be46982e56d8a2bde11c4e032ac4b5899bd93e5aa55788720)))(solid-js@1.9.15(patch_hash=81363d487d52081be46982e56d8a2bde11c4e032ac4b5899bd93e5aa55788720)):
+  cmdk-solid@1.2.0(@kobalte/core@0.13.13(patch_hash=2df04162d37a481acd8350ebf750d510a2582d00610f29441e36e10e0a87abcb)(solid-js@1.9.15(patch_hash=81363d487d52081be46982e56d8a2bde11c4e032ac4b5899bd93e5aa55788720)))(solid-js@1.9.15(patch_hash=81363d487d52081be46982e56d8a2bde11c4e032ac4b5899bd93e5aa55788720)):
     dependencies:
-      '@kobalte/core': 0.13.13(patch_hash=693bf7913af5977cae28696ca55ba3aea36352304bfe31341b08ecbd3f43865c)(solid-js@1.9.15(patch_hash=81363d487d52081be46982e56d8a2bde11c4e032ac4b5899bd93e5aa55788720))
+      '@kobalte/core': 0.13.13(patch_hash=2df04162d37a481acd8350ebf750d510a2582d00610f29441e36e10e0a87abcb)(solid-js@1.9.15(patch_hash=81363d487d52081be46982e56d8a2bde11c4e032ac4b5899bd93e5aa55788720))
       solid-js: 1.9.15(patch_hash=81363d487d52081be46982e56d8a2bde11c4e032ac4b5899bd93e5aa55788720)
 
   code-block-writer@13.0.3: {}

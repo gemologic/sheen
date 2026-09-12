@@ -16,11 +16,9 @@ describe("table benchmark baseline", () => {
     for (const value of values) expect(Number.isFinite(value) && value > 0 && value < 50).toBe(true);
   });
 
-  it("compares only baselines captured on the current CPU family", () => {
-    expect(compatibleTableBenchmarkHistory("AMD EPYC 7763 64-Core Processor").map(entry => entry.version)).toEqual([3]);
-    expect(compatibleTableBenchmarkHistory("AMD EPYC 9V74 96-Core Processor").map(entry => entry.version)).toEqual([4]);
-    expect(compatibleTableBenchmarkHistory("AMD EPYC 9V45 96-Core Processor").map(entry => entry.version)).toEqual([4]);
-    expect(compatibleTableBenchmarkHistory("AMD Ryzen Threadripper 9960X 24-Cores").map(entry => entry.version)).toEqual([2]);
-    expect(() => compatibleTableBenchmarkHistory("unknown runner")).toThrow("No table benchmark baseline matches CPU model");
+  it("compares baselines captured on the declared runner class", () => {
+    expect(compatibleTableBenchmarkHistory("ubuntu-24.04").map(entry => entry.version)).toEqual([3, 4]);
+    expect(compatibleTableBenchmarkHistory("local:AMD Ryzen Threadripper 9960X 24-Cores").map(entry => entry.version)).toEqual([2]);
+    expect(() => compatibleTableBenchmarkHistory("unknown runner")).toThrow("No table benchmark baseline matches runner class");
   });
 });

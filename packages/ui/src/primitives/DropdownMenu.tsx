@@ -196,12 +196,20 @@ export function DropdownMenu(props: DropdownMenuProps): JSX.Element {
   };
   createEffect(() => { if (open()) onCleanup(theme.layers.register(id)); });
   const layer = createMemo<number>(previous => open() ? theme.layers.zIndex(id) : previous ?? 100);
+  const closeAutoFocus = (event: Event) => {
+    props.onCloseAutoFocus?.(event);
+    if (event.defaultPrevented) return;
+    const active = trigger?.ownerDocument.activeElement;
+    const body = trigger?.ownerDocument.body;
+    const root = trigger?.ownerDocument.documentElement;
+    if (active && active !== body && active !== root && active !== trigger && !content()?.contains(active)) event.preventDefault();
+  };
   return <Primitive.Root open={open()} onOpenChange={change} modal={false} gutter={6} placement={props.placement ?? "bottom-start"}>
     <MenuTrigger label={props.triggerLabel} disabled={props.disabled ?? false} setTrigger={element => { trigger = element; }}>{props.trigger}</MenuTrigger>
     <Show when={theme.portal()}>{target => <Primitive.Portal mount={target()}>
       <Primitive.Content ref={setContent} class={cn("sheen-menu", props.class)} data-kb-top-layer="true" data-match-trigger-width={props.matchTriggerWidth || undefined} aria-hidden={!open() || undefined} inert={!open()} style={{ "z-index": layer() }}
         onOpenAutoFocus={event => event.preventDefault()}
-        onCloseAutoFocus={event => props.onCloseAutoFocus?.(event)}
+        onCloseAutoFocus={closeAutoFocus}
         onKeyDown={event => {
           if (!event.defaultPrevented && event.key === "Escape" && open() && theme.layers.isTop(id)) { event.preventDefault(); trigger?.focus({ preventScroll: true }); change(false); }
         }}

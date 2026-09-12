@@ -6,6 +6,22 @@ diff --git a/dist/chunk/V25KEN4T.jsx b/dist/chunk/V25KEN4T.jsx
      local.onCloseAutoFocus?.(e);
 +    if (e.defaultPrevented) return;
      if (context.modal()) {
+diff --git a/dist/chunk/3565MS4H.jsx b/dist/chunk/3565MS4H.jsx
+--- a/dist/chunk/3565MS4H.jsx
++++ b/dist/chunk/3565MS4H.jsx
+@@ -61,3 +61,4 @@
+   const onCloseAutoFocus = (e) => {
+     local.onCloseAutoFocus?.(e);
++    if (e.defaultPrevented) return;
+     if (!hasInteractedOutside) {
+diff --git a/dist/chunk/JEP7F7FN.js b/dist/chunk/JEP7F7FN.js
+--- a/dist/chunk/JEP7F7FN.js
++++ b/dist/chunk/JEP7F7FN.js
+@@ -36,3 +36,4 @@
+   const onCloseAutoFocus = (e) => {
+     local.onCloseAutoFocus?.(e);
++    if (e.defaultPrevented) return;
+     if (!hasInteractedOutside) {
 diff --git a/dist/chunk/27MLNS66.js b/dist/chunk/27MLNS66.js
 --- a/dist/chunk/27MLNS66.js
 +++ b/dist/chunk/27MLNS66.js

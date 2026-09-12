@@ -66,6 +66,9 @@ describe("release configuration", () => {
 
   it("collects every benchmark result before failing the combined gate", async () => {
     const check = await readFile(join(root, ".github", "workflows", "check.yml"), "utf8");
+    const benchmark = check.slice(check.indexOf("  benchmark:\n"));
+    assert.match(benchmark, /^  benchmark:\n    runs-on: ubuntu-24\.04\n/u);
+    assert.match(benchmark, /^    env:\n      SHEEN_BENCHMARK_RUNNER_CLASS: ubuntu-24\.04$/mu);
     const profiles = ["table", "admin", "date", "chart", "composer"];
     for (const profile of profiles) {
       assert.ok(check.includes(`id: benchmark_${profile}\n        continue-on-error: true`));
