@@ -141,6 +141,9 @@ export function Toolbar(props: ToolbarProps): JSX.Element {
   const keydown: JSX.EventHandler<HTMLDivElement, KeyboardEvent> = event => {
     if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey || !(event.target instanceof HTMLButtonElement)) return;
     if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+    // A key can arrive after resize/focusout but before the scheduled allocation frame.
+    if (frame !== undefined) actions?.ownerDocument.defaultView?.cancelAnimationFrame(frame);
+    measure();
     const entries = buttons();
     const index = entries.indexOf(event.target);
     if (index < 0) return;

@@ -219,6 +219,37 @@ test("queued overflow activation survives hydration and reaches the original act
   } finally { release(); }
 });
 
+test("arrow navigation uses the expanded layout before its scheduled measurement", async ({ page }) => {
+  await page.goto("/toolbar");
+  const toolbar = page.getByRole("toolbar", { name: "Document actions", exact: true });
+  await expect(toolbar.getByRole("button", { name: "Wrap lines", exact: true })).toBeVisible();
+  await toolbar.evaluate(element => {
+    const container = element.closest(".sheen-toolbar")?.parentElement;
+    if (!(container instanceof HTMLElement)) throw new Error("Expected a toolbar width container");
+    const group = element.querySelector(".sheen-toolbar-group-content");
+    const overflow = element.querySelector(".sheen-toolbar-overflow > button");
+    if (!(group instanceof HTMLElement) || !(overflow instanceof HTMLButtonElement)) throw new Error("Expected measured toolbar actions");
+    const style = getComputedStyle(element);
+    const width = group.getBoundingClientRect().width + overflow.getBoundingClientRect().width +
+      Number.parseFloat(style.columnGap) + Number.parseFloat(style.paddingInlineStart) + Number.parseFloat(style.paddingInlineEnd) + 1;
+    container.style.width = `${width}px`;
+  });
+  const save = toolbar.getByRole("button", { name: "Save document", exact: true });
+  await expect(save).toBeVisible();
+  await expect(toolbar.getByRole("button", { name: "Copy selection", exact: true })).toHaveCount(0);
+  await save.evaluate(element => {
+    if (!(element instanceof HTMLButtonElement)) throw new Error("Expected the Save action");
+    const container = element.closest(".sheen-toolbar")?.parentElement;
+    if (!(container instanceof HTMLElement)) throw new Error("Expected a toolbar width container");
+    container.style.width = "800px";
+    element.focus();
+    element.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true, cancelable: true }));
+  });
+  await expect(toolbar.getByRole("button", { name: "Copy selection", exact: true })).toBeFocused();
+  await expect(toolbar.getByRole("button", { name: "More actions", exact: true })).toHaveCount(0);
+  await expect(toolbar.locator('button[tabindex="0"]')).toHaveCount(1);
+});
+
 test("resize transfers a disappearing action's focus to overflow and RTL leaves filter editing native", async ({ page }) => {
   await page.goto("/toolbar");
   const toolbar = page.getByRole("toolbar", { name: "Document actions", exact: true });

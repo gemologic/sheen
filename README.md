@@ -25,6 +25,8 @@ sheen-browser
 
 On Ubuntu, CI uses `playwright install --with-deps chromium` and `pnpm test:browser` directly. Do not substitute a different installed Chromium for the pinned test browser.
 
+Loupe handles disconnected requests before Vite's global error overlay. See [development request cancellation](docs/dev-request-cancellation.md) for the narrow cancellation boundary and real-server regressions.
+
 Build and inspect the exact static GitHub Pages artifact with:
 
 ```sh

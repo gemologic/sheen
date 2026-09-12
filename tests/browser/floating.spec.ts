@@ -1,5 +1,22 @@
 import { expect, test } from "@playwright/test";
 
+test("a nested popover closed before deferred autofocus retains its trigger focus", async ({ page }) => {
+  await page.goto("/floating");
+  await page.getByRole("button", { name: "Open view options", exact: true }).click();
+  const popover = page.getByRole("dialog", { name: "View options", exact: true });
+  await expect(popover.getByRole("textbox", { name: "View name" })).toBeFocused();
+  const trigger = popover.getByRole("button", { name: "Open nested options", exact: true });
+  await trigger.evaluate(element => {
+    if (!(element instanceof HTMLButtonElement)) throw new Error("Expected a popover trigger");
+    element.focus();
+    element.click();
+    element.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true, cancelable: true }));
+  });
+  await expect(page.getByRole("dialog", { name: "Nested options", exact: true })).toHaveCount(0);
+  await expect(trigger).toBeFocused();
+  await expect(popover).toBeVisible();
+});
+
 test("Closing a nested popover restores focus and releases Escape during its exit animation", async ({ page }) => {
   await page.goto("/floating");
   const trigger = page.getByRole("button", { name: "Open view options", exact: true });
@@ -75,7 +92,9 @@ test("Popover preserves drafts, unwinds nested layers, and respects controlled r
   await expect(popover).toHaveAccessibleDescription("Updated without replacing your draft.");
   const nestedTrigger = popover.getByRole("button", { name: "Open nested options" });
   await nestedTrigger.click();
-  await expect(page.getByRole("dialog", { name: "Nested options", exact: true })).toBeVisible();
+  const nested = page.getByRole("dialog", { name: "Nested options", exact: true });
+  await expect(nested).toBeVisible();
+  await expect(nested.getByRole("textbox", { name: "Nested value" })).toBeFocused();
   await page.keyboard.press("Escape");
   await expect(nestedTrigger).toBeFocused();
   await expect(popover).toBeVisible();
