@@ -35,6 +35,16 @@ describe("client sorting", () => {
     expect(sortClientRows(rows, [{ column: "amount", direction: "asc" }], columns, options)).toEqual([rows[4], rows[1], rows[0], rows[2], rows[3], rows[5], rows[6], rows[7]]);
     expect(sortClientRows(rows, [{ column: "amount", direction: "desc" }], columns, options)).toEqual([rows[1], rows[4], rows[0], rows[2], rows[3], rows[5], rows[6], rows[7]]);
   });
+  it("continues to secondary keys for identical and collation-equivalent text", () => {
+    const rows = [
+      { name: "item1", amount: 1 }, { name: "item01", amount: 3 }, { name: "item1", amount: 2 },
+      { name: "é", amount: 1 }, { name: "e\u0301", amount: 2 }, { name: "item1", amount: 2 },
+    ];
+    const result = sortClientRows(rows, [{ column: "name", direction: "asc" }, { column: "amount", direction: "desc" }], columns, options);
+    expect(result).toEqual([rows[4], rows[3], rows[1], rows[2], rows[5], rows[0]]);
+    expect(result[3]).toBe(rows[2]);
+    expect(result[4]).toBe(rows[5]);
+  });
   it("uses explicit locale collation and natural embedded-number order", () => {
     const state: SortState = [{ column: "name", direction: "asc" }];
     const rows = ["z", "ä", "a", "item10", "item2", ""].map(name => ({ name }));

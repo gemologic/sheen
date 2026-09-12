@@ -1,5 +1,6 @@
 import { parseFilter } from "./filter.ts";
 import type { FilterColumn, FilterNode } from "./filter.ts";
+import { createTextNormalizer } from "./text-normalization.ts";
 
 export interface FilterEvaluation<Row> {
   readonly locale: string;
@@ -8,7 +9,7 @@ export interface FilterEvaluation<Row> {
 
 /** Validate and compile once per filter/schema/locale change, not once per row. */
 export function compileFilter<Row>(filter: FilterNode, columns: readonly FilterColumn[], options: FilterEvaluation<Row>): (row: Row) => boolean {
-  const locale = Intl.getCanonicalLocales(options.locale)[0];
+  const locale = Intl.getCanonicalLocales(options.locale)[0] ?? "";
   if (!locale) throw new Error("Filter evaluation requires an explicit locale");
   const getValue = options.getValue;
   function compile(node: FilterNode): (row: Row) => boolean {
@@ -30,7 +31,7 @@ export function compileFilter<Row>(filter: FilterNode, columns: readonly FilterC
         return value === null || value === undefined || value === "";
       };
       case "text": {
-        const normalize = node.caseSensitive ? (value: string) => value.normalize("NFC") : (value: string) => value.normalize("NFC").toLocaleLowerCase(locale).normalize("NFC");
+        const normalize = createTextNormalizer(locale, node.caseSensitive);
         const needle = normalize(node.value);
         const match = (value: string) => {
           switch (node.operator) {

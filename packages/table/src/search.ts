@@ -1,3 +1,5 @@
+import { createTextNormalizer } from "./text-normalization.ts";
+
 export interface SearchEvaluation<Row> {
   readonly locale: string;
   readonly columns: readonly string[];
@@ -65,7 +67,7 @@ function prepareSearch<Row>(query: string, options: SearchEvaluation<Row>): Prep
   if (!locale) throw new Error("Search requires an explicit locale");
   const columns = [...options.columns];
   if (columns.some(column => typeof column !== "string" || !column.trim()) || new Set(columns).size !== columns.length) throw new Error("Search columns must be unique nonempty IDs");
-  const normalize = (value: string): string => value.normalize("NFC").toLocaleLowerCase(locale).normalize("NFC");
+  const normalize = createTextNormalizer(locale);
   const parsed = parseSearchQuery(query, options.exactMatch ?? false);
   const normalized = normalize(parsed.value);
   const terms = parsed.mode === "exact" ? (normalized ? [normalized] : []) : [...new Set(normalized.split(/\s+/u).filter(Boolean))];

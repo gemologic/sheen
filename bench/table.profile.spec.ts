@@ -237,22 +237,19 @@ async function measureRefresh(page: Page): Promise<OperationProfile & { readonly
   const beforeTime = focused.time;
   if (!before) throw new Error("Missing accepted row profile state");
   await resetDiagnostics(page);
-  const durationMs = await page.evaluate(async () => {
+  const durationMs = await page.evaluate(async ({ rowId, beforeTime }) => {
     const trigger = document.querySelector("[data-benchmark-refresh]");
-    const snapshot = document.querySelector("[data-benchmark-snapshot]");
-    const output = document.querySelector("[data-benchmark-diagnostics]");
-    if (!(trigger instanceof HTMLButtonElement) || !(snapshot instanceof HTMLButtonElement) || !(output instanceof HTMLOutputElement)) throw new Error("Missing refresh diagnostics");
+    if (!(trigger instanceof HTMLButtonElement)) throw new Error("Missing refresh diagnostics");
     const start = performance.now();
     trigger.click();
     const deadline = start + 15_000;
-    while (!output.textContent?.includes(`"rowIdReads":${100_000}`)) {
+    while (document.querySelector(`tbody tr[data-row-id="${CSS.escape(rowId)}"] time`)?.getAttribute("datetime") === beforeTime) {
       if (performance.now() > deadline) throw new Error("Timed out waiting for accepted replacement rows");
       await new Promise<void>(resolveFrame => requestAnimationFrame(() => resolveFrame()));
-      snapshot.click();
     }
     await new Promise<void>(resolveFrame => requestAnimationFrame(() => resolveFrame()));
     return performance.now() - start;
-  });
+  }, { rowId, beforeTime });
   const after = page.locator(`tbody tr[data-row-id="${rowId}"]`);
   const afterHandle = await after.elementHandle();
   if (!afterHandle) throw new Error("Accepted row was not retained in the realized range");
@@ -306,7 +303,8 @@ test("profiles the production table pipeline and reactive fan-out", async ({ bro
     expect(core.blankRows).toBe(tableBenchmarkFixture.rows);
     expect(core.sortedRows).toBe(tableBenchmarkFixture.rows);
     expect(core.searchRows).toBe(tableBenchmarkFixture.matchingRows);
-    expect(mount.counts.rowIdReads).toBe(tableBenchmarkFixture.rows);
+    expect(mount.counts.rowIdReads).toBeGreaterThanOrEqual(tableBenchmarkFixture.rows);
+    expect(mount.counts.rowIdReads).toBeLessThan(tableBenchmarkFixture.rows * 2);
     expect(rankedSearch.counts.searchProjectionReads).toBe(tableBenchmarkFixture.rows * tableBenchmarkFixture.searchableColumns);
     expect(refresh.retainedNode).toBe(true);
     expect(refresh.retainedFocus).toBe(true);

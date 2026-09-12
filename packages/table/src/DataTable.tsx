@@ -557,6 +557,7 @@ export function DataTable<Row extends object>(props: DataTableProps<Row>): JSX.E
   const schema = columnStateSchema(props.columns);
   const tableId = createUniqueId();
   const theme = useTheme();
+  const locale = createMemo(() => theme.state().locale);
   const messages = createMemo(() => resolveTableMessages(theme.messages()));
   const definitions = readColumnDefinitions(props.columns);
   const definitionById = new Map(definitions.map(column => [column.id, column]));
@@ -633,7 +634,7 @@ export function DataTable<Row extends object>(props: DataTableProps<Row>): JSX.E
     return column?.search?.(row) ?? null;
   };
   const clientView = createMemo<ClientView<Row> | undefined>(() => props.mode === "server" ? undefined : createClientView(props.data ?? [], clientState(), {
-    locale: theme.state().locale,
+    locale: locale(),
     searchColumns: searchableDefinitions.map(column => column.id),
     exactMatch: searchOptions?.exactMatch ?? false,
     filterColumns: schema.filterColumns,
@@ -891,7 +892,7 @@ export function DataTable<Row extends object>(props: DataTableProps<Row>): JSX.E
     flatDisplayCache.set(row.id, created);
     return created;
   }
-  const groupNumberFormatter = createMemo(() => new Intl.NumberFormat(theme.state().locale));
+  const groupNumberFormatter = createMemo(() => new Intl.NumberFormat(locale()));
   function groupLabel(group: ClientRowGroup<Row>): string {
     const supplied = props.grouping?.getLabel?.(group.value);
     const label = supplied ?? (group.value === null ? messages().groupMissing : typeof group.value === "number" ? groupNumberFormatter().format(group.value) : String(group.value));
@@ -1229,7 +1230,7 @@ export function DataTable<Row extends object>(props: DataTableProps<Row>): JSX.E
     try {
       const view = clientView()?.view ?? [];
       const payload = selectionActive() ? selectionPayload() : undefined;
-      const rows = payload ? selectClientRows(view, payload, { locale: theme.state().locale, filterColumns: schema.filterColumns, getRowId: props.getRowId, getValue }) : view;
+      const rows = payload ? selectClientRows(view, payload, { locale: locale(), filterColumns: schema.filterColumns, getRowId: props.getRowId, getValue }) : view;
       const exported = createClientExport(rows, visibleDefinitions().flatMap(column => column.definition.accessor
         ? [{ id: column.definition.id, header: column.definition.header, value: column.definition.accessor }]
         : []));
@@ -1273,7 +1274,7 @@ export function DataTable<Row extends object>(props: DataTableProps<Row>): JSX.E
     disabled: pending() || exportPending(),
     onSelect: () => requestExport(format),
   })));
-  const resultNumber = createMemo(() => new Intl.NumberFormat(theme.state().locale));
+  const resultNumber = createMemo(() => new Intl.NumberFormat(locale()));
   const resultCount = () => {
     if (!acceptedAvailable()) return undefined;
     const total = result().total;

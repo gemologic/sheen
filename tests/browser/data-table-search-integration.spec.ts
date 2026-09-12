@@ -7,6 +7,38 @@ async function ready(page: Page): Promise<void> {
   await expect(page.locator('[data-sheen-portal="root"]')).toHaveAttribute("data-sheen-ready", "true");
 }
 
+test("color-only theme updates do not rescan the client query, while locale updates do", async ({ page }) => {
+  await page.goto("/table-benchmark?profile=true");
+  await ready(page);
+  const activate = async (control: string) => page.locator(`[data-benchmark-${control}]`).evaluate(element => {
+    if (!(element instanceof HTMLButtonElement)) throw new Error("Expected a benchmark control");
+    element.click();
+  });
+  await activate("mount");
+  const search = page.getByRole("searchbox", { name: "Search Benchmark accounts", exact: true });
+  await search.fill("needle");
+  const table = page.getByRole("table", { name: "Benchmark accounts", exact: true });
+  await expect(table).toHaveAttribute("aria-rowcount", "1001");
+  const row = table.locator("tbody tr[data-row-id]").first();
+  await row.evaluate(element => element.setAttribute("data-query-theme-retained", "true"));
+  await activate("reset");
+  await activate("theme");
+  await expect(page.locator(".loupe-table-benchmark-scope")).toHaveAttribute("data-sheen-theme", "graphite");
+  await page.evaluate(() => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));
+  await activate("snapshot");
+  const diagnostics = page.locator("[data-benchmark-diagnostics]");
+  await expect(diagnostics).toHaveText(/"searchProjectionReads":0,/u);
+  await expect(row).toHaveAttribute("data-query-theme-retained", "true");
+  await expect(search).toBeFocused();
+  await activate("locale");
+  await expect(page.locator(".loupe-table-benchmark-scope")).toHaveAttribute("lang", "tr-TR");
+  await activate("snapshot");
+  await expect(diagnostics).toHaveText(/"searchProjectionReads":300000,/u);
+  await expect(table).toHaveAttribute("aria-rowcount", "1001");
+  await expect(row).toHaveAttribute("data-query-theme-retained", "true");
+  await expect(search).toBeFocused();
+});
+
 function searchField(scope: Locator, name: string): Locator {
   return scope.getByRole("searchbox", { name, exact: true });
 }

@@ -39,7 +39,7 @@ export function sortClientRows<Row>(rows: readonly Row[], sorting: SortState, co
   if (!locale) throw new Error("Sorting requires an explicit locale");
   if (Intl.Collator.supportedLocalesOf([locale]).length === 0) throw new Error(`Unsupported sort locale: ${locale}`);
   if (state.length === 0) return rows;
-  const collator = new Intl.Collator(locale, { usage: "sort", sensitivity: "variant", numeric: true });
+  const compareText = new Intl.Collator(locale, { usage: "sort", sensitivity: "variant", numeric: true }).compare;
   const schema = new Map(columns.map(column => [column.id, column.type]));
   const keys = state.map(entry => ({ ...entry, type: schema.get(entry.column) }));
   const decorated = rows.map((row, index) => ({ row, index, values: keys.map(key => {
@@ -51,9 +51,10 @@ export function sortClientRows<Row>(rows: readonly Row[], sorting: SortState, co
     for (let index = 0; index < keys.length; index++) {
       const left = a.values[index];
       const right = b.values[index];
+      if (left === right) continue;
       if (left === null || left === undefined) { if (right !== null && right !== undefined) return 1; continue; }
       if (right === null || right === undefined) return -1;
-      const order = typeof left === "string" && typeof right === "string" ? collator.compare(left, right) : left < right ? -1 : left > right ? 1 : 0;
+      const order = typeof left === "string" && typeof right === "string" ? compareText(left, right) : left < right ? -1 : left > right ? 1 : 0;
       if (order !== 0) return keys[index]?.direction === "desc" ? -order : order;
     }
     return a.index - b.index;

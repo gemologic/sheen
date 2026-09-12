@@ -1,4 +1,5 @@
 import { ThemeScope } from "@gemologic/sheen";
+import type { ThemeOverrides } from "@gemologic/sheen";
 import { DataTable, createClientView, defineColumns } from "@gemologic/sheen-table";
 import type { ClientViewOptions, ClientViewState, ColumnValue, FilterNode, SheenColumns, SortColumn } from "@gemologic/sheen-table";
 import { Show, createSignal, onMount } from "solid-js";
@@ -144,6 +145,7 @@ export default function TableBenchmarkFixture() {
   const [mounted, setMounted] = createSignal(false);
   const [ready, setReady] = createSignal(false);
   const [data, setData] = createSignal(rows);
+  const [scopeOverrides, setScopeOverrides] = createSignal<ThemeOverrides>({});
   const [reportedCounts, setReportedCounts] = createSignal<BenchmarkCounts>(emptyCounts());
   const [coreProfile, setCoreProfile] = createSignal<CoreProfile>();
   const counts: MutableBenchmarkCounts = { accessorReads: 0, searchProjectionReads: 0, cellRenders: 0, rowIdReads: 0 };
@@ -172,10 +174,12 @@ export default function TableBenchmarkFixture() {
       <button type="button" hidden data-benchmark-reset onClick={() => resetCounts(counts)}>Reset diagnostics</button>
       <button type="button" hidden data-benchmark-snapshot onClick={() => setReportedCounts(snapshotCounts(counts))}>Snapshot diagnostics</button>
       <button type="button" hidden data-benchmark-core-profile onClick={() => setCoreProfile(profileCore())}>Profile core processing</button>
+      <button type="button" hidden data-benchmark-theme onClick={() => setScopeOverrides(current => ({ ...current, theme: "graphite" }))}>Change benchmark theme</button>
+      <button type="button" hidden data-benchmark-locale onClick={() => setScopeOverrides(current => ({ ...current, locale: "tr-TR" }))}>Change benchmark locale</button>
       <output hidden data-benchmark-diagnostics>{JSON.stringify({ counts: reportedCounts(), core: coreProfile() ?? null })}</output>
     </div>
     <section class="loupe-table-benchmark-surface" aria-label="Table benchmark surface">
-      <ThemeScope density="compact" class="loupe-table-benchmark-scope">
+      <ThemeScope {...scopeOverrides()} density="compact" class="loupe-table-benchmark-scope">
         <Show when={mounted()}><DataTable data={data()} columns={columns} getRowId={getRowId} caption="Benchmark accounts" pagination={false} variant="integrated" search={{ debounce: 0 }}
           initialViewportHeight={tableBenchmarkFixture.viewport.tableHeight} export={false} columnControls={false} onRowActivate={() => {}} /></Show>
       </ThemeScope>
