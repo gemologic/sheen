@@ -1,5 +1,14 @@
 # @gemologic/sheen-charts
 
+## 0.1.0-rc.1
+
+### Patch Changes
+
+- 4c53735: Reuse number/date formatters and SVG chart models across color-only theme changes. Locale changes still rebuild localized formatting. Read each requested theme token only once per scope redraw, even when many charts subscribe. Tighten production benchmark sampling and scoped revision checks without changing performance budgets or baselines.
+- Updated dependencies [4c53735]
+- Updated dependencies [4c53735]
+  - @gemologic/sheen@0.1.0-rc.1
+
 ## 0.1.0-rc.0
 
 ### Minor Changes

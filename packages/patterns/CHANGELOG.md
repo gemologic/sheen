@@ -1,5 +1,14 @@
 # @gemologic/sheen-patterns
 
+## 0.1.0-rc.1
+
+### Patch Changes
+
+- 08f2a63: Resolve Toolbar keyboard navigation against the current measured layout, including keys arriving before the resize allocation frame. Preserve overflow focus, open-menu freezing, and native filter editing.
+- Updated dependencies [4c53735]
+- Updated dependencies [4c53735]
+  - @gemologic/sheen@0.1.0-rc.1
+
 ## 0.1.0-rc.0
 
 ### Minor Changes

@@ -1,5 +1,13 @@
 # @gemologic/sheen-code
 
+## 0.1.0-rc.1
+
+### Patch Changes
+
+- Updated dependencies [4c53735]
+- Updated dependencies [4c53735]
+  - @gemologic/sheen@0.1.0-rc.1
+
 ## 0.1.0-rc.0
 
 ### Minor Changes
