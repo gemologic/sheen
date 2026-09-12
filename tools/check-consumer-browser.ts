@@ -21,7 +21,7 @@ export async function checkConsumerBrowser(temporary: string, ui: string, condit
       name: "verify-runtime-package-entry",
       generateBundle(_options, bundle) {
         const modules = Object.values(bundle).flatMap(output => output.type === "chunk" ? Object.keys(output.modules) : []);
-        for (const component of ["Button", "Link"]) {
+        for (const component of ["Button", "Link", "Dialog", "Popover"]) {
           const suffix = condition === "solid" ? `/src/primitives/${component}.tsx` : `/dist/primitives/${component}.js`;
           assert.ok(modules.some(id => id.startsWith(ui) && id.endsWith(suffix)), `Browser must execute copied ${condition} ${component}`);
         }
@@ -82,6 +82,32 @@ export async function checkConsumerBrowser(temporary: string, ui: string, condit
         await expect(page).not.toHaveURL(/#consumer-target$/);
         await link.press("Enter");
         await expect(page).toHaveURL(/#consumer-target$/);
+        for (const kind of ["dialog", "popover"]) {
+          const trigger = page.getByRole("button", { name: `Open consumer ${kind}`, exact: true });
+          await trigger.click();
+          const parent = page.getByRole("dialog", { name: `Consumer ${kind}`, exact: true });
+          const draft = parent.getByRole("textbox", { name: `Consumer ${kind} draft`, exact: true });
+          await expect(draft).toBeFocused();
+          await draft.fill("Retained consumer draft");
+          const nestedTrigger = parent.getByRole("button", { name: `Open nested consumer ${kind}`, exact: true });
+          await nestedTrigger.click();
+          const nested = page.getByRole("dialog", { name: `Nested consumer ${kind}`, exact: true });
+          await expect(nested.getByRole("textbox", { name: `Nested consumer ${kind} draft`, exact: true })).toBeFocused();
+          await nested.evaluate((element, kind) => {
+            element.setAttribute("data-exiting-consumer", kind);
+            if (element instanceof HTMLElement) element.style.setProperty(kind === "dialog" ? "--sheen-duration-normal" : "--sheen-duration-fast", "10s");
+          }, kind);
+          await page.keyboard.press("Escape");
+          const exiting = page.locator(`[data-exiting-consumer="${kind}"]`);
+          await expect(exiting).toHaveAttribute("data-closed", "");
+          await expect(exiting).toHaveAttribute("inert", "");
+          await expect(nestedTrigger).toBeFocused();
+          await expect(exiting).toBeAttached();
+          await expect(draft).toHaveValue("Retained consumer draft");
+          await page.keyboard.press("Escape");
+          await expect(parent).toHaveCount(0);
+          await expect(trigger).toBeFocused();
+        }
         assert.deepEqual(errors, [], "Consumer must not produce browser exceptions");
         await context.tracing.stop();
       } catch (error) {

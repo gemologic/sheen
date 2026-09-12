@@ -1,5 +1,30 @@
 import { expect, test } from "@playwright/test";
 
+test("Closing a nested popover restores focus and releases Escape during its exit animation", async ({ page }) => {
+  await page.goto("/floating");
+  const trigger = page.getByRole("button", { name: "Open view options", exact: true });
+  await trigger.click();
+  const popover = page.getByRole("dialog", { name: "View options", exact: true });
+  const nestedTrigger = popover.getByRole("button", { name: "Open nested options" });
+  await nestedTrigger.click();
+  const nested = page.getByRole("dialog", { name: "Nested options", exact: true });
+  await expect(nested.getByRole("textbox", { name: "Nested value" })).toBeFocused();
+  await nested.evaluate(element => {
+    element.setAttribute("data-exiting-nested", "");
+    if (element instanceof HTMLElement) element.style.setProperty("--sheen-duration-fast", "10s");
+  });
+  await page.keyboard.press("Escape");
+  const exiting = page.locator("[data-exiting-nested]");
+  await expect(exiting).toHaveAttribute("data-closed", "");
+  await expect(exiting).toHaveAttribute("inert", "");
+  await expect(nestedTrigger).toBeFocused();
+  await expect(exiting).toBeAttached();
+  await expect(popover).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(popover).toHaveCount(0);
+  await expect(trigger).toBeFocused();
+});
+
 test("Tooltip supports focus, shortcut text, hoverable content, Escape, and native action", async ({ page }) => {
   await page.goto("/floating");
   const trigger = page.getByRole("button", { name: "Save workspace", exact: true });

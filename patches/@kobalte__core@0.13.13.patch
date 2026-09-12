@@ -1,183 +1,522 @@
-diff --git a/dist/chunk/V25KEN4T.jsx b/dist/chunk/V25KEN4T.jsx
---- a/dist/chunk/V25KEN4T.jsx
-+++ b/dist/chunk/V25KEN4T.jsx
-@@ -144,3 +144,4 @@
-   const onCloseAutoFocus = (e) => {
-     local.onCloseAutoFocus?.(e);
-+    if (e.defaultPrevented) return;
-     if (context.modal()) {
-diff --git a/dist/chunk/3565MS4H.jsx b/dist/chunk/3565MS4H.jsx
---- a/dist/chunk/3565MS4H.jsx
-+++ b/dist/chunk/3565MS4H.jsx
-@@ -61,3 +61,4 @@
-   const onCloseAutoFocus = (e) => {
-     local.onCloseAutoFocus?.(e);
-+    if (e.defaultPrevented) return;
-     if (!hasInteractedOutside) {
-diff --git a/dist/chunk/JEP7F7FN.js b/dist/chunk/JEP7F7FN.js
---- a/dist/chunk/JEP7F7FN.js
-+++ b/dist/chunk/JEP7F7FN.js
-@@ -36,3 +36,4 @@
-   const onCloseAutoFocus = (e) => {
-     local.onCloseAutoFocus?.(e);
-+    if (e.defaultPrevented) return;
-     if (!hasInteractedOutside) {
 diff --git a/dist/chunk/27MLNS66.js b/dist/chunk/27MLNS66.js
+index 0ab38403004326274cfcdd3dc96eb0c64abf7c8a..3a629a8f3cef7319e15cc360587f1684997b6eb5 100644
 --- a/dist/chunk/27MLNS66.js
 +++ b/dist/chunk/27MLNS66.js
-@@ -93,3 +93,4 @@
+@@ -92,6 +92,7 @@ function DialogContent(props) {
+   };
    const onCloseAutoFocus = (e) => {
      local.onCloseAutoFocus?.(e);
 +    if (e.defaultPrevented) return;
      if (context.modal()) {
-diff --git a/dist/chunk/LP6E37CW.jsx b/dist/chunk/LP6E37CW.jsx
---- a/dist/chunk/LP6E37CW.jsx
-+++ b/dist/chunk/LP6E37CW.jsx
-@@ -114,1 +114,1 @@
--    direction: () => props.locale ? getReadingDirection(props.locale) : defaultLocale.direction()
-+    direction: () => props.direction ?? (props.locale ? getReadingDirection(props.locale) : defaultLocale.direction())
-diff --git a/dist/chunk/7TPOQ36Z.js b/dist/chunk/7TPOQ36Z.js
---- a/dist/chunk/7TPOQ36Z.js
-+++ b/dist/chunk/7TPOQ36Z.js
-@@ -106,1 +106,1 @@
--    direction: () => props.locale ? getReadingDirection(props.locale) : defaultLocale.direction()
-+    direction: () => props.direction ?? (props.locale ? getReadingDirection(props.locale) : defaultLocale.direction())
-diff --git a/dist/i18n/index.d.ts b/dist/i18n/index.d.ts
---- a/dist/i18n/index.d.ts
-+++ b/dist/i18n/index.d.ts
-@@ -60,1 +60,3 @@
- interface I18nProviderProps {
-+    /** Explicit layout direction, independent of the formatting locale. */
-+    direction?: Direction;
+       e.preventDefault();
+       focusWithoutScrolling(context.triggerRef());
+@@ -117,7 +118,8 @@ function DialogContent(props) {
+   createFocusScope({
+     trapFocus: () => context.isOpen() && context.modal(),
+     onMountAutoFocus: local.onOpenAutoFocus,
+-    onUnmountAutoFocus: onCloseAutoFocus
++    onUnmountAutoFocus: onCloseAutoFocus,
++    restoreFocusOnClose: true
+   }, () => ref);
+   createEffect(() => onCleanup(context.registerContentId(others.id)));
+   return createComponent(Show, {
+diff --git a/dist/chunk/2YCOH52P.js b/dist/chunk/2YCOH52P.js
+index 9e3ff470d60f8f5c00de62fc93191ca5c66bb48f..c48f40017176e09add30e18a3c31df4dede00f60 100644
+--- a/dist/chunk/2YCOH52P.js
++++ b/dist/chunk/2YCOH52P.js
+@@ -12,10 +12,10 @@ function find(node) {
+   return layers[indexOf(node)];
+ }
+ function isTopMostLayer(node) {
+-  return layers.length > 0 && layers[layers.length - 1].node === node;
++  return layers.findLast((layer) => !layer.node.hasAttribute("data-closed"))?.node === node;
+ }
+ function getPointerBlockingLayers() {
+-  return layers.filter((layer) => layer.isPointerBlocking);
++  return layers.filter((layer) => layer.isPointerBlocking && !layer.node.hasAttribute("data-closed"));
+ }
+ function getTopMostPointerBlockingLayer() {
+   return [...getPointerBlockingLayers()].slice(-1)[0];
+@@ -41,7 +41,7 @@ function assignPointerEventToLayers() {
+   for (const {
+     node
+   } of layers) {
+-    node.style.pointerEvents = isBelowPointerBlockingLayer(node) ? "none" : "auto";
++    node.style.pointerEvents = node.hasAttribute("data-closed") || isBelowPointerBlockingLayer(node) ? "none" : "auto";
+   }
+ }
+ function disableBodyPointerEvents(node) {
+diff --git a/dist/chunk/3565MS4H.jsx b/dist/chunk/3565MS4H.jsx
+index 0ee681e296a6e52bdac5d955eb1b1058d30e9983..7f620bd8709469592842ad27bbd845ac697f68a0 100644
+--- a/dist/chunk/3565MS4H.jsx
++++ b/dist/chunk/3565MS4H.jsx
+@@ -67,6 +67,7 @@ function DropdownMenuContent(props) {
+   let hasInteractedOutside = false;
+   const onCloseAutoFocus = (e) => {
+     local.onCloseAutoFocus?.(e);
++    if (e.defaultPrevented) return;
+     if (!hasInteractedOutside) {
+       focusWithoutScrolling(context.triggerRef());
+     }
 diff --git a/dist/chunk/3ARTUDH2.jsx b/dist/chunk/3ARTUDH2.jsx
+index 4a2cfa59cfd0adec119e46de043c590af12ceb60..b20e8c029fc6cb279d7ae93a82d7b51f86038924 100644
 --- a/dist/chunk/3ARTUDH2.jsx
 +++ b/dist/chunk/3ARTUDH2.jsx
-@@ -886,3 +886,4 @@
+@@ -885,6 +885,7 @@ function MenuContentBase(props) {
+   };
    const onEscapeKeyDown = (e) => {
      local.onEscapeKeyDown?.(e);
 +    if (e.defaultPrevented) return;
      optionalMenubarContext?.setAutoFocusMenu(false);
-diff --git a/dist/chunk/BK63AFY4.js b/dist/chunk/BK63AFY4.js
---- a/dist/chunk/BK63AFY4.js
-+++ b/dist/chunk/BK63AFY4.js
-@@ -316,3 +316,8 @@
--    queueMicrotask(() => {
--      positioner.style.zIndex = getComputedStyle(content).zIndex;
--    });
-+    let disposed = false;
-+    const syncZIndex = () => { if (!disposed) positioner.style.zIndex = getComputedStyle(content).zIndex; };
-+    queueMicrotask(syncZIndex);
-+    const observer = new MutationObserver(syncZIndex);
-+    observer.observe(content, { attributes: true, attributeFilter: ["style", "class"] });
-+    onCleanup(() => {
-+      disposed = true; observer.disconnect();
-+    });
-diff --git a/dist/chunk/OGE3DKII.jsx b/dist/chunk/OGE3DKII.jsx
---- a/dist/chunk/OGE3DKII.jsx
-+++ b/dist/chunk/OGE3DKII.jsx
-@@ -379,3 +379,8 @@
--    queueMicrotask(() => {
--      positioner.style.zIndex = getComputedStyle(content).zIndex;
--    });
-+    let disposed = false;
-+    const syncZIndex = () => { if (!disposed) positioner.style.zIndex = getComputedStyle(content).zIndex; };
-+    queueMicrotask(syncZIndex);
-+    const observer = new MutationObserver(syncZIndex);
-+    observer.observe(content, { attributes: true, attributeFilter: ["style", "class"] });
-+    onCleanup(() => {
-+      disposed = true; observer.disconnect();
-+    });
-diff --git a/dist/chunk/WHII6HHI.js b/dist/chunk/WHII6HHI.js
---- a/dist/chunk/WHII6HHI.js
-+++ b/dist/chunk/WHII6HHI.js
-@@ -83,3 +83,14 @@
-     layerStack.disableBodyPointerEvents(ref);
-+    const node = ref;
-+    const observer = new MutationObserver(() => {
-+      if (!node.hasAttribute("data-expanded")) return;
-+      const layer = layerStack.find(node);
-+      if (!layer) return;
-+      layerStack.removeLayer(node);
-+      layerStack.addLayer(layer);
-+      layerStack.assignPointerEventToLayers();
-+    });
-+    observer.observe(node, { attributes: true, attributeFilter: ["data-expanded"] });
-     onCleanup(() => {
-+      observer.disconnect();
-       if (!ref) {
-diff --git a/dist/chunk/XNF3WGZ2.jsx b/dist/chunk/XNF3WGZ2.jsx
---- a/dist/chunk/XNF3WGZ2.jsx
-+++ b/dist/chunk/XNF3WGZ2.jsx
-@@ -113,3 +113,14 @@
-     layerStack.disableBodyPointerEvents(ref);
-+    const node = ref;
-+    const observer = new MutationObserver(() => {
-+      if (!node.hasAttribute("data-expanded")) return;
-+      const layer = layerStack.find(node);
-+      if (!layer) return;
-+      layerStack.removeLayer(node);
-+      layerStack.addLayer(layer);
-+      layerStack.assignPointerEventToLayers();
-+    });
-+    observer.observe(node, { attributes: true, attributeFilter: ["data-expanded"] });
-     onCleanup(() => {
-+      observer.disconnect();
-       if (!ref) {
-diff --git a/dist/chunk/G3KI2B4X.js b/dist/chunk/G3KI2B4X.js
---- a/dist/chunk/G3KI2B4X.js
-+++ b/dist/chunk/G3KI2B4X.js
-@@ -88,2 +88,8 @@
-     focusScopeStack.add(focusScope);
-+    const activationObserver = new MutationObserver(() => {
-+      if (!container.hasAttribute("data-expanded")) return;
-+      focusScopeStack.add(focusScope);
-+      focusScope.resume();
-+    });
-+    activationObserver.observe(container, { attributes: true, attributeFilter: ["data-expanded"] });
-     const previouslyFocusedElement = getActiveElement(container);
-@@ -106,2 +112,3 @@
-     onCleanup(() => {
-+      activationObserver.disconnect();
-       container.removeEventListener(AUTOFOCUS_ON_MOUNT_EVENT, onMountAutoFocus);
-diff --git a/dist/chunk/KEL2LLJM.jsx b/dist/chunk/KEL2LLJM.jsx
---- a/dist/chunk/KEL2LLJM.jsx
-+++ b/dist/chunk/KEL2LLJM.jsx
-@@ -100,2 +100,8 @@
-     focusScopeStack.add(focusScope);
-+    const activationObserver = new MutationObserver(() => {
-+      if (!container.hasAttribute("data-expanded")) return;
-+      focusScopeStack.add(focusScope);
-+      focusScope.resume();
-+    });
-+    activationObserver.observe(container, { attributes: true, attributeFilter: ["data-expanded"] });
-     const previouslyFocusedElement = getActiveElement(
-@@ -121,2 +127,3 @@
-     onCleanup(() => {
-+      activationObserver.disconnect();
-       container.removeEventListener(AUTOFOCUS_ON_MOUNT_EVENT, onMountAutoFocus);
-diff --git a/dist/chunk/RFN6X5VH.jsx b/dist/chunk/RFN6X5VH.jsx
---- a/dist/chunk/RFN6X5VH.jsx
-+++ b/dist/chunk/RFN6X5VH.jsx
-@@ -451,3 +451,5 @@
-     const manager = access3(mergedProps.selectionManager);
-+    const container = ref();
-+    if (manager.isFocused() && manager.focusedKey() != null && container?.contains(container.ownerDocument.activeElement)) return;
-     const delegate = access3(mergedProps.keyboardDelegate);
-     let focusedKey;
+     context.close(true);
+   };
 diff --git a/dist/chunk/3D6FM2PJ.js b/dist/chunk/3D6FM2PJ.js
+index 6a05111c7de78a88a403e76dc9c4902f90207081..f2b330f772554784d6a4cd33628b5a3c891b0588 100644
 --- a/dist/chunk/3D6FM2PJ.js
 +++ b/dist/chunk/3D6FM2PJ.js
-@@ -419,3 +419,5 @@
+@@ -417,6 +417,8 @@ function createSelectableCollection(props, ref, scrollRef) {
+       return;
+     }
      const manager = access(mergedProps.selectionManager);
 +    const container = ref();
 +    if (manager.isFocused() && manager.focusedKey() != null && container?.contains(container.ownerDocument.activeElement)) return;
      const delegate = access(mergedProps.keyboardDelegate);
      let focusedKey;
+     if (autoFocus === "first") {
+diff --git a/dist/chunk/3DLZMX4Z.jsx b/dist/chunk/3DLZMX4Z.jsx
+index 16d0457a76623bc733fef790ad9f9ee4b0888a17..fdef91c0963623ed3f44216e4096fa063e26e102 100644
+--- a/dist/chunk/3DLZMX4Z.jsx
++++ b/dist/chunk/3DLZMX4Z.jsx
+@@ -11,10 +11,10 @@ function find(node) {
+   return layers[indexOf(node)];
+ }
+ function isTopMostLayer(node) {
+-  return layers.length > 0 && layers[layers.length - 1].node === node;
++  return layers.findLast((layer) => !layer.node.hasAttribute("data-closed"))?.node === node;
+ }
+ function getPointerBlockingLayers() {
+-  return layers.filter((layer) => layer.isPointerBlocking);
++  return layers.filter((layer) => layer.isPointerBlocking && !layer.node.hasAttribute("data-closed"));
+ }
+ function getTopMostPointerBlockingLayer() {
+   return [...getPointerBlockingLayers()].slice(-1)[0];
+@@ -38,7 +38,7 @@ function removeLayer(node) {
+ }
+ function assignPointerEventToLayers() {
+   for (const { node } of layers) {
+-    node.style.pointerEvents = isBelowPointerBlockingLayer(node) ? "none" : "auto";
++    node.style.pointerEvents = node.hasAttribute("data-closed") || isBelowPointerBlockingLayer(node) ? "none" : "auto";
+   }
+ }
+ function disableBodyPointerEvents(node) {
+diff --git a/dist/chunk/7TPOQ36Z.js b/dist/chunk/7TPOQ36Z.js
+index 65c517c49a16ecd22d53adbea21e3edb912b5ca6..f6411b1cb2743efcd766b62a9c651052cc00aec1 100644
+--- a/dist/chunk/7TPOQ36Z.js
++++ b/dist/chunk/7TPOQ36Z.js
+@@ -103,7 +103,7 @@ function I18nProvider(props) {
+   const defaultLocale = createDefaultLocale();
+   const context = {
+     locale: () => props.locale ?? defaultLocale.locale(),
+-    direction: () => props.locale ? getReadingDirection(props.locale) : defaultLocale.direction()
++    direction: () => props.direction ?? (props.locale ? getReadingDirection(props.locale) : defaultLocale.direction())
+   };
+   return createComponent(I18nContext.Provider, {
+     value: context,
+diff --git a/dist/chunk/BK63AFY4.js b/dist/chunk/BK63AFY4.js
+index 069ac57d156ad35cf46407f833db0d6ddd5a4115..5dd8b1328972bdd0882c44fec887ad9de3dc371b 100644
+--- a/dist/chunk/BK63AFY4.js
++++ b/dist/chunk/BK63AFY4.js
+@@ -313,8 +313,13 @@ function PopperRoot(props) {
+     if (!positioner || !content) {
+       return;
+     }
+-    queueMicrotask(() => {
+-      positioner.style.zIndex = getComputedStyle(content).zIndex;
++    let disposed = false;
++    const syncZIndex = () => { if (!disposed) positioner.style.zIndex = getComputedStyle(content).zIndex; };
++    queueMicrotask(syncZIndex);
++    const observer = new MutationObserver(syncZIndex);
++    observer.observe(content, { attributes: true, attributeFilter: ["style", "class"] });
++    onCleanup(() => {
++      disposed = true; observer.disconnect();
+     });
+   });
+   const context = {
+diff --git a/dist/chunk/G3KI2B4X.js b/dist/chunk/G3KI2B4X.js
+index 7844b9f7b903e5cddd00467678d9d40384fd2ad2..ced7874e31d49060b2aba6341e54064c324cb721 100644
+--- a/dist/chunk/G3KI2B4X.js
++++ b/dist/chunk/G3KI2B4X.js
+@@ -86,6 +86,35 @@ function createFocusScope(props, ref) {
+       return;
+     }
+     focusScopeStack.add(focusScope);
++    let restored = false;
++    let disposed = false;
++    let mountTimer;
++    const restoreFocus = () => {
++      if (restored) return;
++      restored = true;
++      clearTimeout(mountTimer);
++      const preventAutoFocus = isPaused() || shouldPreventUnmountAutoFocus();
++      focusScope.pause();
++      focusScopeStack.remove(focusScope);
++      const unmountEvent = new CustomEvent(AUTOFOCUS_ON_UNMOUNT_EVENT, EVENT_OPTIONS);
++      if (preventAutoFocus) unmountEvent.preventDefault();
++      container.addEventListener(AUTOFOCUS_ON_UNMOUNT_EVENT, onUnmountAutoFocus);
++      container.dispatchEvent(unmountEvent);
++      if (!unmountEvent.defaultPrevented) {
++        focusWithoutScrolling(previouslyFocusedElement ?? ownerDocument().body);
++      }
++      container.removeEventListener(AUTOFOCUS_ON_UNMOUNT_EVENT, onUnmountAutoFocus);
++    };
++    const activationObserver = new MutationObserver(() => {
++      if (container.hasAttribute("data-expanded")) {
++        restored = false;
++        focusScopeStack.add(focusScope);
++        focusScope.resume();
++      } else if (props.restoreFocusOnClose && container.hasAttribute("data-closed")) {
++        restoreFocus();
++      }
++    });
++    activationObserver.observe(container, { attributes: true, attributeFilter: ["data-expanded"] });
+     const previouslyFocusedElement = getActiveElement(container);
+     const hasFocusedCandidate = contains(container, previouslyFocusedElement);
+     if (!hasFocusedCandidate) {
+@@ -93,7 +122,8 @@ function createFocusScope(props, ref) {
+       container.addEventListener(AUTOFOCUS_ON_MOUNT_EVENT, onMountAutoFocus);
+       container.dispatchEvent(mountEvent);
+       if (!mountEvent.defaultPrevented) {
+-        setTimeout(() => {
++        mountTimer = setTimeout(() => {
++          if (disposed || restored || container.hasAttribute("data-closed") || isPaused()) return;
+           focusWithoutScrolling(firstTabbable());
+           if (getActiveElement(container) === previouslyFocusedElement) {
+             focusWithoutScrolling(container);
+@@ -102,20 +132,11 @@ function createFocusScope(props, ref) {
+       }
+     }
+     onCleanup(() => {
++      disposed = true;
++      clearTimeout(mountTimer);
++      activationObserver.disconnect();
+       container.removeEventListener(AUTOFOCUS_ON_MOUNT_EVENT, onMountAutoFocus);
+-      setTimeout(() => {
+-        const unmountEvent = new CustomEvent(AUTOFOCUS_ON_UNMOUNT_EVENT, EVENT_OPTIONS);
+-        if (shouldPreventUnmountAutoFocus()) {
+-          unmountEvent.preventDefault();
+-        }
+-        container.addEventListener(AUTOFOCUS_ON_UNMOUNT_EVENT, onUnmountAutoFocus);
+-        container.dispatchEvent(unmountEvent);
+-        if (!unmountEvent.defaultPrevented) {
+-          focusWithoutScrolling(previouslyFocusedElement ?? ownerDocument().body);
+-        }
+-        container.removeEventListener(AUTOFOCUS_ON_UNMOUNT_EVENT, onUnmountAutoFocus);
+-        focusScopeStack.remove(focusScope);
+-      }, 0);
++      setTimeout(restoreFocus, 0);
+     });
+   });
+   createEffect(() => {
 diff --git a/dist/chunk/HGKTPMYY.js b/dist/chunk/HGKTPMYY.js
+index a8fa9b06a97cb3d4d5029fc0c929d78dfdc6edd4..1d8a135cf00305af90624e86f93da6f7890bcf56 100644
 --- a/dist/chunk/HGKTPMYY.js
 +++ b/dist/chunk/HGKTPMYY.js
-@@ -726,3 +726,4 @@
+@@ -725,6 +725,7 @@ function MenuContentBase(props) {
+   };
    const onEscapeKeyDown = (e) => {
      local.onEscapeKeyDown?.(e);
 +    if (e.defaultPrevented) return;
      optionalMenubarContext?.setAutoFocusMenu(false);
+     context.close(true);
+   };
+diff --git a/dist/chunk/JEP7F7FN.js b/dist/chunk/JEP7F7FN.js
+index a5906978688e5b06e493f93d551a6dd882d5eb51..7925416aaed644889f4b7470626824a8d90de773 100644
+--- a/dist/chunk/JEP7F7FN.js
++++ b/dist/chunk/JEP7F7FN.js
+@@ -37,6 +37,7 @@ function DropdownMenuContent(props) {
+   let hasInteractedOutside = false;
+   const onCloseAutoFocus = (e) => {
+     local.onCloseAutoFocus?.(e);
++    if (e.defaultPrevented) return;
+     if (!hasInteractedOutside) {
+       focusWithoutScrolling(context.triggerRef());
+     }
+diff --git a/dist/chunk/KEL2LLJM.jsx b/dist/chunk/KEL2LLJM.jsx
+index 1ff4c0953b05dc157c1523e289729783bd005238..07d455e40281a6c16a8c3f445cc173bc1619016c 100644
+--- a/dist/chunk/KEL2LLJM.jsx
++++ b/dist/chunk/KEL2LLJM.jsx
+@@ -98,6 +98,35 @@ function createFocusScope(props, ref) {
+       return;
+     }
+     focusScopeStack.add(focusScope);
++    let restored = false;
++    let disposed = false;
++    let mountTimer;
++    const restoreFocus = () => {
++      if (restored) return;
++      restored = true;
++      clearTimeout(mountTimer);
++      const preventAutoFocus = isPaused() || shouldPreventUnmountAutoFocus();
++      focusScope.pause();
++      focusScopeStack.remove(focusScope);
++      const unmountEvent = new CustomEvent(AUTOFOCUS_ON_UNMOUNT_EVENT, EVENT_OPTIONS);
++      if (preventAutoFocus) unmountEvent.preventDefault();
++      container.addEventListener(AUTOFOCUS_ON_UNMOUNT_EVENT, onUnmountAutoFocus);
++      container.dispatchEvent(unmountEvent);
++      if (!unmountEvent.defaultPrevented) {
++        focusWithoutScrolling(previouslyFocusedElement ?? ownerDocument().body);
++      }
++      container.removeEventListener(AUTOFOCUS_ON_UNMOUNT_EVENT, onUnmountAutoFocus);
++    };
++    const activationObserver = new MutationObserver(() => {
++      if (container.hasAttribute("data-expanded")) {
++        restored = false;
++        focusScopeStack.add(focusScope);
++        focusScope.resume();
++      } else if (props.restoreFocusOnClose && container.hasAttribute("data-closed")) {
++        restoreFocus();
++      }
++    });
++    activationObserver.observe(container, { attributes: true, attributeFilter: ["data-expanded"] });
+     const previouslyFocusedElement = getActiveElement(
+       container
+     );
+@@ -110,7 +139,8 @@ function createFocusScope(props, ref) {
+       container.addEventListener(AUTOFOCUS_ON_MOUNT_EVENT, onMountAutoFocus);
+       container.dispatchEvent(mountEvent);
+       if (!mountEvent.defaultPrevented) {
+-        setTimeout(() => {
++        mountTimer = setTimeout(() => {
++          if (disposed || restored || container.hasAttribute("data-closed") || isPaused()) return;
+           focusWithoutScrolling(firstTabbable());
+           if (getActiveElement(container) === previouslyFocusedElement) {
+             focusWithoutScrolling(container);
+@@ -119,31 +149,11 @@ function createFocusScope(props, ref) {
+       }
+     }
+     onCleanup(() => {
++      disposed = true;
++      clearTimeout(mountTimer);
++      activationObserver.disconnect();
+       container.removeEventListener(AUTOFOCUS_ON_MOUNT_EVENT, onMountAutoFocus);
+-      setTimeout(() => {
+-        const unmountEvent = new CustomEvent(
+-          AUTOFOCUS_ON_UNMOUNT_EVENT,
+-          EVENT_OPTIONS
+-        );
+-        if (shouldPreventUnmountAutoFocus()) {
+-          unmountEvent.preventDefault();
+-        }
+-        container.addEventListener(
+-          AUTOFOCUS_ON_UNMOUNT_EVENT,
+-          onUnmountAutoFocus
+-        );
+-        container.dispatchEvent(unmountEvent);
+-        if (!unmountEvent.defaultPrevented) {
+-          focusWithoutScrolling(
+-            previouslyFocusedElement ?? ownerDocument().body
+-          );
+-        }
+-        container.removeEventListener(
+-          AUTOFOCUS_ON_UNMOUNT_EVENT,
+-          onUnmountAutoFocus
+-        );
+-        focusScopeStack.remove(focusScope);
+-      }, 0);
++      setTimeout(restoreFocus, 0);
+     });
+   });
+   createEffect(() => {
+diff --git a/dist/chunk/LP6E37CW.jsx b/dist/chunk/LP6E37CW.jsx
+index c04eb905f6e0549f8b64eb50e3b9e5f163d2d109..f2d8067bec20baecf089e323b245f2bbced8fae7 100644
+--- a/dist/chunk/LP6E37CW.jsx
++++ b/dist/chunk/LP6E37CW.jsx
+@@ -111,7 +111,7 @@ function I18nProvider(props) {
+   const defaultLocale = createDefaultLocale();
+   const context = {
+     locale: () => props.locale ?? defaultLocale.locale(),
+-    direction: () => props.locale ? getReadingDirection(props.locale) : defaultLocale.direction()
++    direction: () => props.direction ?? (props.locale ? getReadingDirection(props.locale) : defaultLocale.direction())
+   };
+   return <I18nContext.Provider value={context}>{props.children}</I18nContext.Provider>;
+ }
+diff --git a/dist/chunk/NEFPNRTI.jsx b/dist/chunk/NEFPNRTI.jsx
+index 60f4063a94477f73ded7a80fa0347ab2e34d3841..73a7282074383e4dda91b2c8a76e4fdc406b6bcc 100644
+--- a/dist/chunk/NEFPNRTI.jsx
++++ b/dist/chunk/NEFPNRTI.jsx
+@@ -191,7 +191,8 @@ function PopoverContent(props) {
+     {
+       trapFocus: () => context.isOpen() && context.isModal(),
+       onMountAutoFocus: local.onOpenAutoFocus,
+-      onUnmountAutoFocus: onCloseAutoFocus
++      onUnmountAutoFocus: onCloseAutoFocus,
++      restoreFocusOnClose: true
+     },
+     () => ref
+   );
+diff --git a/dist/chunk/OGE3DKII.jsx b/dist/chunk/OGE3DKII.jsx
+index 821242fae9caae7bcfe982eaefc02e559dfceb96..5231d5d28f360e99ec1a740fd7c82b4568d74ee2 100644
+--- a/dist/chunk/OGE3DKII.jsx
++++ b/dist/chunk/OGE3DKII.jsx
+@@ -376,8 +376,13 @@ function PopperRoot(props) {
+     if (!positioner || !content) {
+       return;
+     }
+-    queueMicrotask(() => {
+-      positioner.style.zIndex = getComputedStyle(content).zIndex;
++    let disposed = false;
++    const syncZIndex = () => { if (!disposed) positioner.style.zIndex = getComputedStyle(content).zIndex; };
++    queueMicrotask(syncZIndex);
++    const observer = new MutationObserver(syncZIndex);
++    observer.observe(content, { attributes: true, attributeFilter: ["style", "class"] });
++    onCleanup(() => {
++      disposed = true; observer.disconnect();
+     });
+   });
+   const context = {
+diff --git a/dist/chunk/QIRIOMOH.js b/dist/chunk/QIRIOMOH.js
+index 89929f0bc3438da6521a58ad794d1acec28706a2..56509145d3631972e56531c94651f0950156c766 100644
+--- a/dist/chunk/QIRIOMOH.js
++++ b/dist/chunk/QIRIOMOH.js
+@@ -133,7 +133,8 @@ function PopoverContent(props) {
+   createFocusScope({
+     trapFocus: () => context.isOpen() && context.isModal(),
+     onMountAutoFocus: local.onOpenAutoFocus,
+-    onUnmountAutoFocus: onCloseAutoFocus
++    onUnmountAutoFocus: onCloseAutoFocus,
++    restoreFocusOnClose: true
+   }, () => ref);
+   createEffect(() => onCleanup(context.registerContentId(others.id)));
+   return createComponent(Show, {
+diff --git a/dist/chunk/RFN6X5VH.jsx b/dist/chunk/RFN6X5VH.jsx
+index 63e2aa3bf4c0e01102440c9bd14aa4ca563ee5d8..4ae5e69ed56855529adf5375c9228a3030d898f8 100644
+--- a/dist/chunk/RFN6X5VH.jsx
++++ b/dist/chunk/RFN6X5VH.jsx
+@@ -449,6 +449,8 @@ function createSelectableCollection(props, ref, scrollRef) {
+       return;
+     }
+     const manager = access3(mergedProps.selectionManager);
++    const container = ref();
++    if (manager.isFocused() && manager.focusedKey() != null && container?.contains(container.ownerDocument.activeElement)) return;
+     const delegate = access3(mergedProps.keyboardDelegate);
+     let focusedKey;
+     if (autoFocus === "first") {
+diff --git a/dist/chunk/V25KEN4T.jsx b/dist/chunk/V25KEN4T.jsx
+index 8bdcea7217d0e8ad42eeda7bb938d357fbd99a4a..4ac69fadc61fa76e33cdffb27bd5dbc84a4e511a 100644
+--- a/dist/chunk/V25KEN4T.jsx
++++ b/dist/chunk/V25KEN4T.jsx
+@@ -143,6 +143,7 @@ function DialogContent(props) {
+   };
+   const onCloseAutoFocus = (e) => {
+     local.onCloseAutoFocus?.(e);
++    if (e.defaultPrevented) return;
+     if (context.modal()) {
+       e.preventDefault();
+       focusWithoutScrolling(context.triggerRef());
+@@ -169,7 +170,8 @@ function DialogContent(props) {
+     {
+       trapFocus: () => context.isOpen() && context.modal(),
+       onMountAutoFocus: local.onOpenAutoFocus,
+-      onUnmountAutoFocus: onCloseAutoFocus
++      onUnmountAutoFocus: onCloseAutoFocus,
++      restoreFocusOnClose: true
+     },
+     () => ref
+   );
+diff --git a/dist/chunk/WHII6HHI.js b/dist/chunk/WHII6HHI.js
+index 3f252e44263968dc952f2e7c163f0f6a408d37ed..d970dd56118779d3fe8da57c3e52636fe56b4147 100644
+--- a/dist/chunk/WHII6HHI.js
++++ b/dist/chunk/WHII6HHI.js
+@@ -32,7 +32,7 @@ function DismissableLayer(props) {
+     return local.excludedElements?.some((node) => contains(node(), element)) || [...nestedLayers].some((layer) => contains(layer, element));
+   };
+   const onPointerDownOutside = (e) => {
+-    if (!ref || layerStack.isBelowPointerBlockingLayer(ref)) {
++    if (!ref || ref.hasAttribute("data-closed") || layerStack.isBelowPointerBlockingLayer(ref)) {
+       return;
+     }
+     if (!local.bypassTopMostLayerCheck && !layerStack.isTopMostLayer(ref)) {
+@@ -45,6 +45,7 @@ function DismissableLayer(props) {
+     }
+   };
+   const onFocusOutside = (e) => {
++    if (!ref || ref.hasAttribute("data-closed")) return;
+     local.onFocusOutside?.(e);
+     local.onInteractOutside?.(e);
+     if (!e.defaultPrevented) {
+@@ -81,7 +82,21 @@ function DismissableLayer(props) {
+     const unregisterFromParentLayer = parentContext?.registerNestedLayer(ref);
+     layerStack.assignPointerEventToLayers();
+     layerStack.disableBodyPointerEvents(ref);
++    const node = ref;
++    const observer = new MutationObserver(() => {
++      if (node.hasAttribute("data-expanded")) {
++        const layer = layerStack.find(node);
++        if (!layer) return;
++        layerStack.removeLayer(node);
++        layerStack.addLayer(layer);
++      }
++      layerStack.assignPointerEventToLayers();
++      layerStack.restoreBodyPointerEvents(node);
++      layerStack.disableBodyPointerEvents(node);
++    });
++    observer.observe(node, { attributes: true, attributeFilter: ["data-expanded"] });
+     onCleanup(() => {
++      observer.disconnect();
+       if (!ref) {
+         return;
+       }
+diff --git a/dist/chunk/XNF3WGZ2.jsx b/dist/chunk/XNF3WGZ2.jsx
+index 0328be595d0047a5213320808a1ce11d5786489a..9abc765fd89a6eea474fa50117d09e0a883e2cbb 100644
+--- a/dist/chunk/XNF3WGZ2.jsx
++++ b/dist/chunk/XNF3WGZ2.jsx
+@@ -59,7 +59,7 @@ function DismissableLayer(props) {
+     return local.excludedElements?.some((node) => contains(node(), element)) || [...nestedLayers].some((layer) => contains(layer, element));
+   };
+   const onPointerDownOutside = (e) => {
+-    if (!ref || layerStack.isBelowPointerBlockingLayer(ref)) {
++    if (!ref || ref.hasAttribute("data-closed") || layerStack.isBelowPointerBlockingLayer(ref)) {
+       return;
+     }
+     if (!local.bypassTopMostLayerCheck && !layerStack.isTopMostLayer(ref)) {
+@@ -72,6 +72,7 @@ function DismissableLayer(props) {
+     }
+   };
+   const onFocusOutside = (e) => {
++    if (!ref || ref.hasAttribute("data-closed")) return;
+     local.onFocusOutside?.(e);
+     local.onInteractOutside?.(e);
+     if (!e.defaultPrevented) {
+@@ -111,7 +112,21 @@ function DismissableLayer(props) {
+     const unregisterFromParentLayer = parentContext?.registerNestedLayer(ref);
+     layerStack.assignPointerEventToLayers();
+     layerStack.disableBodyPointerEvents(ref);
++    const node = ref;
++    const observer = new MutationObserver(() => {
++      if (node.hasAttribute("data-expanded")) {
++        const layer = layerStack.find(node);
++        if (!layer) return;
++        layerStack.removeLayer(node);
++        layerStack.addLayer(layer);
++      }
++      layerStack.assignPointerEventToLayers();
++      layerStack.restoreBodyPointerEvents(node);
++      layerStack.disableBodyPointerEvents(node);
++    });
++    observer.observe(node, { attributes: true, attributeFilter: ["data-expanded"] });
+     onCleanup(() => {
++      observer.disconnect();
+       if (!ref) {
+         return;
+       }
+diff --git a/dist/i18n/index.d.ts b/dist/i18n/index.d.ts
+index 1337652163a00c1e7091a0daa5326f30881e8792..a974e899d9a0ff88d6c0a9d0be43368f39c8230a 100644
+--- a/dist/i18n/index.d.ts
++++ b/dist/i18n/index.d.ts
+@@ -60,4 +60,6 @@ declare function createFilter(options?: Intl.CollatorOptions): Filter;
+ interface I18nProviderProps {
++    /** Explicit layout direction, independent of the formatting locale. */
++    direction?: Direction;
+     /** Contents that should have the locale applied. */
+     children?: JSX.Element;
+     /** The locale to apply to the children. */

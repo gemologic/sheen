@@ -1,5 +1,29 @@
 import { expect, test } from "@playwright/test";
 
+test("Closing a nested dialog releases Escape before its exit animation finishes", async ({ page }) => {
+  await page.goto("/dialogs");
+  const trigger = page.getByRole("button", { name: "Open settings", exact: true });
+  await trigger.click();
+  const dialog = page.getByRole("dialog", { name: "Settings", exact: true });
+  const nestedTrigger = dialog.getByRole("button", { name: "Open nested settings" });
+  await nestedTrigger.click();
+  const nested = page.getByRole("dialog", { name: "Nested settings", exact: true });
+  await expect(nested.getByRole("textbox", { name: "Nested name" })).toBeFocused();
+  await nested.evaluate(element => {
+    element.setAttribute("data-exiting-nested", "");
+    if (element instanceof HTMLElement) element.style.setProperty("--sheen-duration-normal", "10s");
+  });
+  await page.keyboard.press("Escape");
+  const exiting = page.locator("[data-exiting-nested]");
+  await expect(exiting).toHaveAttribute("data-closed", "");
+  await expect(exiting).toHaveAttribute("inert", "");
+  await expect(nestedTrigger).toBeFocused();
+  await expect(exiting).toBeAttached();
+  await page.keyboard.press("Escape");
+  await expect(dialog).toHaveCount(0);
+  await expect(trigger).toBeFocused();
+});
+
 test("Dialog owns controlled requests, focuses explicit targets, and retains drafts on refresh", async ({ page }) => {
   await page.goto("/dialogs");
   const trigger = page.getByRole("button", { name: "Open settings", exact: true });

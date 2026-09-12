@@ -41,6 +41,7 @@ export default defineConfig({
       "**/shell-drawer-scroll.spec.ts",
       "**/sidebar-route-restoration.spec.ts",
       "**/dialogs.spec.ts",
+      "**/floating.spec.ts",
       "**/drawer.spec.ts",
       "**/menus.spec.ts",
       "**/select.spec.ts",
