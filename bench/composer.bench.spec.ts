@@ -1,17 +1,12 @@
 import { expect, test } from "@playwright/test";
 import type { Browser, Page } from "@playwright/test";
+import { finishFrameSampling, startFrameSampling } from "./frame-sampling.ts";
+import type { FrameSample } from "./frame-sampling.ts";
 import { mkdir, writeFile } from "node:fs/promises";
 import { cpus, platform, release, totalmem } from "node:os";
 import { resolve } from "node:path";
 import { composerBenchmarkBaseline } from "./baselines/composer.v1.ts";
 import type { ComposerNormalizedBaseline } from "./baselines/composer.v1.ts";
-
-interface FrameSample {
-  readonly durationMs: number;
-  readonly intervals: readonly number[];
-  readonly longTasks: readonly number[];
-  readonly unexpectedLayoutShift: number;
-}
 
 interface OperationSample {
   readonly name: string;
@@ -46,39 +41,9 @@ async function calibrate(page: Page): Promise<number> {
 }
 
 async function measure(page: Page, name: string, operation: () => Promise<boolean>): Promise<OperationSample> {
-  const pending = page.evaluate(async (): Promise<FrameSample> => {
-    const start = performance.now();
-    const intervals: number[] = [];
-    const longTasks: number[] = [];
-    let unexpectedLayoutShift = 0;
-    const observer = new PerformanceObserver(list => {
-      for (const entry of list.getEntries()) {
-        if (entry.entryType === "longtask") longTasks.push(entry.duration);
-        if (entry.entryType !== "layout-shift") continue;
-        const serialized: unknown = entry.toJSON();
-        if (typeof serialized !== "object" || serialized === null || !("value" in serialized) || !("hadRecentInput" in serialized)) continue;
-        if (serialized.hadRecentInput === false && typeof serialized.value === "number") unexpectedLayoutShift += serialized.value;
-      }
-    });
-    const entryTypes = PerformanceObserver.supportedEntryTypes.filter(type => type === "longtask" || type === "layout-shift");
-    if (entryTypes.length > 0) observer.observe({ entryTypes });
-    document.documentElement.dataset.composerBenchmarkMeasure = "ready";
-    let stopped = false;
-    const stop = () => { stopped = true; };
-    document.addEventListener("sheen-composer-benchmark-stop", stop, { once: true });
-    let previous: number | undefined;
-    while (!stopped) {
-      const timestamp = await new Promise<number>(resolveFrame => requestAnimationFrame(resolveFrame));
-      if (previous !== undefined) intervals.push(timestamp - previous);
-      previous = timestamp;
-    }
-    observer.disconnect();
-    document.removeEventListener("sheen-composer-benchmark-stop", stop);
-    delete document.documentElement.dataset.composerBenchmarkMeasure;
-    return { durationMs: performance.now() - start, intervals, longTasks, unexpectedLayoutShift };
-  });
-  await page.waitForFunction(() => document.documentElement.dataset.composerBenchmarkMeasure === "ready");
+  await startFrameSampling(page);
   let retained = false;
+  let frames: FrameSample;
   let operationTimeout: ReturnType<typeof setTimeout> | undefined;
   try {
     retained = await Promise.race([
@@ -88,9 +53,9 @@ async function measure(page: Page, name: string, operation: () => Promise<boolea
     await page.evaluate(() => new Promise<void>(resolveFrame => requestAnimationFrame(() => requestAnimationFrame(() => requestAnimationFrame(() => resolveFrame())))));
   } finally {
     if (operationTimeout !== undefined) clearTimeout(operationTimeout);
-    await page.evaluate(() => document.dispatchEvent(new Event("sheen-composer-benchmark-stop")));
+    frames = await finishFrameSampling(page);
   }
-  return Object.freeze({ name, frames: await pending, retained });
+  return Object.freeze({ name, frames, retained });
 }
 
 function operation(run: ComposerBenchmarkRun, name: string): OperationSample {

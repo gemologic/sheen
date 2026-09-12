@@ -26,14 +26,11 @@ const workspace = new URL("../../../", import.meta.url);
 
 async function appAssets(): Promise<AppScaffoldAssets> {
   const load = (path: string) => readFile(new URL(path, workspace), "utf8");
-  const [skill, context, solidPatch, kobalteCorePatch, kobalteUtilsPatch] = await Promise.all([
+  const [skill, context] = await Promise.all([
     load("dist/skill/SKILL.md"),
     load("dist/skill/llms.txt"),
-    load("patches/solid-js@1.9.15.patch"),
-    load("patches/@kobalte__core@0.13.13.patch"),
-    load("patches/@kobalte__utils@0.9.2.patch"),
   ]);
-  return { skill, context, solidPatch, kobalteCorePatch, kobalteUtilsPatch };
+  return { skill, context, version: "0.1.0-rc.1" };
 }
 
 async function linkBuildDependencies(appRoot: string): Promise<void> {
@@ -157,7 +154,7 @@ describe("scaffold generated output", () => {
     expect(project.formatDiagnosticsWithColorAndContext(diagnostics)).toBe("");
   }, 15_000);
 
-  it("builds a complete SolidStart app with hydration bootstraps and exact qualified patches", async () => {
+  it("builds a complete SolidStart app with hydration bootstraps and the owned runtime plugin", async () => {
     const root = await temporaryRoot();
     const assets = await appAssets();
     const plan = createAppScaffold("contract-app", assets);
@@ -181,8 +178,10 @@ describe("scaffold generated output", () => {
 
     await buildGeneratedApp(appRoot);
 
-    expect(await readFile(join(appRoot, "patches/solid-js@1.9.15.patch"), "utf8")).toBe(assets.solidPatch);
-    expect(await readFile(join(appRoot, "patches/@kobalte__core@0.13.13.patch"), "utf8")).toBe(assets.kobalteCorePatch);
+    expect(plan.some(file => file.path.includes("/patches/"))).toBe(false);
+    expect(await readFile(join(appRoot, "pnpm-workspace.yaml"), "utf8")).not.toContain("patchedDependencies");
+    expect(await readFile(join(appRoot, "vite.config.ts"), "utf8")).toContain("sheenRuntime()");
+    expect(await readFile(join(appRoot, "package.json"), "utf8")).toContain(`^${assets.version}`);
     expect(await readFile(join(appRoot, "src/entry-server.tsx"), "utf8")).toContain("createKeyboardHydrationScript");
     expect(await readFile(join(appRoot, "src/entry-server.tsx"), "utf8")).toContain("createThemeScript");
     expect([...await readFile(join(appRoot, "src/entry-server.tsx"), "utf8").then(source => source.matchAll(/rel="preload"/gu))]).toHaveLength(3);

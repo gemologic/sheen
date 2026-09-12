@@ -53,7 +53,9 @@ function createTokenBridge(element: HTMLElement): TokenBridge {
     const computed = browser.getComputedStyle(probe);
     const resolved: Record<string, string> = {};
     for (const subscription of subscriptions) {
-      for (const name of subscription.names) resolved[name] = computed.getPropertyValue(name).trim();
+      for (const name of subscription.names) {
+        if (!Object.hasOwn(resolved, name)) resolved[name] = computed.getPropertyValue(name).trim();
+      }
     }
     for (const subscription of subscriptions) {
       const values: Record<string, string> = {};

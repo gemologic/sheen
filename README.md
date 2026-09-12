@@ -2,7 +2,7 @@
 
 SolidJS design-system workspace. Loupe is the SolidStart SSR preview.
 
-[sheen.gemologic.dev](https://sheen.gemologic.dev) is the prerendered public workbench. The npm packages are not published yet; the repository remains release-candidate software until the package and manual accessibility gates in `TODO.md` are complete.
+[sheen.gemologic.dev](https://sheen.gemologic.dev) is the prerendered public workbench. Release candidates require the package, browser, registry-consumer, and manual accessibility gates in the [release policy](docs/releases.md).
 
 ## Development
 
@@ -35,7 +35,7 @@ pnpm test:pages
 
 The Pages artifact contains the landing page and server-independent workbench routes only. Loupe's API-backed fixtures remain part of the SSR development application and are never uploaded. See [GitHub Pages](docs/pages.md) for the deployment and custom-domain boundary.
 
-Run the calibrated production DataTable workload with `sheen-benchmark` or `pnpm benchmark:table`, the heavy AdminApp workload with `pnpm benchmark:admin`, the date overlay workload with `sheen-benchmark-date` or `pnpm benchmark:date`, and the Composer continuity workload with `sheen-benchmark-composer` or `pnpm benchmark:composer`. They write complete five-run records under `test-results/bench/`. See [table benchmarks](docs/table-benchmarks.md), [AdminApp](docs/admin-app.md), [date and time](docs/date-time.md), and [Composer](docs/composer.md) for their workloads, gates, and rebaseline contracts.
+Run the calibrated production DataTable workload with `sheen-benchmark` or `pnpm benchmark:table`, the heavy AdminApp workload with `pnpm benchmark:admin`, the date overlay workload with `sheen-benchmark-date` or `pnpm benchmark:date`, and the Composer continuity workload with `sheen-benchmark-composer` or `pnpm benchmark:composer`. They write complete five-run records under `test-results/bench/`. See [table benchmarks](docs/table-benchmarks.md), [AdminApp](docs/admin-app.md), [date and time](docs/date-time.md), and [Composer](docs/composer.md) for their workloads, gates, and rebaseline contracts, plus [frame sampling](docs/benchmark-sampling.md) for measurement boundaries and stall-detection tests.
 
 ## Current implementation
 
@@ -52,17 +52,17 @@ Run the calibrated production DataTable workload with `sheen-benchmark` or `pnpm
 - Serializable [date and time controls](docs/date-time.md) with scoped overlays, explicit IANA zones and DST resolution, native form projection, retained async options, table-filter injection, isolated package budgets, and a calibrated production benchmark.
 - An [Application Composer](docs/composer.md) that starts from the branded compact AdminApp, edits a constrained private layout document, and emits deterministic copyable public-API TSX. Its pointer engine is lazy and Loupe-only; every edit also has a keyboard-operable control.
 
-The package implementation is ready for a `0.1.0-rc` qualification cycle. `SPEC.md` and `TODO.md` retain the larger 1.0 scope. The remaining external gates are a reviewed public history, hosted CI, registry-installed npm/pnpm/Bun consumers, manual NVDA/Firefox and VoiceOver/Safari passes, upstream or replacement qualification for the pinned Solid/Kobalte patches, and later viz/metron dogfood. Assay remains deliberately paused and is not a 0.1 release-candidate blocker. Passing local checks is not publication authorization or the v1 release gate.
+The package implementation is ready for a `0.1.0-rc` qualification cycle. Release qualification includes hosted CI for the exact commit, registry-installed npm/pnpm/Bun consumers, manual NVDA/Firefox and VoiceOver/Safari passes, and later viz/metron dogfood. Sheen ships its corrected overlay backend and DOM renderer, retaining the app's shared Solid core. Assay remains deliberately paused and is not a 0.1 release-candidate blocker. Passing local checks is not publication authorization or the v1 release gate.
 
 Component authors should follow the [metadata/demo contract](docs/component-authoring.md). `pnpm manifest` generates exhaustive prop information, typechecks every documented example, and refreshes the compact/full agent context plus the vendorable Sheen skill; it is part of `pnpm check`. See [agent context](docs/agent-context.md) for the generated-artifact and budget contract.
 
-The dependency-free CLI package now provides guarded app/theme/component scaffolds and fail-closed vendored-skill synchronization. The app scaffold carries the dark-default hydration/keyboard bootstraps, public router/shell seams, recommended lint, vendored context, and qualified compatibility patches, and passes an isolated production build. See the [CLI contract](docs/cli.md) for paths, previews, overwrite refusal, and the remaining M5 qualification boundary.
+The dependency-free CLI package provides guarded app/theme/component scaffolds and fail-closed vendored-skill synchronization. The app scaffold carries dark-default hydration/keyboard bootstraps, public router/shell seams, recommended lint, vendored context, and `sheenRuntime()` setup. It needs no consumer patches. See the [CLI contract](docs/cli.md) for paths, previews, overwrite refusal, and qualification boundaries.
 
 The [ESLint plugin](docs/lint.md) enforces all specified JavaScript/TypeScript rule families, including token/directionality, dependency wrappers, Solid reactivity, fixed-shell scrolling, motion, icon semantics, explicit unsafe seams, and layout composition. Standalone CSS enforcement remains tracked in `TODO.md`.
 
 Release versioning, package-content checks, deprecation windows, codemod requirements, public-repository setup, and the protected npm bootstrap/OIDC process are documented in [the release policy](docs/releases.md). The automatic release workflow only maintains a version pull request. The separate publication workflow is manual, main-only, artifact-bound, and gated by the protected `npm` environment.
 
-All public packages stay at the development version `0.0.0` in this checkout. The reviewed Changeset creates the fixed `0.1.0` line after the repository has a real `main` history; enter Changesets prerelease mode first so the initial registry build is `0.1.0-rc.0` on the `next` tag. `pnpm check:packages` refuses a stable version while workspace dependency patches remain.
+All public packages use one Changesets-owned fixed version. The development sentinel is `0.0.0`; the initial registry candidate is the generated `0.1.0-rc.0` on `next`. `pnpm check:packages` verifies packed runtime integrity and refuses stable publication if future workspace-only dependency patches are introduced.
 
 Security reports should follow [the security policy](SECURITY.md), not a public issue containing vulnerability details.
 

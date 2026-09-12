@@ -11,6 +11,8 @@
   "files": [
     "dist",
     "src",
+    "vendor",
+    "THIRD_PARTY_NOTICES.md",
     "!dist/**/*.test.*",
     "!dist/**/*.demo.*",
     "!dist/**/*.meta.*",
@@ -21,7 +23,25 @@
   "sideEffects": [
     "**/*.css"
   ],
+  "imports": {
+    "#sheen-kobalte": { "types": "./vendor/kobalte-core/index.d.ts", "solid": "./vendor/kobalte-core/index.jsx", "default": "./vendor/kobalte-core/index.js" },
+    "#sheen-kobalte/*": { "types": "./vendor/kobalte-core/*/index.d.ts", "solid": "./vendor/kobalte-core/*/index.jsx", "default": "./vendor/kobalte-core/*/index.js" },
+    "#sheen-kobalte-utils": { "types": "./vendor/kobalte-utils/index.d.ts", "default": "./vendor/kobalte-utils/index.js" },
+    "#sheen-cmdk": { "types": "./vendor/cmdk-solid/index.d.ts", "solid": "./vendor/cmdk-solid/index.jsx", "default": "./vendor/cmdk-solid/index.js" }
+  },
   "exports": {
+    "./vite": { "types": "./dist/vite.d.ts", "import": "./dist/vite.js" },
+    "./solid-web": {
+      "types": "./vendor/solid-web/types/index.d.ts",
+      "worker": { "import": "./vendor/solid-web/server.js", "require": "./vendor/solid-web/server.cjs" },
+      "browser": {
+        "development": { "import": "./vendor/solid-web/dev.js", "require": "./vendor/solid-web/dev.cjs" },
+        "import": "./vendor/solid-web/web.js", "require": "./vendor/solid-web/web.cjs"
+      },
+      "node": { "import": "./vendor/solid-web/server.js", "require": "./vendor/solid-web/server.cjs" },
+      "development": { "import": "./vendor/solid-web/dev.js", "require": "./vendor/solid-web/dev.cjs" },
+      "import": "./vendor/solid-web/web.js", "require": "./vendor/solid-web/web.cjs"
+    },
     ".": {
       "types": "./dist/index.d.ts",
       "solid": "./src/index.ts",
@@ -69,19 +89,33 @@
   },
   "peerDependencies": {
     "@formisch/solid": ">=1 <2",
-    "solid-js": "1.9.15"
+    "solid-js": "1.9.15",
+    "vite": ">=8 <9"
   },
   "peerDependenciesMeta": {
     "@formisch/solid": {
+      "optional": true
+    },
+    "vite": {
       "optional": true
     }
   },
   "dependencies": {
     "@corvu/resizable": "0.2.5",
     "@gemologic/sheen-tokens": "workspace:*",
-    "@kobalte/core": "0.13.13",
+    "@floating-ui/dom": "^1.5.1",
+    "@internationalized/number": "^3.2.1",
+    "@solid-primitives/event-listener": "^2.2.14",
+    "@solid-primitives/keyed": "^1.2.0",
+    "@solid-primitives/map": "^0.4.7",
+    "@solid-primitives/media": "^2.2.4",
+    "@solid-primitives/props": "^3.1.8",
+    "@solid-primitives/refs": "^1.0.5",
+    "@solid-primitives/resize-observer": "^2.0.26",
+    "@solid-primitives/utils": "^6.2.1",
     "clsx": "2.1.1",
-    "cmdk-solid": "1.2.0"
+    "solid-presence": "^0.2.0",
+    "solid-prevent-scroll": "^0.1.11"
   },
   "devDependencies": {
     "@formisch/solid": "1.0.0",

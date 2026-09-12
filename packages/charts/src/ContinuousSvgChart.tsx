@@ -226,15 +226,16 @@ function model(props: ChartCommonProps, kind: "line" | "area", curve: "linear" |
 
 function ContinuousChart(props: LineChartProps | AreaChartProps, kind: "line" | "area"): JSX.Element {
   const theme = useTheme();
+  const locale = createMemo(() => theme.state().locale);
   const clipId = createUniqueId();
   const summaryId = createUniqueId();
   const instructionId = createUniqueId();
   const viewport = createResponsiveSvgWidth();
   const definitions = createMemo(() => defineSeries(props.series));
   const visibility = createSeriesVisibility(definitions);
-  const resolved = createMemo(() => model(props, kind, props.curve ?? "linear", kind === "area" && "stacked" in props ? props.stacked ?? false : false, theme.state().locale, viewport.width(), visibility.values()));
+  const resolved = createMemo(() => model(props, kind, props.curve ?? "linear", kind === "area" && "stacked" in props ? props.stacked ?? false : false, locale(), viewport.width(), visibility.values()));
   const messages = createMemo(() => resolveChartMessages(theme.messages()));
-  const formatters = createMemo(() => createChartTableFormatters(theme.state().locale, props.x, props.y));
+  const formatters = createMemo(() => createChartTableFormatters(locale(), props.x, props.y));
   const tooltipRows = new Map<string, HTMLLIElement>();
   const tooltipValues = new Map<string, HTMLSpanElement>();
   let tooltip: HTMLDivElement | undefined;

@@ -2,12 +2,13 @@ import assert from "node:assert/strict";
 import { cp, mkdir } from "node:fs/promises";
 import { createServer } from "node:http";
 import { join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { chromium, expect } from "@playwright/test";
 import { build } from "vite";
 import solid from "vite-plugin-solid";
 
 export async function checkConsumerBrowser(temporary: string, ui: string, condition: string): Promise<void> {
+  const { sheenRuntime } = await import(pathToFileURL(join(ui, "dist/vite.js")).href);
   const entry = join(temporary, "ui-browser.mjs");
   await cp(new URL("../tests/consumers/ui-browser.mjs", import.meta.url), entry);
   let verified = false;
@@ -15,12 +16,15 @@ export async function checkConsumerBrowser(temporary: string, ui: string, condit
     configFile: false,
     root: temporary,
     logLevel: "warn",
-    resolve: { conditions: ["browser", "module", "production"] },
+    resolve: { conditions: condition === "solid" ? ["solid", "browser", "module", "production"] : ["browser", "module", "production"] },
     build: { write: false, rolldownOptions: { input: entry } },
-    plugins: [condition === "solid" ? solid() : undefined, {
+    plugins: [sheenRuntime(), condition === "solid" ? solid() : undefined, {
       name: "verify-runtime-package-entry",
       generateBundle(_options, bundle) {
         const modules = Object.values(bundle).flatMap(output => output.type === "chunk" ? Object.keys(output.modules) : []);
+        assert.ok(modules.some(id => id.startsWith(ui) && id.endsWith("/vendor/solid-web/web.js")), "Client must use Sheen's owned DOM renderer");
+        assert.ok(!modules.some(id => /\/solid-js\/web\/dist\//u.test(id)), "Client must not bundle the original DOM renderer");
+        assert.equal(modules.filter(id => /\/solid-js\/dist\/solid\.js$/u.test(id)).length, 1, "Client must share one Solid reactive core");
         for (const component of ["Button", "Link", "Dialog", "Popover"]) {
           const suffix = condition === "solid" ? `/src/primitives/${component}.tsx` : `/dist/primitives/${component}.js`;
           assert.ok(modules.some(id => id.startsWith(ui) && id.endsWith(suffix)), `Browser must execute copied ${condition} ${component}`);

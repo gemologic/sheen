@@ -1,5 +1,5 @@
-import { MenuContent, MenuPortal, MenuRoot } from "@kobalte/core/menu";
-import { Polymorphic } from "@kobalte/core/polymorphic";
+import { MenuContent, MenuPortal, MenuRoot } from "#sheen-kobalte/menu";
+import { Polymorphic } from "#sheen-kobalte/polymorphic";
 import { Show, createEffect, createMemo, createSignal, createUniqueId, onCleanup, splitProps } from "solid-js";
 import type { JSX } from "solid-js";
 import { useTheme } from "../theme/ThemeProvider.tsx";

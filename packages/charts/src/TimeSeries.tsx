@@ -250,6 +250,7 @@ function options(props: TimeSeriesProps, definitions: readonly ChartSeries[], vi
 
 export function TimeSeries(props: TimeSeriesProps): JSX.Element {
   const theme = useTheme();
+  const locale = createMemo(() => theme.state().locale);
   const tokens = useThemeTokens(tokenNames);
   const definitions = createMemo(() => defineSeries(props.series));
   const visibility = createSeriesVisibility(definitions);
@@ -259,7 +260,7 @@ export function TimeSeries(props: TimeSeriesProps): JSX.Element {
   const summary = createMemo(() => requiredText(props.summary, "summary"));
   const xLabel = createMemo(() => requiredText(props.xLabel, "xLabel"));
   const messages = createMemo(() => resolveChartMessages(theme.messages()));
-  const formatters = createMemo(() => createChartTableFormatters(theme.state().locale, props.x, props.y));
+  const formatters = createMemo(() => createChartTableFormatters(locale(), props.x, props.y));
   const annotations = createMemo(() => validateAnnotations(props.annotations));
   const [enhanced, setEnhanced] = createSignal(false);
   const [rendererPending, setRendererPending] = createSignal(false);
@@ -279,7 +280,7 @@ export function TimeSeries(props: TimeSeriesProps): JSX.Element {
     xLabel: xLabel(),
     cursor: props.cursor,
     tooltip: props.tooltip,
-    locale: theme.state().locale,
+    locale: locale(),
   }));
   const [zoomed, setZoomed] = createSignal(false);
   let plotHost: HTMLDivElement | undefined;
@@ -462,7 +463,7 @@ export function TimeSeries(props: TimeSeriesProps): JSX.Element {
           return;
         }
         currentConfiguration = preparedConfiguration;
-        plot = new uPlot(options(props, preparedDefinitions, untrack(visibility.values), () => currentTokens, theme.state().locale, measuredWidth(), height(), lifecycle), preparedData, plotHost);
+        plot = new uPlot(options(props, preparedDefinitions, untrack(visibility.values), () => currentTokens, locale(), measuredWidth(), height(), lifecycle), preparedData, plotHost);
         resizeObserver = new ResizeObserver(scheduleResize);
         resizeObserver.observe(plotHost);
         setEnhanced(true);

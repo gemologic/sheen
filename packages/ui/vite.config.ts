@@ -13,11 +13,12 @@ export default defineConfig({
         navigation: "src/navigation.ts",
         formisch: "src/formisch.ts",
         metadata: "src/metadata.ts",
+        vite: "src/vite.ts",
       },
       formats: ["es"],
     },
     rolldownOptions: {
-      external: [/^solid-js(?:\/|$)/, /^@kobalte\//, /^@corvu\/resizable(?:\/|$)/, /^cmdk-solid(?:\/|$)/, /^@formisch\/solid(?:\/|$)/, /^@gemologic\/sheen-tokens(?:\/|$)/, "clsx"],
+      external: [/^solid-js(?:\/|$)/, /^#sheen-/, /^node:/, /^vite(?:\/|$)/, /^@corvu\/resizable(?:\/|$)/, /^@formisch\/solid(?:\/|$)/, /^@gemologic\/sheen-tokens(?:\/|$)/, "clsx"],
       output: { preserveModules: true, preserveModulesRoot: "src", entryFileNames: "[name].js" },
     },
   },

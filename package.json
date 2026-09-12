@@ -16,6 +16,7 @@
     "node": ">=24 <25"
   },
   "scripts": {
+    "vendor:runtime": "node tools/vendor-runtime.ts",
     "build:runtime-packages": "pnpm --filter @gemologic/sheen-tokens build && pnpm --filter @gemologic/sheen-icons build && pnpm --filter @gemologic/sheen build && pnpm --filter @gemologic/sheen-code build && pnpm --filter @gemologic/sheen-date build && pnpm --filter @gemologic/sheen-table build && pnpm --filter @gemologic/sheen-patterns build && pnpm --filter @gemologic/sheen-charts build",
     "build:tool-packages": "pnpm --filter eslint-plugin-sheen build && pnpm --filter @gemologic/sheen-cli build",
     "build:packages": "pnpm build:runtime-packages && pnpm build:tool-packages",
@@ -23,6 +24,7 @@
     "build:pages": "pnpm manifest && pnpm --filter loupe build:pages",
     "dev": "pnpm --filter loupe dev",
     "test:browser": "playwright test",
+    "test:production": "playwright test --config playwright.production.config.ts",
     "test:webkit": "playwright test --config playwright.webkit.config.ts",
     "test:pages": "playwright test --config playwright.pages.config.ts",
     "benchmark:table": "pnpm build && playwright test --config bench/playwright.config.ts",
@@ -35,6 +37,7 @@
     "test": "vitest run",
     "check:consumers": "node tools/check-consumers.ts && node tools/check-icon-consumers.ts",
     "test:npm-consumer": "node tools/check-npm-consumer.ts",
+    "test:npm-consumer:browser": "node tools/check-npm-consumer.ts --browser",
     "test:release-artifacts": "node tools/check-release-artifacts.ts",
     "test:consumer-browser": "node tools/check-consumers.ts --browser",
     "manifest": "pnpm build:runtime-packages && pnpm manifest:generate",

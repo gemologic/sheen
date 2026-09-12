@@ -29,6 +29,7 @@ The repository may be edited concurrently. Treat Git commands as read-only conte
 
 - Applications import only public `@gemologic/sheen*` entries.
 - Kobalte and Corvu stay behind UI wrappers. TanStack stays behind table/router adapters. uPlot and d3 stay behind chart wrappers.
+- UI uses its package-private vendored Kobalte/CMDK backend. Applications retain `solid-js@1.9.15` and configure `sheenRuntime()` from `@gemologic/sheen/vite`, sharing one reactive core with Sheen's DOM renderer. Do not restore consumer-side dependency patches.
 - Public escape hatches are named `__unsafe_*`, typed, lint-warned, and easy to grep.
 - Use `Link` for URL changes and `Button` for actions. A link can use `variant="button"`; a button can use `variant="link"`.
 - Keep heavy table/chart engines out of the UI package and out of single-component bundles.

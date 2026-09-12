@@ -1,11 +1,13 @@
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { isAbsolute, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 import { publicPackageDirectories } from "./public-packages.ts";
+import { checkConsumerBrowser } from "./check-consumer-browser.ts";
+import { checkConsumerHydration } from "./check-consumer-hydration.ts";
 
 interface PackResult {
   readonly name: string;
@@ -56,15 +58,42 @@ import "@gemologic/sheen-code/styles.css";
 function nodeConsumer(expectedVersion: string): string {
   return `
 import assert from "node:assert/strict";
+import { createRequire } from "node:module";
 import { buildTheme } from "@gemologic/sheen-tokens";
 import { appScaffold } from "@gemologic/sheen-cli";
 import sheen from "eslint-plugin-sheen";
+import * as ownedServer from "@gemologic/sheen/solid-web";
+import * as peerServer from "solid-js/web";
+import { provideRequestEvent } from "solid-js/web/storage";
+
+assert.equal(ownedServer.RequestContext, peerServer.RequestContext);
+assert.equal(ownedServer.renderToString, peerServer.renderToString);
+const require = createRequire(import.meta.url);
+const ownedCommonJS = require("@gemologic/sheen/solid-web");
+const peerCommonJS = require("solid-js/web");
+assert.equal(ownedCommonJS.RequestContext, peerCommonJS.RequestContext);
+assert.equal(ownedCommonJS.renderToString, peerCommonJS.renderToString);
+assert.equal(ownedServer.getRequestEvent(), undefined);
+await Promise.all(["first", "second"].map(id => {
+  const event = { request: new Request("https://consumer.example/" + id) };
+  return provideRequestEvent(event, async () => {
+    await new Promise(resolve => setImmediate(resolve));
+    assert.equal(ownedServer.getRequestEvent(), event);
+    assert.equal(peerServer.getRequestEvent(), event);
+  });
+}));
+assert.equal(ownedServer.getRequestEvent(), undefined);
 
 assert.equal(typeof buildTheme, "function");
 assert.equal(typeof appScaffold, "function");
 assert.equal(typeof sheen, "object");
 assert.equal(sheen.meta?.version, ${JSON.stringify(expectedVersion)});
-console.log("Node package roots imported from packed npm artifacts.");
+const plan = await appScaffold("packed-starter");
+const appManifest = JSON.parse(plan.find(file => file.path.endsWith("/package.json")).content);
+assert.equal(appManifest.dependencies["@gemologic/sheen"], ${JSON.stringify(`^${expectedVersion}`)});
+assert.ok(plan.find(file => file.path.endsWith("/vite.config.ts")).content.includes("sheenRuntime()"));
+assert.ok(!plan.some(file => file.path.includes("/patches/")));
+console.log("Node package roots and shared SSR request context qualified from packed npm artifacts.");
 `;
 }
 
@@ -72,6 +101,7 @@ const viteProbe = `
 import assert from "node:assert/strict";
 import { build } from "vite";
 import solid from "vite-plugin-solid";
+import { sheenRuntime } from "@gemologic/sheen/vite";
 
 async function buildConsumer(name, conditions, plugins) {
   const result = await build({
@@ -85,7 +115,7 @@ async function buildConsumer(name, conditions, plugins) {
       lib: { entry: "browser-consumer.tsx", formats: ["es"], fileName: name },
       rolldownOptions: { external: [/^solid-js(?:\\/|$)/] },
     },
-    plugins,
+    plugins: [sheenRuntime(), ...plugins],
   });
   const output = (Array.isArray(result) ? result : [result]).flatMap(item => "output" in item ? item.output : []);
   const exports = new Set(output.flatMap(item => item.type === "chunk" ? item.exports : []));
@@ -126,7 +156,20 @@ try {
   await writeFile(join(consumerDirectory, "vite-probe.mjs"), viteProbe);
   await execute(process.execPath, ["node-consumer.mjs"], consumerDirectory);
   await execute("npm", ["exec", "--", "tsc", "--noEmit", "--strict", "--skipLibCheck", "--target", "ES2023", "--module", "ESNext", "--moduleResolution", "Bundler", "--jsx", "preserve", "--types", "vite/client", "browser-consumer.tsx"], consumerDirectory);
+  await cp(join(root, "tests/consumers/ui-runtime-types.mts"), join(consumerDirectory, "runtime-types.mts"));
+  await execute("npm", ["exec", "--", "tsc", "--noEmit", "--strict", "--target", "ES2023", "--module", "ESNext", "--moduleResolution", "Bundler", "--types", "vite/client", "runtime-types.mts"], consumerDirectory);
   await execute(process.execPath, ["vite-probe.mjs"], consumerDirectory);
+  const ui = join(consumerDirectory, "node_modules/@gemologic/sheen");
+  const originalRenderer = await readFile(join(consumerDirectory, "node_modules/solid-js/web/dist/web.js"), "utf8");
+  assert.doesNotMatch(originalRenderer, /if \(!sharedConfig\.count\) sharedConfig\.done/u, "Clean npm must install unpatched Solid");
+  const closure = await execute("npm", ["ls", "--all", "--json"], consumerDirectory);
+  for (const dependency of ["@kobalte/core", "@kobalte/utils", "cmdk-solid"]) {
+    assert.ok(!closure.includes(`\"${dependency}\"`), `Sheen must not depend on original ${dependency}`);
+  }
+  if (process.argv.includes("--browser")) {
+    for (const condition of ["import", "solid"]) await checkConsumerBrowser(consumerDirectory, ui, condition);
+    await checkConsumerHydration(consumerDirectory, ui);
+  }
 
   const packageManifest = await readFile(join(consumerDirectory, "package.json"), "utf8");
   for (const packageDirectory of publicPackageDirectories) {

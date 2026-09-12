@@ -1,19 +1,12 @@
 import { expect, test } from "@playwright/test";
 import type { Browser, Page } from "@playwright/test";
+import { finishFrameSampling, startFrameSampling } from "./frame-sampling.ts";
+import type { FrameSample } from "./frame-sampling.ts";
 import { cpus, platform, release, totalmem } from "node:os";
 import { mkdir, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { adminAppBenchmarkBaseline } from "./baselines/admin-app.v2.ts";
 import type { AdminAppNormalizedBaseline } from "./baselines/admin-app.v2.ts";
-
-interface FrameSample {
-  readonly durationMs: number;
-  readonly intervals: readonly number[];
-  readonly longTasks: readonly number[];
-  readonly unexpectedLayoutShift: number;
-  readonly unexpectedLayoutShiftSources: readonly string[];
-  readonly transientOverlayLayoutShift: number;
-}
 
 interface OperationSample {
   readonly name: string;
@@ -69,74 +62,16 @@ async function calibrate(page: Page): Promise<number> {
 }
 
 async function measure(page: Page, name: string, operation: () => Promise<boolean>): Promise<OperationSample> {
-  const pending = page.evaluate(async (): Promise<FrameSample> => {
-    const start = performance.now();
-    const intervals: number[] = [];
-    const longTasks: number[] = [];
-    let unexpectedLayoutShift = 0;
-    const unexpectedLayoutShiftSources = new Set<string>();
-    let transientOverlayLayoutShift = 0;
-    const describeElement = (node: Element): string => {
-      const id = node.id ? `#${CSS.escape(node.id)}` : "";
-      const classes = [...node.classList].slice(0, 3).map(value => `.${CSS.escape(value)}`).join("");
-      return `${node.localName}${id}${classes}`;
-    };
-    const observer = new PerformanceObserver(list => {
-      for (const entry of list.getEntries()) {
-        if (entry.entryType === "longtask") longTasks.push(entry.duration);
-        if (entry.entryType !== "layout-shift") continue;
-        const serialized: unknown = entry.toJSON();
-        if (typeof serialized !== "object" || serialized === null || !("value" in serialized) || !("hadRecentInput" in serialized)) continue;
-        if (serialized.hadRecentInput !== false || typeof serialized.value !== "number") continue;
-        const rawSources: unknown = Reflect.get(entry, "sources");
-        const sourceElements: Element[] = [];
-        if (Array.isArray(rawSources)) {
-          for (const source of rawSources) {
-            if (typeof source !== "object" || source === null) continue;
-            const node: unknown = Reflect.get(source, "node");
-            if (node instanceof Element) sourceElements.push(node);
-          }
-        }
-        const transient = sourceElements.length > 0 && sourceElements.every(node => node.closest(".sheen-toaster") !== null);
-        if (transient) transientOverlayLayoutShift += serialized.value;
-        else {
-          unexpectedLayoutShift += serialized.value;
-          if (Array.isArray(rawSources)) {
-            for (const source of rawSources) {
-              if (typeof source !== "object" || source === null) continue;
-              const node: unknown = Reflect.get(source, "node");
-              if (node instanceof Element) unexpectedLayoutShiftSources.add(describeElement(node));
-            }
-          }
-        }
-      }
-    });
-    const entryTypes = PerformanceObserver.supportedEntryTypes.filter(type => type === "longtask" || type === "layout-shift");
-    if (entryTypes.length > 0) observer.observe({ entryTypes });
-    document.documentElement.dataset.adminBenchmarkMeasure = "ready";
-    let stopped = false;
-    const stop = () => { stopped = true; };
-    document.addEventListener("sheen-admin-benchmark-stop", stop, { once: true });
-    let previous: number | undefined;
-    while (!stopped) {
-      const timestamp = await new Promise<number>(resolveFrame => requestAnimationFrame(resolveFrame));
-      if (previous !== undefined) intervals.push(timestamp - previous);
-      previous = timestamp;
-    }
-    observer.disconnect();
-    document.removeEventListener("sheen-admin-benchmark-stop", stop);
-    delete document.documentElement.dataset.adminBenchmarkMeasure;
-    return { durationMs: performance.now() - start, intervals, longTasks, unexpectedLayoutShift, unexpectedLayoutShiftSources: [...unexpectedLayoutShiftSources], transientOverlayLayoutShift };
-  });
-  await page.waitForFunction(() => document.documentElement.dataset.adminBenchmarkMeasure === "ready");
+  await startFrameSampling(page, { separateToastLayoutShift: true });
   let retained = false;
+  let frames: FrameSample;
   try {
     retained = await operation();
     await page.evaluate(() => new Promise<void>(resolveFrame => requestAnimationFrame(() => requestAnimationFrame(() => requestAnimationFrame(() => resolveFrame())))));
   } finally {
-    await page.evaluate(() => document.dispatchEvent(new Event("sheen-admin-benchmark-stop")));
+    frames = await finishFrameSampling(page);
   }
-  return Object.freeze({ name, frames: await pending, retained });
+  return Object.freeze({ name, frames, retained });
 }
 
 function operation(run: AdminAppBenchmarkRun, name: string): OperationSample {
@@ -294,7 +229,7 @@ async function runOnce(browser: Browser): Promise<AdminAppBenchmarkRun> {
         if (!(element instanceof HTMLButtonElement)) throw new Error("Refresh trigger must be a button");
         element.click();
       });
-      await expect(page.getByText("Revision 2", { exact: false }).last()).toBeVisible();
+      await expect(page.locator(".sheen-status-bar").getByText("Revision 2", { exact: true })).toBeVisible();
       return await content.getAttribute("data-benchmark-content") === "retained"
         && await note.getAttribute("data-benchmark-note") === "retained"
         && await note.inputValue() === "Benchmark retained draft"

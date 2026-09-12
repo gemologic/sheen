@@ -1,4 +1,4 @@
-import * as Primitive from "@kobalte/core/select";
+import * as Primitive from "#sheen-kobalte/select";
 import { For, Show, createEffect, createMemo, createSignal, createUniqueId, onCleanup, onMount, splitProps, untrack } from "solid-js";
 import type { JSX } from "solid-js";
 import { useTheme } from "../theme/ThemeProvider.tsx";

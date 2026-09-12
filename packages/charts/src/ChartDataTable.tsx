@@ -27,6 +27,7 @@ function requiredText(value: string, name: string): string {
 
 export function ChartDataTable(props: ChartDataTableProps): JSX.Element {
   const theme = useTheme();
+  const locale = createMemo(() => theme.state().locale);
   const definitions = createMemo(() => defineSeries(props.series));
   const data = createMemo(() => validateColumnar(props.data, definitions()));
   const pageSize = createMemo(() => {
@@ -35,7 +36,7 @@ export function ChartDataTable(props: ChartDataTableProps): JSX.Element {
     return value;
   });
   const messages = createMemo(() => resolveChartMessages(theme.messages()));
-  const formatters = createMemo(() => createChartTableFormatters(theme.state().locale, props.x, props.y));
+  const formatters = createMemo(() => createChartTableFormatters(locale(), props.x, props.y));
   const [requestedPage, setRequestedPage] = createSignal(0);
   const pageCount = createMemo(() => Math.ceil(data().t.length / pageSize()));
   const page = createMemo(() => Math.min(requestedPage(), Math.max(0, pageCount() - 1)));

@@ -23,7 +23,9 @@ jobs:
         run: pnpm changeset status --since="origin/${{ github.base_ref }}"
       - run: pnpm check
       - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm test:production
       - run: pnpm test:consumer-browser
+      - run: pnpm test:npm-consumer:browser
       - run: pnpm test:browser
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: failure()

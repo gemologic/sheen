@@ -19,6 +19,6 @@ pnpm sheen doctor
 pnpm sheen sync-skill
 ```
 
-`new` never overwrites an existing target. `--force` first prints the diff; `--dry-run` performs no writes. `sync-skill` touches only its managed directory and refuses to replace uncommitted content. Generated applications include the dark-first theme and keyboard hydration scripts, public package boundaries, lint configuration, and the compatibility patches qualified by this release line.
+`new` never overwrites an existing target. `--force` first prints the diff; `--dry-run` performs no writes. `sync-skill` touches only its managed directory and refuses to replace uncommitted content. Generated applications include the dark-first theme and keyboard hydration scripts, public package boundaries, lint configuration, and `sheenRuntime()` setup. They retain the ordinary shared Solid core and need no consumer compatibility patches.
 
 See the [CLI guide](https://github.com/gemologic/sheen/blob/main/docs/cli.md) for every scaffold, exit behavior, manifest output, doctor diagnostics, and skill synchronization contract.

@@ -1,1 +1,1 @@
-export type { PolymorphicProps as SheenPolymorphicProps } from "@kobalte/core/polymorphic";
+export type { PolymorphicProps as SheenPolymorphicProps } from "#sheen-kobalte/polymorphic";

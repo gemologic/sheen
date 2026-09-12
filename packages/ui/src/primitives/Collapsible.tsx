@@ -1,4 +1,4 @@
-import * as Primitive from "@kobalte/core/collapsible";
+import * as Primitive from "#sheen-kobalte/collapsible";
 import { createEffect, createSignal, createUniqueId, splitProps } from "solid-js";
 import type { JSX } from "solid-js";
 import { Button } from "./Button.tsx";

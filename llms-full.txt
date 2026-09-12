@@ -2,6 +2,8 @@
 
 Generated from sheen.manifest.json. Do not edit by hand.
 
+Install solid-js@1.9.15 as the shared application core and configure sheenRuntime() from @gemologic/sheen/vite in Vite/SolidStart. Sheen ships its patched browser renderer and overlay backend; SSR retains the peer renderer and matching request storage. Consumers need no dependency patches or Kobalte dependency. Keep the setup plugin enabled. Other bundlers require an explicitly qualified adapter.
+
 ## @gemologic/sheen-charts
 
 ### AreaChart

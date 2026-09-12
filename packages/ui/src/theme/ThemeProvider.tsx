@@ -1,6 +1,6 @@
 import { createContext, createEffect, createMemo, createSignal, createUniqueId, onCleanup, onMount, useContext } from "solid-js";
 import type { Accessor, JSX, ParentProps } from "solid-js";
-import { I18nProvider } from "@kobalte/core/i18n";
+import { I18nProvider } from "#sheen-kobalte/i18n";
 import { bundledThemeMetadata, iconSetForTheme } from "@gemologic/sheen-tokens/catalog";
 import type { ThemeMetadata } from "@gemologic/sheen-tokens/catalog";
 import type { Mode } from "@gemologic/sheen-tokens";

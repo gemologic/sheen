@@ -190,6 +190,7 @@ function CategoricalDataTable(props: {
   readonly loading?: boolean;
 }): JSX.Element {
   const theme = useTheme();
+  const locale = createMemo(() => theme.state().locale);
   const messages = createMemo(() => resolveChartMessages(theme.messages()));
   const pageSize = createMemo(() => {
     const value = props.pageSize ?? defaultPageSize;
@@ -204,7 +205,7 @@ function CategoricalDataTable(props: {
     const start = page() * pageSize();
     return Array.from({ length: Math.min(pageSize(), Math.max(0, props.data.categories.length - start)) }, (_, offset) => start + offset);
   });
-  const format = createMemo(() => createChartTableFormatters(theme.state().locale, { type: "number" }, props.y).value);
+  const format = createMemo(() => createChartTableFormatters(locale(), { type: "number" }, props.y).value);
   return <details class="sheen-chart-data" aria-busy={props.loading || undefined}>
     <summary>{props.viewLabel ?? messages().viewAsTable}</summary>
     <p class="sheen-chart-data-summary">{props.summary}</p>
@@ -231,13 +232,14 @@ function CategoricalDataTable(props: {
 
 export function BarChart(props: BarChartProps): JSX.Element {
   const theme = useTheme();
+  const locale = createMemo(() => theme.state().locale);
   const summaryId = createUniqueId();
   const instructionId = createUniqueId();
   const viewport = createResponsiveSvgWidth();
   const definitions = createMemo(() => defineSeries(props.series));
   const visibility = createSeriesVisibility(definitions);
-  const resolved = createMemo(() => model(props, theme.state().locale, viewport.width(), visibility.values()));
-  const format = createMemo(() => createChartTableFormatters(theme.state().locale, { type: "number" }, props.y).value);
+  const resolved = createMemo(() => model(props, locale(), viewport.width(), visibility.values()));
+  const format = createMemo(() => createChartTableFormatters(locale(), { type: "number" }, props.y).value);
   const messages = createMemo(() => resolveChartMessages(theme.messages()));
   const tooltipRows = new Map<string, HTMLLIElement>();
   const tooltipValues = new Map<string, HTMLSpanElement>();

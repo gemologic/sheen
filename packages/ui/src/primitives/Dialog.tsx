@@ -1,4 +1,4 @@
-import * as KobalteDialog from "@kobalte/core/dialog";
+import * as KobalteDialog from "#sheen-kobalte/dialog";
 import type { JSX, ParentProps } from "solid-js";
 import { Show, createEffect, createMemo, createSignal, createUniqueId, onCleanup } from "solid-js";
 import { useTheme } from "../theme/ThemeProvider.tsx";

@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 import { publicPackageDirectories } from "./public-packages.ts";
 import { patchedDependencyReleaseError, workspacePatchedDependencies } from "./release-version.ts";
+import { verifyVendorIntegrity } from "./vendor-integrity.ts";
 
 interface PackageRepository {
   readonly type: "git";
@@ -33,6 +34,7 @@ interface PublicPackageManifest {
   readonly repository: PackageRepository;
   readonly publishConfig: PackagePublishConfig;
   readonly exports: Readonly<Record<string, unknown>>;
+  readonly imports?: Readonly<Record<string, unknown>>;
   readonly bin?: string | Readonly<Record<string, string>>;
 }
 
@@ -96,6 +98,7 @@ function manifest(value: unknown): value is PublicPackageManifest {
     && value.bugs.url === "https://github.com/gemologic/sheen/issues"
     && stringArray(value.files) && repository(value.repository)
     && publishConfig(value.publishConfig) && record(value.exports)
+    && (value.imports === undefined || record(value.imports))
     && (value.bin === undefined || nonempty(value.bin) || stringRecord(value.bin));
 }
 
@@ -174,6 +177,7 @@ async function inspectPackage(directoryName: string, rootLicense: string): Promi
     assert.ok(!forbiddenFiles.some(expression => expression.test(path)), `${parsedManifest.name} includes forbidden publication file ${path}`);
   }
   for (const target of collectExportTargets(parsedManifest.exports)) assertTargetIncluded(target, included, parsedManifest.name);
+  for (const target of collectExportTargets(parsedManifest.imports)) assertTargetIncluded(target, included, parsedManifest.name);
   for (const target of binTargets(parsedManifest.bin)) assertTargetIncluded(target, included, parsedManifest.name);
 
   if (parsedManifest.name === "@gemologic/sheen-tokens") {
@@ -184,8 +188,14 @@ async function inspectPackage(directoryName: string, rootLicense: string): Promi
   if (parsedManifest.name === "@gemologic/sheen-icons") {
     assert.ok(included.has("THIRD_PARTY_NOTICES.md"), `${parsedManifest.name} package is missing third-party icon notices`);
   }
+  if (parsedManifest.name === "@gemologic/sheen") {
+    for (const required of ["THIRD_PARTY_NOTICES.md", "dist/vite.js", "dist/vite.d.ts", "vendor/origins.json", "vendor/integrity.json", "vendor/kobalte-core/LICENSE.md", "vendor/kobalte-core/NOTICE.txt", "vendor/kobalte-utils/LICENSE.md", "vendor/kobalte-utils/NOTICE.txt", "vendor/solid-web/LICENSE", "vendor/cmdk-solid/LICENSE"]) {
+      assert.ok(included.has(required), `${parsedManifest.name} package is missing runtime artifact ${required}`);
+    }
+  }
   if (parsedManifest.name === "@gemologic/sheen-cli") {
-    for (const required of ["dist/skill/SKILL.md", "dist/skill/llms.txt", "dist/app-patches/solid-js@1.9.15.patch", "dist/app-patches/@kobalte__core@0.13.13.patch", "dist/app-patches/@kobalte__utils@0.9.2.patch"]) {
+    assert.ok(![...included].some(path => path.startsWith("dist/app-patches/")), "CLI must not distribute consumer dependency patches");
+    for (const required of ["dist/skill/SKILL.md", "dist/skill/llms.txt"]) {
       assert.ok(included.has(required), `${parsedManifest.name} package is missing generated app artifact ${required}`);
     }
   }
@@ -195,6 +205,7 @@ async function inspectPackage(directoryName: string, rootLicense: string): Promi
 }
 
 const rootLicense = await readFile(join(root, "LICENSE"), "utf8");
+await verifyVendorIntegrity(root);
 const inspected: InspectedPackage[] = [];
 for (const directory of publicPackageDirectories) inspected.push(await inspectPackage(directory, rootLicense));
 assert.equal(new Set(inspected.map(item => item.name)).size, publicPackageDirectories.length, "public package names must be unique");

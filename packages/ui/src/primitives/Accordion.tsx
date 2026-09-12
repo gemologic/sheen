@@ -1,4 +1,4 @@
-import * as Primitive from "@kobalte/core/accordion";
+import * as Primitive from "#sheen-kobalte/accordion";
 import { createContext, createEffect, createMemo, createSignal, createUniqueId, onCleanup, onMount, splitProps, useContext } from "solid-js";
 import type { Accessor, JSX } from "solid-js";
 import { Button } from "./Button.tsx";

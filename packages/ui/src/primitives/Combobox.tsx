@@ -1,4 +1,4 @@
-import * as Primitive from "@kobalte/core/combobox";
+import * as Primitive from "#sheen-kobalte/combobox";
 import { For, Show, createEffect, createMemo, createSignal, createUniqueId, onCleanup, onMount, splitProps } from "solid-js";
 import type { Accessor, JSX } from "solid-js";
 import { useTheme } from "../theme/ThemeProvider.tsx";

@@ -5,8 +5,18 @@ Accessible, themeable SolidJS components for application interfaces. Import the 
 ## Install
 
 ```sh
-pnpm add @gemologic/sheen @gemologic/sheen-tokens solid-js
+pnpm add @gemologic/sheen @gemologic/sheen-tokens solid-js@1.9.15
 ```
+
+Add the runtime setup plugin to Vite 8 or SolidStart's Vite configuration:
+
+```ts
+import { sheenRuntime } from "@gemologic/sheen/vite";
+
+export default { plugins: [sheenRuntime(), /* your Solid/SolidStart plugin */] };
+```
+
+Sheen ships its patched browser DOM renderer and overlay backend. The plugin directs browser `solid-js/web` imports to that renderer and deduplicates the application's ordinary Solid core. SSR uses the peer server renderer and its matching request storage, including through Sheen's Node/worker renderer exports. No Kobalte dependency or consumer patches are needed. Keep `solid-js` in your app dependencies for JSX, signals, stores, and routing. Do not mix original Kobalte overlays into Sheen's layer stack. Other bundlers need a qualified setup adapter.
 
 Load the styles once at the application root:
 

@@ -277,9 +277,10 @@ try {
   await mkdir(join(ui, "src"), { recursive: true });
   await cp(new URL("packages/ui/package.json", root), join(ui, "package.json"));
   await cp(new URL("packages/ui/dist", root), join(ui, "dist"), { recursive: true });
+  await cp(new URL("packages/ui/vendor", root), join(ui, "vendor"), { recursive: true });
   // CSS is the only source file exposed by the first built-JS fixture. Accidental TSX resolution must fail.
   await cp(new URL("packages/ui/src/styles.css", root), join(ui, "src", "styles.css"));
-  for (const dependency of ["solid-js", "@kobalte/core", "@corvu/resizable", "cmdk-solid", "clsx"]) {
+  for (const dependency of ["solid-js", "@corvu/resizable", "clsx", "@floating-ui/dom", "@internationalized/number", "@solid-primitives/event-listener", "@solid-primitives/keyed", "@solid-primitives/map", "@solid-primitives/media", "@solid-primitives/props", "@solid-primitives/refs", "@solid-primitives/resize-observer", "@solid-primitives/utils", "solid-presence", "solid-prevent-scroll"]) {
     const target = join(temporary, "node_modules", dependency);
     await mkdir(join(target, ".."), { recursive: true });
     await symlink(await realpath(new URL(`packages/ui/node_modules/${dependency}`, root)), target, "dir");
@@ -410,7 +411,7 @@ try {
             const suffix = entryCondition === "solid" ? `/src/primitives/${component}.tsx` : `/dist/primitives/${component}.js`;
             assert.ok(retained.some(id => id.startsWith(ui) && id.endsWith(suffix)), `${entryCondition} consumer must use its copied ${component} entry`);
           }
-          assert.ok(!retained.some(id => /@kobalte|@tanstack|uplot/.test(id)), "Native Button/Link consumer must not retain headless/chart/table modules");
+          assert.ok(!retained.some(id => /@kobalte|@tanstack|uplot|\/vendor\/(?:kobalte|cmdk)/u.test(id)), "Native Button/Link consumer must not retain headless/chart/table modules");
           if (entryCondition === "built") assert.ok(!retained.some(id => /\/src\/.*\.tsx/.test(id)), "Built consumer must not retain source TSX");
           else assert.ok(!retained.some(id => id.startsWith(ui) && id.includes("/dist/")), "Solid consumer must not mix compiled UI entries into its source graph");
           verified = true;

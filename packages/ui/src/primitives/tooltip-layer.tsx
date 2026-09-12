@@ -1,4 +1,4 @@
-import * as Primitive from "@kobalte/core/tooltip";
+import * as Primitive from "#sheen-kobalte/tooltip";
 import { Show, createEffect, createMemo, createSignal, createUniqueId, onCleanup, onMount } from "solid-js";
 import type { Accessor } from "solid-js";
 import { Kbd } from "./Typography.tsx";

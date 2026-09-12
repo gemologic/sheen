@@ -1,5 +1,5 @@
-import * as Primitive from "@kobalte/core/dropdown-menu";
-import { useMenuContext } from "@kobalte/core/menu";
+import * as Primitive from "#sheen-kobalte/dropdown-menu";
+import { useMenuContext } from "#sheen-kobalte/menu";
 import { For, Show, createEffect, createMemo, createSignal, createUniqueId, onCleanup } from "solid-js";
 import type { JSX } from "solid-js";
 import { Button } from "./Button.tsx";

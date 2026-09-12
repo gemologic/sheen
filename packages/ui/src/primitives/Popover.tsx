@@ -1,4 +1,4 @@
-import * as Primitive from "@kobalte/core/popover";
+import * as Primitive from "#sheen-kobalte/popover";
 import { Show, createEffect, createMemo, createSignal, createUniqueId, onCleanup } from "solid-js";
 import type { JSX, ParentProps } from "solid-js";
 import { Button } from "./Button.tsx";

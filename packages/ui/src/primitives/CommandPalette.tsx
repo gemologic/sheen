@@ -1,5 +1,5 @@
-import { Command } from "cmdk-solid";
-import * as KobalteDialog from "@kobalte/core/dialog";
+import { Command } from "#sheen-cmdk";
+import * as KobalteDialog from "#sheen-kobalte/dialog";
 import { For, Show, createEffect, createMemo, createSignal, createUniqueId, onCleanup, splitProps, type JSX } from "solid-js";
 import { useTheme } from "../theme/ThemeProvider.tsx";
 import { cn } from "../utils/cn.ts";

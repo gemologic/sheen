@@ -1,6 +1,7 @@
 # Sheen component index
 
 Generated from sheen.manifest.json. Import public @gemologic/sheen entries. Link changes URLs; Button acts. Omit absent optional props instead of passing undefined. Use semantic tokens, explicit locale, complete SSR, and retained refresh content.
+Setup: solid-js@1.9.15 is the shared app core; add sheenRuntime() from @gemologic/sheen/vite to Vite/SolidStart. Sheen owns the browser renderer and overlay backend; SSR retains the peer renderer/request storage. Do not add consumer patches or remove the plugin.
 Aliases: s=string, b=boolean, n=number, v=void, ro=readonly, node=JSX.Element, P=Promise, Abort=AbortSignal, size="sm"|"md"|"lg", mute="muted"|"inherit". Native props, defaults, and referenced examples are in the full context.
 
 ## @gemologic/sheen-charts
