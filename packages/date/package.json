@@ -1,6 +1,6 @@
 {
   "name": "@gemologic/sheen-date",
-  "version": "0.1.0-rc.0",
+  "version": "0.1.0-rc.1",
   "description": "Locale-aware date, time, range, and timezone controls for Sheen SolidJS applications.",
   "type": "module",
   "license": "MIT",
