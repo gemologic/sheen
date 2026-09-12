@@ -14,7 +14,8 @@ export interface StatusBarProps extends JSX.HTMLAttributes<HTMLDivElement> {
 export function StatusBar(props: StatusBarProps): JSX.Element {
   const theme = useTheme();
   const [local, others] = splitProps(props, ["label", "connection", "tasks", "counts", "class", "children"]);
-  const numbers = createMemo(() => new Intl.NumberFormat(theme.state().locale));
+  const locale = createMemo(() => theme.state().locale);
+  const numbers = createMemo(() => new Intl.NumberFormat(locale()));
   const label = createMemo(() => {
     const value = local.label ?? theme.messages().statusBar;
     if (!value.trim()) throw new Error("StatusBar requires a nonempty label");
@@ -27,13 +28,13 @@ export function StatusBar(props: StatusBarProps): JSX.Element {
   });
   const counts = createMemo(() => {
     const values = local.counts ?? [];
-    const labels = new Set<string>();
+    const labels = new Map<string, StatusCount>();
     for (const count of values) {
       if (!count.label.trim() || labels.has(count.label)) throw new Error("StatusBar counts require unique nonempty labels");
       if (!Number.isSafeInteger(count.value) || count.value < 0) throw new Error("StatusBar counts must be nonnegative safe integers");
-      labels.add(count.label);
+      labels.set(count.label, count);
     }
-    return values;
+    return labels;
   });
   const connection = () => {
     const state = local.connection;
@@ -47,7 +48,7 @@ export function StatusBar(props: StatusBarProps): JSX.Element {
       <Show when={local.tasks !== undefined}><span class="sheen-status-tasks" data-pending={tasks() > 0 || undefined} data-idle={tasks() === 0 || undefined}
         aria-hidden={tasks() === 0 || undefined}>{theme.messages().backgroundTasks}: {numbers().format(tasks())}</span></Show>
     </div>
-    <Show when={counts().length > 0}><dl class="sheen-status-counts"><For each={counts()}>{count => <div><dt>{count.label}</dt><dd>{numbers().format(count.value)}</dd></div>}</For></dl></Show>
+    <Show when={counts().size > 0}><dl class="sheen-status-counts"><For each={[...counts().keys()]}>{label => <div><dt>{label}</dt><dd>{numbers().format(counts().get(label)?.value ?? 0)}</dd></div>}</For></dl></Show>
     {local.children}
   </div>;
 }

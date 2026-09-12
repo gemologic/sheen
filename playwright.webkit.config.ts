@@ -49,6 +49,7 @@ export default defineConfig({
       "**/toaster.spec.ts",
       "**/admin-controls-gallery.spec.ts",
       "**/admin-app.spec.ts",
+      "**/admin-model-refresh.spec.ts",
       "**/composer.spec.ts",
       "**/date-time.spec.ts",
       "**/data-table-accessibility.spec.ts",

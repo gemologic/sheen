@@ -246,6 +246,8 @@ export function AdminAppFixture(props: AdminAppFixtureProps) {
   const pagination = createMemo<TablePagination>(() => parameters().get("table") === "continuous" ? false : { pageIndex: 0, pageSize: 25 });
   const view = createMemo(() => adminView(props.view));
   const [snapshot, setSnapshot] = createSignal<AdminWorkloadSnapshot>(createAdminWorkload(workload()));
+  const rowCount = createMemo(() => snapshot().rowCount);
+  const chartPoints = createMemo(() => snapshot().chartPoints);
   const [refreshing, setRefreshing] = createSignal(false);
   const [revision, setRevision] = createSignal(1);
   const [workspaceId, setWorkspaceId] = createSignal("production");
@@ -258,9 +260,9 @@ export function AdminAppFixture(props: AdminAppFixtureProps) {
   const [applicationSearch, setApplicationSearch] = createSignal("");
   const navigation = createMemo<AdminNavigationModel>(() => ({ id: "primary", label: "Primary navigation", items: [
     { kind: "link", id: "overview", label: "Overview", href: routeHref("/admin"), icon: <HomeIcon decorative />, actions: { label: "Overview actions", items: [
-      { kind: "action", id: "refresh-overview", label: "Refresh dashboard", disabled: refreshing(), onSelect: () => { void refresh(); } },
+      { kind: "action", id: "refresh-overview", label: "Refresh dashboard", get disabled() { return refreshing(); }, onSelect: () => { void refresh(); } },
     ] } },
-    { kind: "link", id: "accounts", label: longContent() ? "Accounts requiring unusually detailed operational review" : "Accounts", href: routeHref("/admin/accounts"), match: "prefix", icon: <UsersIcon decorative />, badge: <Badge>{snapshot().rowCount.toLocaleString("en-US")}</Badge>, actions: { label: "Accounts actions", items: [
+    { kind: "link", id: "accounts", label: longContent() ? "Accounts requiring unusually detailed operational review" : "Accounts", href: routeHref("/admin/accounts"), match: "prefix", icon: <UsersIcon decorative />, badge: <Badge>{rowCount().toLocaleString("en-US")}</Badge>, actions: { label: "Accounts actions", items: [
       { kind: "action", id: "preview-account", label: "Preview first account", onSelect: () => openDetails(snapshot().rows[0]?.id ?? "") },
     ] } },
     { kind: "link", id: "inbox", label: "Inbox", href: routeHref("/admin/inbox"), match: "prefix", icon: <InboxIcon decorative />, badge: inboxUnread() > 0 ? <Badge tone="accent">{inboxUnread()}</Badge> : undefined, actions: { label: "Inbox actions", items: [
@@ -364,7 +366,7 @@ export function AdminAppFixture(props: AdminAppFixtureProps) {
     return [{ id: "create", label: "Create", role: "primary", items: [
       { kind: "action", id: "new-account", label: "New account", icon: <AddIcon decorative />, onSelect: () => openDetails(snapshot().rows[0]?.id ?? "") },
     ] }, { id: "operations", label: "Operations", role: "utility", items: [
-      { kind: "action", id: "refresh", label: "Refresh", icon: <RefreshIcon decorative />, disabled: refreshing(), onSelect: () => { void refresh(); } },
+      { kind: "action", id: "refresh", label: "Refresh", icon: <RefreshIcon decorative />, get disabled() { return refreshing(); }, onSelect: () => { void refresh(); } },
     ] }, { id: "help", label: "Help", role: "help", items: [
       { kind: "link", id: "component-docs", label: "Docs", icon: <ExternalLinkIcon decorative />, href: "/components" },
     ] }];
@@ -381,8 +383,8 @@ export function AdminAppFixture(props: AdminAppFixtureProps) {
       { id: "accounts", label: "Open accounts", group: "Navigation", run: () => router.navigate("/admin/accounts") },
       { id: "refresh", label: "Refresh accepted data", group: "Operations", run: refresh },
     ] }] } : undefined} details={details()} refreshing={refreshing()} authorizationKey={authorized() ? "operator" : "revoked"}
-    statusBar={<StatusBar connection={authorized() ? "connected" : "disconnected"} tasks={refreshing() ? 1 : 0} counts={[{ label: "Rows", value: authorized() ? snapshot().rowCount : 0 }, { label: "Chart points", value: authorized() ? snapshot().chartPoints : 0 }]}><span>{workspaceName()} workspace</span><span>Revision {revision()}</span></StatusBar>}>
-    <AdminStarterPage view={view()} rows={state() === "empty" ? [] : snapshot().rows} summary={state() === "empty" ? emptyWorkloadSummary : snapshot().summary} traffic={snapshot().traffic} workload={workload()} chartPoints={snapshot().chartPoints}
+    statusBar={<StatusBar connection={authorized() ? "connected" : "disconnected"} tasks={refreshing() ? 1 : 0} counts={[{ label: "Rows", value: authorized() ? rowCount() : 0 }, { label: "Chart points", value: authorized() ? chartPoints() : 0 }]}><span>{workspaceName()} workspace</span><span>Revision {revision()}</span></StatusBar>}>
+    <AdminStarterPage view={view()} rows={state() === "empty" ? [] : snapshot().rows} summary={state() === "empty" ? emptyWorkloadSummary : snapshot().summary} traffic={snapshot().traffic} workload={workload()} chartPoints={chartPoints()}
       pagination={pagination()} state={state()} refreshing={refreshing()} revision={revision()} preset={preset()}
       appearance={resolvedAppearance()} theme={parameters().get("theme") ?? "inherit"} mode={parameters().get("mode") ?? "inherit"}
       accent={parameters().get("accent") ?? "inherit"} direction={parameters().get("direction") ?? "inherit"} table={parameters().get("table") === "continuous" ? "continuous" : "paged"}

@@ -23,6 +23,14 @@ describe("Stat and StatGroup", () => {
     expect(html.match(/class="sheen-stat sheen-stat-group-item"/gu)).toHaveLength(2);
   });
 
+  it("resolves an inline stats getter once for validation and rendering", () => {
+    let reads = 0;
+    const props = { label: "Metrics", get stats() { reads++; return [{ label: "Requests", value: 1200 }]; } };
+    const html = renderToString(() => <StatGroup {...props} />);
+    expect(html).toContain("1200");
+    expect(reads).toBe(1);
+  });
+
   it("rejects ambiguous or invalid display contracts", () => {
     expect(() => renderToString(() => <Stat label="Metric" value={Number.NaN} />)).toThrow("finite");
     expect(() => renderToString(() => <Stat label="Metric" value="12" trend="up" />)).toThrow("trendLabel");

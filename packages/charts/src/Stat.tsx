@@ -1,4 +1,4 @@
-import { For, Show, createMemo } from "solid-js";
+import { Index, Show, createMemo } from "solid-js";
 import type { JSX } from "solid-js";
 import type { StatGroupProps, StatProps, StatTrend } from "./chart-types.ts";
 
@@ -39,14 +39,15 @@ export function Stat(props: StatProps): JSX.Element {
 
 function validateGroup(props: StatGroupProps): readonly StatProps[] {
   if (!props.label?.trim()) throw new Error("StatGroup requires a nonempty label");
-  if (!Array.isArray(props.stats) || props.stats.length === 0) throw new Error("StatGroup requires at least one stat");
-  for (const stat of props.stats) validateStat(stat);
-  return props.stats;
+  const stats = props.stats;
+  if (!Array.isArray(stats) || stats.length === 0) throw new Error("StatGroup requires at least one stat");
+  for (const stat of stats) validateStat(stat);
+  return stats;
 }
 
 export function StatGroup(props: StatGroupProps): JSX.Element {
   const items = createMemo(() => validateGroup(props));
   return <section class={className("sheen-stat-group", props.class)} role="group" aria-label={props.label}>
-    <For each={items()}>{item => <Stat {...item} class={className("sheen-stat-group-item", item.class)} />}</For>
+    <Index each={items()}>{item => <Stat {...item()} class={className("sheen-stat-group-item", item().class)} />}</Index>
   </section>;
 }

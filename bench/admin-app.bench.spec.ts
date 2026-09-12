@@ -373,6 +373,7 @@ test("AdminApp operations retain owners and satisfy calibrated frame stability g
     footprints: Object.freeze(runs.map(run => run.footprint)),
     calibrationsMs: Object.freeze(runs.map(run => run.calibrationMs)),
     normalized,
+    runs: Object.freeze(runs),
     rawMedianMs: Object.freeze({
       sidebarCollapse: median(runs.map(run => operation(run, "sidebar-collapse").frames.durationMs)),
       presetLayout: median(runs.map(run => operation(run, "preset-layout").frames.durationMs)),

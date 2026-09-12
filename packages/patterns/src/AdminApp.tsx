@@ -281,17 +281,31 @@ function AdminProduct(props: { readonly product: AdminProductModel; readonly col
 }
 
 function AdminActions(props: { readonly groups: readonly AdminActionGroup[]; readonly appearance: AdminActionAppearance }): JSX.Element {
-  return <For each={props.groups}>{group => <div class="sheen-admin-actions" role="group" aria-label={group.label} data-action-role={group.role} data-action-appearance={props.appearance}>
-    <For each={group.items}>{item => <AdminActionControl action={item} role={group.role} appearance={props.appearance} />}</For>
-  </div>}</For>;
+  const groups = createMemo(() => new Map(props.groups.map(group => [group.id, group])));
+  return <For each={[...groups().keys()]}>{id => <Show when={groups().get(id)}>{group =>
+    <AdminActionGroupControl group={group()} appearance={props.appearance} />
+  }</Show>}</For>;
+}
+
+function AdminActionGroupControl(props: { readonly group: AdminActionGroup; readonly appearance: AdminActionAppearance }): JSX.Element {
+  const items = createMemo(() => new Map(props.group.items.map(item => [item.id, item])));
+  return <div class="sheen-admin-actions" role="group" aria-label={props.group.label} data-action-role={props.group.role} data-action-appearance={props.appearance}>
+    <For each={[...items().keys()]}>{id => <Show when={items().get(id)}>{item =>
+      <AdminActionControl action={item()} role={props.group.role} appearance={props.appearance} />
+    }</Show>}</For>
+  </div>;
 }
 
 function AdminActionControl(props: { readonly action: AdminAction; readonly role: AdminActionGroup["role"]; readonly appearance: AdminActionAppearance }): JSX.Element {
   const icon = children(() => props.action.icon);
   const content = <><Show when={icon()}>{resolved => <span class="sheen-admin-action-icon" aria-hidden="true">{resolved()}</span>}</Show><span class="sheen-admin-action-label">{props.action.label}</span></>;
-  return props.action.kind === "link" ? <Link variant="button" href={props.action.href}>{content}</Link>
-    : <Button variant={props.appearance === "accent" && props.role === "primary" ? "solid" : props.appearance === "outlined" ? "outline" : props.appearance === "accent" ? "soft" : "ghost"}
-      tone={props.appearance !== "quiet" && props.role === "primary" ? "accent" : "neutral"} disabled={props.action.disabled} onClick={props.action.onSelect}>{content}</Button>;
+  const link = createMemo(() => { const action = props.action; return action.kind === "link" ? action : undefined; });
+  const button = createMemo(() => { const action = props.action; return action.kind === "action" ? action : undefined; });
+  return <>
+    <Show when={link()}>{action => <Link variant="button" href={action().href}>{content}</Link>}</Show>
+    <Show when={button()}>{action => <Button variant={props.appearance === "accent" && props.role === "primary" ? "solid" : props.appearance === "outlined" ? "outline" : props.appearance === "accent" ? "soft" : "ghost"}
+      tone={props.appearance !== "quiet" && props.role === "primary" ? "accent" : "neutral"} disabled={action().disabled} onClick={() => action().onSelect()}>{content}</Button>}</Show>
+  </>;
 }
 
 function validateActionGroups(groups: readonly AdminActionGroup[]): readonly AdminActionGroup[] {

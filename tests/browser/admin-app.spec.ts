@@ -351,75 +351,88 @@ test("collapsed Admin rail keeps every destination centered and clickable", asyn
   await expect(accountRow.getByRole("button", { name: "Accounts actions", exact: true })).toBeVisible();
 });
 
-test("accepted refresh keeps page, row, details, focus, and an uncontrolled draft visible", async ({ page }) => {
-  await page.setViewportSize({ width: 1200, height: 800 });
-  await page.goto("/admin");
-  await ready(page);
-  const row = page.locator('tbody tr[data-row-id="account-0001"]');
-  await row.focus();
-  await page.keyboard.press("Enter");
-  const details = page.locator(".sheen-admin-details-owner");
-  const note = page.getByRole("textbox", { name: "Account note", exact: true });
-  const tableViewport = page.locator(".sheen-data-table-viewport");
-  await expect(details).toHaveAttribute("data-presentation", "docked");
-  await details.evaluate(element => element.setAttribute("data-refresh-identity", "details"));
-  await row.evaluate(element => element.setAttribute("data-refresh-identity", "row"));
-  await page.locator("[data-admin-starter-content]").evaluate(element => element.setAttribute("data-refresh-identity", "page"));
-  await note.fill("Keep this detail draft");
-  await note.evaluate(element => element.setAttribute("data-refresh-identity", "note"));
-  await note.focus();
-  await tableViewport.evaluate(element => { element.scrollTop = 180; });
-  const retainedScroll = await tableViewport.evaluate(element => element.scrollTop);
-  expect(retainedScroll).toBeGreaterThan(0);
+for (const path of ["/admin", "/admin?workload=heavy&table=continuous"]) {
+  test(`accepted refresh keeps page, row, details, focus, chrome, and an uncontrolled draft visible: ${path}`, async ({ page }) => {
+    await page.setViewportSize({ width: 1200, height: 800 });
+    await page.goto(path);
+    await ready(page);
+    const row = page.locator('tbody tr[data-row-id="account-0001"]');
+    await row.focus();
+    await page.keyboard.press("Enter");
+    const details = page.locator(".sheen-admin-details-owner");
+    const note = page.getByRole("textbox", { name: "Account note", exact: true });
+    const tableViewport = page.locator(".sheen-data-table-viewport");
+    await expect(details).toHaveAttribute("data-presentation", "docked");
+    await details.evaluate(element => element.setAttribute("data-refresh-identity", "details"));
+    await row.evaluate(element => element.setAttribute("data-refresh-identity", "row"));
+    await page.locator("[data-admin-starter-content]").evaluate(element => element.setAttribute("data-refresh-identity", "page"));
+    const chrome = page.locator(".sheen-admin-actions button, .sheen-admin-actions a, .sheen-stat-group-item, .sheen-status-counts > div");
+    const chromeCount = await chrome.count();
+    expect(chromeCount).toBeGreaterThan(0);
+    await chrome.evaluateAll(elements => {
+      for (const element of elements) element.setAttribute("data-refresh-chrome", "retained");
+    });
+    await note.fill("Keep this detail draft");
+    await note.evaluate(element => element.setAttribute("data-refresh-identity", "note"));
+    await note.focus();
+    await tableViewport.evaluate(element => { element.scrollTop = 180; });
+    const retainedScroll = await tableViewport.evaluate(element => element.scrollTop);
+    expect(retainedScroll).toBeGreaterThan(0);
 
-  await page.getByRole("button", { name: "Refresh", exact: true }).first().evaluate(element => {
-    if (!(element instanceof HTMLButtonElement)) throw new Error("Refresh trigger must be a button");
-    element.click();
-  });
-  await expect(page.locator(".sheen-admin-page")).toHaveAttribute("data-pending", "true");
-  const frames = await page.locator("[data-admin-starter-content]").evaluate(async element => {
-    const samples: boolean[] = [];
-    for (let index = 0; index < 36; index += 1) {
-      await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
-      const style = getComputedStyle(element);
-      const draft = document.querySelector('[data-refresh-identity="note"]');
-      samples.push(element.isConnected
-        && style.display !== "none"
-        && style.visibility !== "hidden"
-        && style.opacity === "1"
-        && document.querySelector('[data-refresh-identity="details"]') !== null
-        && document.querySelector('[data-refresh-identity="row"]') !== null
-        && draft instanceof HTMLInputElement
-        && draft.value === "Keep this detail draft"
-        && !element.querySelector(".sheen-skeleton"));
-    }
-    return samples;
-  });
-  expect(frames.every(Boolean)).toBe(true);
-  await expect(page.getByText("Revision 2", { exact: false }).last()).toBeVisible();
-  await expect(details).toHaveAttribute("data-refresh-identity", "details");
-  await expect(row).toHaveAttribute("data-refresh-identity", "row");
-  await expect(row).toContainText("just now");
-  await expect(note).toHaveAttribute("data-refresh-identity", "note");
-  await expect(note).toHaveValue("Keep this detail draft");
-  await expect(note).toBeFocused();
-  expect(await tableViewport.evaluate(element => element.scrollTop)).toBe(retainedScroll);
+    await page.getByRole("button", { name: "Refresh", exact: true }).first().evaluate(element => {
+      if (!(element instanceof HTMLButtonElement)) throw new Error("Refresh trigger must be a button");
+      element.click();
+    });
+    await expect(page.locator(".sheen-admin-page")).toHaveAttribute("data-pending", "true");
+    const frames = await page.locator("[data-admin-starter-content]").evaluate(async (element, chromeCount) => {
+      const samples: boolean[] = [];
+      for (let index = 0; index < 60; index += 1) {
+        await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
+        const style = getComputedStyle(element);
+        const draft = document.querySelector('[data-refresh-identity="note"]');
+        const chrome = [...document.querySelectorAll(".sheen-admin-actions button, .sheen-admin-actions a, .sheen-stat-group-item, .sheen-status-counts > div")];
+        samples.push(element.isConnected
+          && style.display !== "none"
+          && style.visibility !== "hidden"
+          && style.opacity === "1"
+          && document.querySelector('[data-refresh-identity="details"]') !== null
+          && document.querySelector('[data-refresh-identity="row"]') !== null
+          && draft instanceof HTMLInputElement
+          && draft.value === "Keep this detail draft"
+          && chrome.length === chromeCount
+          && chrome.every(element => element.getAttribute("data-refresh-chrome") === "retained")
+          && !element.querySelector(".sheen-skeleton"));
+      }
+      return samples;
+    }, chromeCount);
+    expect(frames.every(Boolean)).toBe(true);
+    await expect(page.getByText("Revision 2", { exact: false }).last()).toBeVisible();
+    await expect(details).toHaveAttribute("data-refresh-identity", "details");
+    await expect(row).toHaveAttribute("data-refresh-identity", "row");
+    await expect(row).toContainText("just now");
+    await expect(note).toHaveAttribute("data-refresh-identity", "note");
+    await expect(note).toHaveValue("Keep this detail draft");
+    await expect(note).toBeFocused();
+    await expect(chrome).toHaveCount(chromeCount);
+    expect(await chrome.evaluateAll(elements => elements.every(element => element.getAttribute("data-refresh-chrome") === "retained"))).toBe(true);
+    expect(await tableViewport.evaluate(element => element.scrollTop)).toBe(retainedScroll);
 
-  const separator = page.getByRole("separator", { name: "Resize details panel", exact: true });
-  const before = Number(await separator.getAttribute("aria-valuenow"));
-  await separator.focus();
-  await page.keyboard.press("ArrowLeft");
-  await expect(separator).toHaveAttribute("aria-valuenow", String(before - 16));
-  await note.focus();
-  await page.setViewportSize({ width: 800, height: 800 });
-  await expect(details).toHaveAttribute("data-presentation", "sheet");
-  await expect(details).toHaveAttribute("data-refresh-identity", "details");
-  await expect(page.getByRole("dialog", { name: "Aperture 001", exact: true })).toBeVisible();
-  await expect(note).toHaveAttribute("data-refresh-identity", "note");
-  await expect(note).toHaveValue("Keep this detail draft");
-  await page.keyboard.press("Escape");
-  await expect(row).toBeFocused();
-});
+    const separator = page.getByRole("separator", { name: "Resize details panel", exact: true });
+    const before = Number(await separator.getAttribute("aria-valuenow"));
+    await separator.focus();
+    await page.keyboard.press("ArrowLeft");
+    await expect(separator).toHaveAttribute("aria-valuenow", String(before - 16));
+    await note.focus();
+    await page.setViewportSize({ width: 800, height: 800 });
+    await expect(details).toHaveAttribute("data-presentation", "sheet");
+    await expect(details).toHaveAttribute("data-refresh-identity", "details");
+    await expect(page.getByRole("dialog", { name: "Aperture 001", exact: true })).toBeVisible();
+    await expect(note).toHaveAttribute("data-refresh-identity", "note");
+    await expect(note).toHaveValue("Keep this detail draft");
+    await page.keyboard.press("Escape");
+    await expect(row).toBeFocused();
+  });
+}
 
 test("scoped account, notification, command, confirm, and toast layers restore focus", async ({ page }) => {
   const hiddenFocusWarnings: string[] = [];
