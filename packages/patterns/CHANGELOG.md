@@ -1,5 +1,12 @@
 # @gemologic/sheen-patterns
 
+## 0.1.0-rc.2
+
+### Patch Changes
+
+- Updated dependencies [f235435]
+  - @gemologic/sheen@0.1.0-rc.2
+
 ## 0.1.0-rc.1
 
 ### Patch Changes

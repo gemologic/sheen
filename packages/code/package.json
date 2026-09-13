@@ -1,6 +1,6 @@
 {
   "name": "@gemologic/sheen-code",
-  "version": "0.1.0-rc.1",
+  "version": "0.1.0-rc.2",
   "description": "Code, diff, log, and JSON viewers for the Sheen SolidJS design system.",
   "type": "module",
   "license": "MIT",
