@@ -120,6 +120,8 @@ export function ThemeProvider(props: ThemeProviderProps): JSX.Element {
     direction: props.direction ?? "ltr", locale: props.locale ?? "en-US",
   };
   const [state, setState] = createSignal<ThemeState>(props.initialState ?? defaults);
+  const locale = createMemo(() => state().locale);
+  const direction = createMemo(() => state().direction);
   const [ready, setReady] = createSignal(false);
   const [portal, setPortal] = createSignal<HTMLElement>();
   const system = modeSignal();
@@ -160,7 +162,7 @@ export function ThemeProvider(props: ThemeProviderProps): JSX.Element {
       }
     },
   });
-  return <ThemeContext.Provider value={context}><I18nProvider locale={state().locale} direction={state().direction}>
+  return <ThemeContext.Provider value={context}><I18nProvider locale={locale()} direction={direction()}>
     {props.children}
     <PortalTarget kind="root" ready={ready()} ref={setPortal} state={ready() ? state() : undefined} mode={mode()} themes={themes()} />
   </I18nProvider></ThemeContext.Provider>;
@@ -183,6 +185,8 @@ export function ThemeScope(props: ThemeScopeProps): JSX.Element {
     locale: props.locale ?? (props.locale === null ? null : parent.state().locale),
     ...local(),
   }, parent.defaults));
+  const locale = createMemo(() => state().locale);
+  const direction = createMemo(() => state().direction);
   const system = modeSignal();
   const mode = createMemo<Mode>(() => state().mode === "system" ? system() : state().mode === "light" ? "light" : "dark");
   const themes = () => parent.themes();
@@ -205,7 +209,7 @@ export function ThemeScope(props: ThemeScopeProps): JSX.Element {
     if (props.locale !== undefined) result.locale = props.locale;
     return result;
   };
-  return <ThemeContext.Provider value={context}><I18nProvider locale={state().locale} direction={state().direction}>
+  return <ThemeContext.Provider value={context}><I18nProvider locale={locale()} direction={direction()}>
     <section id={id} class={props.class} {...attributes(state(), mode(), themes())} dir={state().direction} lang={state().locale}>
       {props.children}
       <PortalTarget kind="scope" ref={setPortal} state={state()} mode={mode()} themes={themes()} />
