@@ -95,6 +95,18 @@ describe("release configuration", () => {
     assert.match(publish, /if: inputs\.publication_mode == 'bootstrap'/u);
   });
 
+  it("retains browser diagnostics when publication preparation fails", async () => {
+    const publish = await readFile(join(root, ".github", "workflows", "publish.yml"), "utf8");
+    const prepare = publish.slice(publish.indexOf("  prepare:\n"), publish.indexOf("\n  publish:\n"));
+    const diagnostics = prepare.slice(prepare.indexOf("      - name: Upload publication-gate diagnostics\n"));
+    assert.match(diagnostics, /if: failure\(\)/u);
+    assert.match(diagnostics, /uses: actions\/upload-artifact@[a-f0-9]{40} # v7\.0\.1/u);
+    assert.ok(diagnostics.includes("name: npm-prepare-failures-${{ github.run_id }}"));
+    assert.match(diagnostics, /^          path: test-results$/mu);
+    assert.match(diagnostics, /if-no-files-found: ignore/u);
+    assert.match(diagnostics, /retention-days: 7/u);
+  });
+
   it("pins every GitHub Action to an immutable commit", async () => {
     for (const filename of ["check.yml", "pages.yml", "publish.yml", "release.yml"]) {
       const workflow = await readFile(join(root, ".github", "workflows", filename), "utf8");

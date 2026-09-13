@@ -38,7 +38,7 @@ test("frame sampling rejects overlapping starts and disposes each sample", async
   await expect(page.locator("html")).not.toHaveAttribute("data-sheen-benchmark-sampling");
 });
 
-test("frame sampling still reports a real blocked main thread and its final frame", async ({ page }) => {
+test("frame sampling reports blocked main-thread work through the settled final frame", async ({ page }) => {
   await startFrameSampling(page);
   await page.evaluate(() => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));
   await page.evaluate(() => new Promise<void>(resolve => {
@@ -48,12 +48,15 @@ test("frame sampling still reports a real blocked main thread and its final fram
       let checksum = 0x12345678;
       while (performance.now() - start < 80) checksum = Math.imul(checksum, 1_664_525) + 1_013_904_223;
       if (!Number.isFinite(checksum)) throw new Error("Blocking workload checksum failed");
-      resolve();
+      // Match the benchmark boundary. A queued frame's timestamp can predate
+      // this task's completion, so draining only that frame can miss the gap.
+      requestAnimationFrame(() => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
     }, 0);
   }));
   const result = await finishFrameSampling(page);
-  expect(result.longTasks.some(duration => duration >= 50)).toBe(true);
-  expect(result.intervals.some(duration => duration > 50)).toBe(true);
+  const diagnostics = JSON.stringify({ durationMs: result.durationMs, longTasks: result.longTasks, intervals: result.intervals });
+  expect(Math.max(0, ...result.longTasks), diagnostics).toBeGreaterThanOrEqual(50);
+  expect(Math.max(0, ...result.intervals), diagnostics).toBeGreaterThan(50);
   await startFrameSampling(page);
   await page.evaluate(() => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));
   const fresh = await finishFrameSampling(page);
