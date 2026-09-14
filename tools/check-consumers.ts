@@ -28,6 +28,28 @@ async function assertTokenCssBudgets(installed: string): Promise<void> {
   process.stdout.write(`Token CSS budgets passed: selected=${selectedBytes}B gzip, all=${allBytes}B gzip\n`);
 }
 
+async function assertTokenRuntimeIsolation(temporary: string, installed: string): Promise<void> {
+  const entry = join(temporary, "token-runtime.mjs");
+  await cp(new URL("tests/consumers/token-runtime.mjs", root), entry);
+  const built = await build({
+    configFile: false,
+    root: temporary,
+    logLevel: "warn",
+    build: {
+      write: false,
+      minify: true,
+      lib: { entry, formats: ["es"], fileName: "token-runtime" },
+    },
+  });
+  const outputs = (Array.isArray(built) ? built : [built]).flatMap(result => "output" in result ? result.output : []);
+  const chunks = outputs.filter(output => output.type === "chunk");
+  const retained = chunks.flatMap(chunk => Object.entries(chunk.modules).filter(([, module]) => module.renderedLength > 0).map(([id]) => id));
+  assert.ok(retained.some(id => id.startsWith(installed) && id.endsWith("/dist/accents.js")), "Accent controls must retain their lightweight built data");
+  assert.ok(!retained.some(id => id.startsWith(installed) && /\/dist\/(?:themes|define|palette|primitives|color|schema)\.js$/u.test(id)), `Runtime metadata and accent data must not retain theme compilation or color conversion: ${retained.join(", ")}`);
+  assert.ok(chunks.some(chunk => chunk.exports.includes("accents") && chunk.exports.includes("bundledThemeMetadata")), "Runtime token fixture must preserve its public exports");
+  process.stdout.write(`Token runtime isolation passed: ${gzipBytes(chunks.map(chunk => chunk.code).join("\n"))}B gzip, no theme compilation\n`);
+}
+
 async function assertUiBundleBudget(temporary: string, fixture: string, maximum?: number): Promise<void> {
   const entry = join(temporary, `${fixture}.mjs`);
   await cp(new URL(`tests/consumers/${fixture}.mjs`, root), entry);
@@ -256,6 +278,7 @@ try {
   await cp(new URL("packages/tokens/package.json", root), join(installed, "package.json"));
   await cp(new URL("packages/tokens/dist", root), join(installed, "dist"), { recursive: true });
   await assertTokenCssBudgets(installed);
+  await assertTokenRuntimeIsolation(temporary, installed);
   const table = join(temporary, "node_modules", "@gemologic", "sheen-table");
   await mkdir(table, { recursive: true });
   await cp(new URL("packages/table/package.json", root), join(table, "package.json"));

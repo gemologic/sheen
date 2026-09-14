@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { buildTheme, defineTheme, resolveTokens, ThemeValidationError, validateContrast } from "./define.ts";
-import { accentNames, accents, accentTokens, buildAccent, buildAccents, contrast, isAccentName, obsidian, studio, themes, vellum } from "./themes.ts";
+import { accents, accentTokens } from "./accents.ts";
+import { accentNames, isAccentName } from "./catalog.ts";
+import { buildAccent, buildAccents, contrast, obsidian, studio, themes, vellum } from "./themes.ts";
 import { primitives } from "./primitives.ts";
 import { currentSchemaVersion, semanticDefaults } from "./schema.ts";
 import type { Mode, ThemeDefinition, TokenName } from "./schema.ts";

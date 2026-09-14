@@ -31,7 +31,9 @@ export function countClientFacets<Row>(rows: readonly Row[], columns: readonly F
   for (let index = 0; index < rows.length; index++) {
     const row = rows[index];
     if (row === undefined) throw new Error(`Missing facet row at index ${index}`);
-    for (const facet of facets) {
+    for (let facetIndex = 0; facetIndex < facets.length; facetIndex++) {
+      const facet = facets[facetIndex];
+      if (!facet) throw new Error(`Missing facet column at index ${facetIndex}`);
       const value = evaluation.getValue(row, facet.column);
       if (value === null || value === undefined) { facet.missing++; continue; }
       if (typeof value !== "string" || !facet.counts.has(value)) throw new Error(`Invalid enum value for facet ${facet.column} at row ${index}`);

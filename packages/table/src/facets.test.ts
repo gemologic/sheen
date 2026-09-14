@@ -41,4 +41,20 @@ describe("client facets", () => {
     expect(() => countClientFacets([{}], columns, { getValue: () => { throw new Error("Accessor error"); } })).toThrow("Accessor error");
     expect(() => countClientFacets(Array<Row>(1), columns, options)).toThrow("Missing facet row");
   });
+  it("counts a heavy view without changing row-major accessor order", () => {
+    const rows = Array.from({ length: 12_000 }, (_, index) => ({ status: index % 3 === 0 ? "closed" : "open", region: index % 2 === 0 ? "east" : "west" }));
+    const schema: readonly FilterColumn[] = [...columns, { id: "region", type: "enum", options: ["east", "west"] }];
+    let calls = 0;
+    const result = countClientFacets(rows, schema, { getValue: (row, column) => {
+      expect(column).toBe(calls % 2 === 0 ? "status" : "region");
+      expect(row).toBe(rows[Math.floor(calls / 2)]);
+      calls++;
+      return column === "status" ? row.status : row.region;
+    } });
+    expect(calls).toBe(24_000);
+    expect(result).toEqual([
+      { column: "status", options: [{ value: "open", count: 8_000 }, { value: "closed", count: 4_000 }, { value: "archived", count: 0 }], missing: 0 },
+      { column: "region", options: [{ value: "east", count: 6_000 }, { value: "west", count: 6_000 }], missing: 0 },
+    ]);
+  });
 });

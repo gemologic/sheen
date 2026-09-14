@@ -6,6 +6,7 @@ The passing gates are:
 
 - `core.css` plus one independently selectable theme and accent: under 12,000 bytes gzip.
 - `core.css` plus all seven themes and twelve accents: under 30,000 bytes gzip.
+- runtime token metadata and accent data imported from the package root: no retained theme compiler, palette audit, primitive generation, or color conversion modules.
 - a root-package `Button` import: under 5,000 bytes gzip and no retained headless, table, or chart modules.
 - the complete `/core`, `/forms`, `/overlays`, and `/navigation` entries: under 32,000, 60,000, 55,000, and 58,000 bytes gzip respectively.
 - a representative application importing theme, form, overlay, and navigation components: under 55,000 bytes gzip.

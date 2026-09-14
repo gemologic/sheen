@@ -8,6 +8,7 @@ export { currentSchemaVersion, semanticDefaults, isTokenName } from "./schema.ts
 export type { ThemeDefinition, Theme, Tokens, TokenName, Mode, PrimitiveMap } from "./schema.ts";
 export { bundledThemeMetadata, accentNames, isAccentName, iconSetForTheme } from "./catalog.ts";
 export type { AccentName, ThemeMetadata, IconSetName } from "./catalog.ts";
-export { themes, accents, obsidian, paper, vellum, contrast, slate, graphite, studio, accentTokens, buildAccent, buildAccents } from "./themes.ts";
+export { accents, accentTokens } from "./accents.ts";
+export { themes, obsidian, paper, vellum, contrast, slate, graphite, studio, buildAccent, buildAccents } from "./themes.ts";
 export { buildCore, buildPreset } from "./css.ts";
 export { primitives, colorRamp } from "./primitives.ts";

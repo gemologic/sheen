@@ -1,9 +1,18 @@
 import type { Page } from "@playwright/test";
 
+export interface LongAnimationFrameSample {
+  readonly startOffsetMs: number;
+  readonly durationMs: number;
+  readonly blockingDurationMs: number | null;
+  readonly renderStartOffsetMs: number | null;
+  readonly styleAndLayoutStartOffsetMs: number | null;
+}
+
 export interface FrameSample {
   readonly durationMs: number;
   readonly intervals: readonly number[];
   readonly longTasks: readonly number[];
+  readonly longAnimationFrames: readonly LongAnimationFrameSample[];
   readonly unexpectedLayoutShift: number;
   readonly unexpectedLayoutShiftSources: readonly string[];
   readonly transientOverlayLayoutShift: number;
@@ -11,6 +20,13 @@ export interface FrameSample {
 
 const stopEventName = "sheen-benchmark-stop";
 const markerAttribute = "data-sheen-benchmark-sampling";
+
+/** Drain setup rendering before the first interaction, without warming its component. */
+export async function settleBenchmarkRendering(page: Page): Promise<void> {
+  await page.evaluate(() => new Promise<void>(resolve => {
+    requestAnimationFrame(() => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
+  }));
+}
 
 /** Acknowledge observer installation directly, without polling on an extra animation frame. */
 export async function startFrameSampling(page: Page, options: { readonly separateToastLayoutShift?: boolean } = {}): Promise<void> {
@@ -20,6 +36,7 @@ export async function startFrameSampling(page: Page, options: { readonly separat
     const start = performance.now();
     const intervals: number[] = [];
     const longTasks: number[] = [];
+    const longAnimationFrames: LongAnimationFrameSample[] = [];
     let unexpectedLayoutShift = 0;
     const unexpectedLayoutShiftSources = new Set<string>();
     let transientOverlayLayoutShift = 0;
@@ -29,6 +46,18 @@ export async function startFrameSampling(page: Page, options: { readonly separat
     const collect = (entries: readonly PerformanceEntry[]): void => {
       for (const entry of entries) {
         if (entry.entryType === "longtask") longTasks.push(entry.duration);
+        if (entry.entryType === "long-animation-frame") {
+          const timing = (name: string): number | null => {
+            const value: unknown = Reflect.get(entry, name);
+            return typeof value === "number" && Number.isFinite(value) ? value : null;
+          };
+          const renderStart = timing("renderStart");
+          const styleAndLayoutStart = timing("styleAndLayoutStart");
+          longAnimationFrames.push({ startOffsetMs: entry.startTime - start, durationMs: entry.duration,
+            blockingDurationMs: timing("blockingDuration"),
+            renderStartOffsetMs: renderStart === null || renderStart === 0 ? null : renderStart - start,
+            styleAndLayoutStartOffsetMs: styleAndLayoutStart === null || styleAndLayoutStart === 0 ? null : styleAndLayoutStart - start });
+        }
         if (entry.entryType !== "layout-shift") continue;
         const serialized: unknown = entry.toJSON();
         if (typeof serialized !== "object" || serialized === null || !("value" in serialized) || !("hadRecentInput" in serialized)) continue;
@@ -55,7 +84,7 @@ export async function startFrameSampling(page: Page, options: { readonly separat
       }
     };
     const observer = new PerformanceObserver(list => collect(list.getEntries()));
-    const entryTypes = PerformanceObserver.supportedEntryTypes.filter(type => type === "longtask" || type === "layout-shift");
+    const entryTypes = PerformanceObserver.supportedEntryTypes.filter(type => type === "longtask" || type === "layout-shift" || type === "long-animation-frame");
     if (entryTypes.length > 0) observer.observe({ entryTypes });
     const recordFrame = (timestamp: number): void => {
       if (previous !== undefined) intervals.push(timestamp - previous);
@@ -78,7 +107,7 @@ export async function startFrameSampling(page: Page, options: { readonly separat
         collect(observer.takeRecords());
         observer.disconnect();
         root.removeAttribute(markerAttribute);
-        receive({ durationMs: performance.now() - start, intervals, longTasks, unexpectedLayoutShift,
+        receive({ durationMs: performance.now() - start, intervals, longTasks, longAnimationFrames, unexpectedLayoutShift,
           unexpectedLayoutShiftSources: [...unexpectedLayoutShiftSources], transientOverlayLayoutShift });
       });
     }, { once: true });

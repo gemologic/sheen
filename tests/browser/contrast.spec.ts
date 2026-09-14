@@ -1,6 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { contrastRatio } from "../../packages/tokens/src/color";
-import { accents, themes } from "../../packages/tokens/src/themes";
+import { accents } from "../../packages/tokens/src/accents";
+import { themes } from "../../packages/tokens/src/themes";
 
 test("the complete theme, mode, and accent palette passes rendered contrast gates without a screenshot Cartesian product", async ({ page }) => {
   test.setTimeout(90_000);

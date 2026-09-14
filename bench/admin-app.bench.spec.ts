@@ -1,22 +1,29 @@
 import { expect, test } from "@playwright/test";
 import type { Browser, Page } from "@playwright/test";
-import { finishFrameSampling, startFrameSampling } from "./frame-sampling.ts";
+import { finishFrameSampling, settleBenchmarkRendering, startFrameSampling } from "./frame-sampling.ts";
 import type { FrameSample } from "./frame-sampling.ts";
-import { cpus, platform, release, totalmem } from "node:os";
+import { cpuMeasurement, createBrowserCpuClock, isCpuBaselineCapture } from "./cpu-sampling.ts";
+import type { BrowserCpuClock } from "./cpu-sampling.ts";
+import { captureAdminAppOwners, retainedAdminAppOwners } from "./admin-app-owners.ts";
+import { cpus, loadavg, platform, release, totalmem } from "node:os";
 import { mkdir, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
-import { adminAppBenchmarkBaseline } from "./baselines/admin-app.v2.ts";
-import type { AdminAppNormalizedBaseline } from "./baselines/admin-app.v2.ts";
+import { adminAppBenchmarkBaseline } from "./baselines/admin-app.v3.ts";
+import type { AdminAppNormalizedBaseline } from "./baselines/admin-app.v3.ts";
 
 interface OperationSample {
   readonly name: string;
+  readonly taskMs: number;
   readonly frames: FrameSample;
   readonly retained: boolean;
 }
 
 interface AdminAppBenchmarkRun {
+  readonly hostLoadAverageStart: readonly number[];
+  readonly hostLoadAverageEnd: readonly number[];
   readonly initialReadyMs: number;
   readonly calibrationMs: number;
+  readonly calibrationTaskMs: number;
   readonly footprint: AdminAppFootprint;
   readonly operations: readonly OperationSample[];
 }
@@ -61,17 +68,22 @@ async function calibrate(page: Page): Promise<number> {
   });
 }
 
-async function measure(page: Page, name: string, operation: () => Promise<boolean>): Promise<OperationSample> {
+async function measureFrames(page: Page, name: string, operation: () => Promise<boolean>): Promise<Omit<OperationSample, "taskMs">> {
   await startFrameSampling(page, { separateToastLayoutShift: true });
   let retained = false;
   let frames: FrameSample;
   try {
     retained = await operation();
-    await page.evaluate(() => new Promise<void>(resolveFrame => requestAnimationFrame(() => requestAnimationFrame(() => requestAnimationFrame(() => resolveFrame())))));
+    await settleBenchmarkRendering(page);
   } finally {
     frames = await finishFrameSampling(page);
   }
   return Object.freeze({ name, frames, retained });
+}
+
+async function measure(page: Page, clock: BrowserCpuClock, name: string, operation: () => Promise<boolean>): Promise<OperationSample> {
+  const sample = await clock.measure(() => measureFrames(page, name, operation));
+  return Object.freeze({ ...sample.value, taskMs: sample.taskMs });
 }
 
 function operation(run: AdminAppBenchmarkRun, name: string): OperationSample {
@@ -81,7 +93,7 @@ function operation(run: AdminAppBenchmarkRun, name: string): OperationSample {
 }
 
 function normalizedSummary(runs: readonly AdminAppBenchmarkRun[]): AdminAppNormalizedBaseline {
-  const normalized = (name: string) => median(runs.map(run => operation(run, name).frames.durationMs / run.calibrationMs));
+  const normalized = (name: string) => median(runs.map(run => operation(run, name).taskMs / run.calibrationTaskMs));
   return Object.freeze({
     sidebarCollapse: normalized("sidebar-collapse"),
     presetLayout: normalized("preset-layout"),
@@ -103,9 +115,12 @@ function driftFailures(current: AdminAppNormalizedBaseline): readonly string[] {
 }
 
 async function runOnce(browser: Browser): Promise<AdminAppBenchmarkRun> {
+  const hostLoadAverageStart = Object.freeze(loadavg());
   const context = await browser.newContext({ viewport: { width: 1200, height: 800 } });
   const page = await context.newPage();
+  let clock: BrowserCpuClock | undefined;
   try {
+    clock = await createBrowserCpuClock(page);
     const startedAt = Date.now();
     await page.goto("/admin?workload=heavy&table=continuous");
     await expect(page.locator('[data-sheen-portal="root"]')).toHaveAttribute("data-sheen-ready", "true");
@@ -129,55 +144,61 @@ async function runOnce(browser: Browser): Promise<AdminAppBenchmarkRun> {
         loadMs: navigation instanceof PerformanceNavigationTiming ? navigation.loadEventEnd : Number.NaN,
       };
     });
-    const calibrationMs = await calibrate(page);
+    await settleBenchmarkRendering(page);
+    const calibration = await clock.measure(() => calibrate(page));
+    const calibrationMs = calibration.value;
+    const calibrationTaskMs = calibration.taskMs;
     const shell = page.locator(".sheen-admin-app");
     const chart = page.locator(".sheen-time-series");
     await shell.evaluate(element => element.setAttribute("data-benchmark-shell", "retained"));
     await content.evaluate(element => element.setAttribute("data-benchmark-content", "retained"));
     await chart.evaluate(element => element.setAttribute("data-benchmark-chart", "retained"));
+    const owners = await captureAdminAppOwners(page);
+    const retained = (mode: "shell" | "chart" | "details" | "refresh") => owners.evaluate(retainedAdminAppOwners, mode);
     const operations: OperationSample[] = [];
 
-    operations.push(await measure(page, "sidebar-collapse", async () => {
+    await settleBenchmarkRendering(page);
+    operations.push(await measure(page, clock, "sidebar-collapse", async () => {
       await page.locator(".sheen-sidebar-toggle-desktop").click();
       await expect(shell).toHaveAttribute("data-sidebar-collapsed", "true");
-      return await shell.getAttribute("data-benchmark-shell") === "retained" && await content.getAttribute("data-benchmark-content") === "retained";
+      return retained("shell");
     }));
 
     await page.getByText("Customize starter", { exact: true }).click();
-    operations.push(await measure(page, "preset-layout", async () => {
-      await page.getByRole("button", { name: "Layout Standard", exact: true }).click();
-      await page.getByRole("option", { name: "Workspace", exact: true }).click();
+    operations.push(await measure(page, clock, "preset-layout", async () => {
+      await page.locator(".loupe-admin-customize").getByRole("button", { name: "Layout Standard", exact: true }).click();
+      await page.locator(".sheen-select-content").getByRole("option", { name: "Workspace", exact: true }).click();
       await expect(shell).toHaveAttribute("data-admin-preset", "workspace");
-      return await shell.getAttribute("data-benchmark-shell") === "retained" && await content.getAttribute("data-benchmark-content") === "retained";
+      return retained("shell");
     }));
 
-    operations.push(await measure(page, "theme-switch", async () => {
-      await page.getByRole("button", { name: "Theme Inherit root theme", exact: true }).click();
-      await page.getByRole("option", { name: "Graphite", exact: true }).click();
+    operations.push(await measure(page, clock, "theme-switch", async () => {
+      await page.locator(".loupe-admin-customize").getByRole("button", { name: "Theme Inherit root theme", exact: true }).click();
+      await page.locator(".sheen-select-content").getByRole("option", { name: "Graphite", exact: true }).click();
       await expect(page.locator(".sheen-admin-scope")).toHaveAttribute("data-sheen-theme", "graphite");
-      return await shell.getAttribute("data-benchmark-shell") === "retained"
-        && await content.getAttribute("data-benchmark-content") === "retained"
-        && await chart.getAttribute("data-benchmark-chart") === "retained";
+      return retained("chart");
     }));
 
-    operations.push(await measure(page, "command-palette", async () => {
+    operations.push(await measure(page, clock, "command-palette", async () => {
       await page.keyboard.press("Control+K");
-      await expect(page.getByRole("dialog", { name: "Command palette", exact: true })).toBeVisible();
-      return await shell.getAttribute("data-benchmark-shell") === "retained";
+      const palette = page.locator('.sheen-command-dialog[role="dialog"]');
+      await expect(palette).toBeVisible();
+      await expect(palette).toHaveAccessibleName("Command palette");
+      return retained("shell");
     }));
     await page.keyboard.press("Escape");
 
     const tableSearch = page.getByRole("searchbox", { name: "Search Northstar accounts", exact: true });
-    operations.push(await measure(page, "table-search", async () => {
+    operations.push(await measure(page, clock, "table-search", async () => {
       await tableSearch.fill("'Aperture 001");
       await expect(page.locator(".sheen-data-table-result-count")).toContainText("1 result");
-      return await shell.getAttribute("data-benchmark-shell") === "retained" && await chart.getAttribute("data-benchmark-chart") === "retained";
+      return retained("chart");
     }));
     await tableSearch.fill("");
     await expect(page.locator(".sheen-data-table-result-count")).toContainText("12,000 results");
 
     const tableViewport = page.locator(".sheen-data-table-viewport");
-    operations.push(await measure(page, "table-scroll", async () => {
+    operations.push(await measure(page, clock, "table-scroll", async () => {
       const populated = await tableViewport.evaluate(async element => {
         const samples: boolean[] = [];
         const maximum = Math.min(10_000, Math.max(0, element.scrollHeight - element.clientHeight));
@@ -193,26 +214,27 @@ async function runOnce(browser: Browser): Promise<AdminAppBenchmarkRun> {
         }
         return samples.length === 120 && samples.every(Boolean);
       });
-      return populated && await shell.getAttribute("data-benchmark-shell") === "retained" && await content.getAttribute("data-benchmark-content") === "retained";
+      return populated && await retained("shell");
     }));
 
     await tableViewport.evaluate(element => { element.scrollTop = 0; });
     const firstRow = page.locator('tbody tr[data-row-id="account-0001"]');
     await expect(firstRow).toBeVisible();
     await firstRow.focus();
-    operations.push(await measure(page, "details-dock", async () => {
+    operations.push(await measure(page, clock, "details-dock", async () => {
       await page.keyboard.press("Enter");
       const details = page.locator(".sheen-admin-details-owner");
       await expect(details).toHaveAttribute("data-presentation", "docked");
       await details.evaluate(element => element.setAttribute("data-benchmark-details", "retained"));
-      return await shell.getAttribute("data-benchmark-shell") === "retained";
+      await owners.evaluate(nodes => { nodes.details = document.querySelector<HTMLElement>(".sheen-admin-details-owner"); });
+      return retained("details");
     }));
 
-    operations.push(await measure(page, "details-sheet", async () => {
+    operations.push(await measure(page, clock, "details-sheet", async () => {
       await page.setViewportSize({ width: 800, height: 800 });
       const details = page.locator(".sheen-admin-details-owner");
       await expect(details).toHaveAttribute("data-presentation", "sheet");
-      return await details.getAttribute("data-benchmark-details") === "retained" && await content.getAttribute("data-benchmark-content") === "retained";
+      return retained("details");
     }));
     await page.keyboard.press("Escape");
     await page.setViewportSize({ width: 1200, height: 800 });
@@ -224,31 +246,31 @@ async function runOnce(browser: Browser): Promise<AdminAppBenchmarkRun> {
     await note.fill("Benchmark retained draft");
     await note.focus();
     await note.evaluate(element => element.setAttribute("data-benchmark-note", "retained"));
-    operations.push(await measure(page, "retained-refresh", async () => {
+    await owners.evaluate(nodes => { nodes.draft = document.querySelector<HTMLInputElement>('[data-benchmark-note="retained"]'); });
+    operations.push(await measure(page, clock, "retained-refresh", async () => {
       await page.getByRole("button", { name: "Refresh", exact: true }).first().evaluate(element => {
         if (!(element instanceof HTMLButtonElement)) throw new Error("Refresh trigger must be a button");
         element.click();
       });
       await expect(page.locator(".sheen-status-bar").getByText("Revision 2", { exact: true })).toBeVisible();
-      return await content.getAttribute("data-benchmark-content") === "retained"
-        && await note.getAttribute("data-benchmark-note") === "retained"
-        && await note.inputValue() === "Benchmark retained draft"
-        && await note.evaluate(element => element.ownerDocument.activeElement === element);
+      return retained("refresh");
     }));
-    return Object.freeze({ initialReadyMs, calibrationMs, footprint: Object.freeze(footprint), operations: Object.freeze(operations) });
+    return Object.freeze({ hostLoadAverageStart, hostLoadAverageEnd: Object.freeze(loadavg()), initialReadyMs, calibrationMs, calibrationTaskMs, footprint: Object.freeze(footprint), operations: Object.freeze(operations) });
   } finally {
-    await context.close();
+    try { await clock?.close(); } finally { await context.close(); }
   }
 }
 
-test("AdminApp operations retain owners and satisfy calibrated frame stability gates", async ({ browser }) => {
+test("AdminApp operations retain owners and satisfy calibrated frame stability gates", async ({ browser }, testInfo) => {
   test.setTimeout(300_000);
+  const capture = isCpuBaselineCapture();
   const runs: AdminAppBenchmarkRun[] = [];
   for (let index = 0; index < adminAppBenchmarkBaseline.runs; index += 1) runs.push(await runOnce(browser));
   const normalized = normalizedSummary(runs);
-  const failures = [...driftFailures(normalized)];
+  const failures = capture ? [] : [...driftFailures(normalized)];
   const latest = adminAppBenchmarkBaseline.history.at(-1);
-  if (latest) {
+  if (!capture && !latest) throw new Error("AdminApp CPU benchmark baseline history must not be empty");
+  if (!capture && latest) {
     for (const name of metricNames) {
       const maximum = latest.normalized[name] * (1 + adminAppBenchmarkBaseline.maximumRegression);
       if (normalized[name] > maximum) failures.push(`${name} normalized median ${normalized[name].toFixed(4)} exceeds ${maximum.toFixed(4)}`);
@@ -298,7 +320,9 @@ test("AdminApp operations retain owners and satisfy calibrated frame stability g
     if (!summary.retained) failures.push(`${summary.name} replaced an accepted owner, focus, or draft`);
   }
   const artifact = Object.freeze({
-    schema: 2,
+    schema: 3,
+    measurement: cpuMeasurement,
+    qualification: capture ? "baseline-capture" : "regression",
     fixture: adminAppBenchmarkBaseline.fixture,
     recordedAt: new Date().toISOString(),
     commit: process.env.GITHUB_SHA ?? null,
@@ -307,6 +331,7 @@ test("AdminApp operations retain owners and satisfy calibrated frame stability g
     initialReadyMedianMs: median(runs.map(run => run.initialReadyMs)),
     footprints: Object.freeze(runs.map(run => run.footprint)),
     calibrationsMs: Object.freeze(runs.map(run => run.calibrationMs)),
+    calibrationTaskMs: Object.freeze(runs.map(run => run.calibrationTaskMs)),
     normalized,
     runs: Object.freeze(runs),
     rawMedianMs: Object.freeze({
@@ -325,7 +350,8 @@ test("AdminApp operations retain owners and satisfy calibrated frame stability g
   });
   const artifacts = resolve(process.cwd(), "test-results/bench");
   await mkdir(artifacts, { recursive: true });
-  await writeFile(resolve(artifacts, "admin-app-benchmark.json"), `${JSON.stringify(artifact, null, 2)}\n`, "utf8");
+  const artifactName = testInfo.repeatEachIndex === 0 ? "admin-app-benchmark.json" : `admin-app-benchmark.repeat-${testInfo.repeatEachIndex}.json`;
+  await writeFile(resolve(artifacts, artifactName), `${JSON.stringify(artifact, null, 2)}\n`, "utf8");
   process.stdout.write(`${JSON.stringify(artifact.operations, null, 2)}\n`);
   expect(failures, failures.join("\n")).toEqual([]);
 });

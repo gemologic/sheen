@@ -6,6 +6,11 @@ const bucketCount = 1_024;
 /** Bound canvas work while retaining each pixel-scale bucket's shape and gap signal. */
 export function downsampleTimeSeriesRendererData(data: ChartData, series: readonly ChartSeries[]): ChartData {
   if (data.t.length <= maximumSourcePoints) return data;
+  const columns = series.map(definition => {
+    const column = data[definition.key];
+    if (!column) throw new Error(`TimeSeries data is missing series ${definition.key}`);
+    return { key: definition.key, column };
+  });
   const indices = new Set<number>();
   for (let bucket = 0; bucket < bucketCount; bucket += 1) {
     const start = Math.floor(bucket * data.t.length / bucketCount);
@@ -13,9 +18,10 @@ export function downsampleTimeSeriesRendererData(data: ChartData, series: readon
     if (start >= end) continue;
     indices.add(start);
     indices.add(end - 1);
-    for (const definition of series) {
-      const column = data[definition.key];
-      if (!column) throw new Error(`TimeSeries data is missing series ${definition.key}`);
+    for (let seriesIndex = 0; seriesIndex < columns.length; seriesIndex += 1) {
+      const entry = columns[seriesIndex];
+      if (!entry) throw new Error(`TimeSeries renderer is missing series at index ${seriesIndex}`);
+      const column = entry.column;
       let minimum = Number.POSITIVE_INFINITY;
       let maximum = Number.NEGATIVE_INFINITY;
       let minimumIndex = start;
@@ -51,16 +57,17 @@ export function downsampleTimeSeriesRendererData(data: ChartData, series: readon
   const ordered = [...indices].sort((left, right) => left - right);
   const t = new Float64Array(ordered.length);
   const output: { readonly t: Float64Array; [key: string]: Float64Array } = { t };
-  for (const definition of series) output[definition.key] = new Float64Array(ordered.length);
   for (let target = 0; target < ordered.length; target += 1) {
     const source = ordered[target];
     if (source === undefined) continue;
     t[target] = data.t[source] ?? Number.NaN;
-    for (const definition of series) {
-      const column = data[definition.key];
-      const rendered = output[definition.key];
-      if (!column || !rendered) throw new Error(`TimeSeries data is missing series ${definition.key}`);
-      rendered[target] = column[source] ?? Number.NaN;
+  }
+  for (const entry of columns) {
+    const rendered = new Float64Array(ordered.length);
+    output[entry.key] = rendered;
+    for (let target = 0; target < ordered.length; target += 1) {
+      const source = ordered[target];
+      if (source !== undefined) rendered[target] = entry.column[source] ?? Number.NaN;
     }
   }
   return Object.freeze(output);

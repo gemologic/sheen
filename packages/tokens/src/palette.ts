@@ -193,15 +193,16 @@ export function validateChartPalette(tokens: Tokens): string[] {
 }
 
 function auditDistances(colors: readonly string[]): PaletteDistanceAudit {
+  const coordinates = colors.map(colorToCam16Ucs);
   const pairs: PalettePairDistance[] = [];
   const adjacent: PalettePairDistance[] = [];
   for (let first = 0; first < colors.length; first += 1) {
-    const firstColor = colors[first];
+    const firstColor = coordinates[first];
     if (firstColor === undefined) throw new Error(`Missing chart color ${first + 1}`);
     for (let second = first + 1; second < colors.length; second += 1) {
-      const secondColor = colors[second];
+      const secondColor = coordinates[second];
       if (secondColor === undefined) throw new Error(`Missing chart color ${second + 1}`);
-      const pair = { first: first + 1, second: second + 1, distance: cam16UcsDistance(firstColor, secondColor) };
+      const pair = { first: first + 1, second: second + 1, distance: Math.hypot(firstColor.j - secondColor.j, firstColor.a - secondColor.a, firstColor.b - secondColor.b) };
       pairs.push(pair);
       if (second === first + 1) adjacent.push(pair);
     }

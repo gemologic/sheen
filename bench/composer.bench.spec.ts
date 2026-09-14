@@ -1,21 +1,27 @@
 import { expect, test } from "@playwright/test";
 import type { Browser, Page } from "@playwright/test";
-import { finishFrameSampling, startFrameSampling } from "./frame-sampling.ts";
+import { finishFrameSampling, settleBenchmarkRendering, startFrameSampling } from "./frame-sampling.ts";
 import type { FrameSample } from "./frame-sampling.ts";
+import { cpuMeasurement, createBrowserCpuClock, isCpuBaselineCapture } from "./cpu-sampling.ts";
+import type { BrowserCpuClock } from "./cpu-sampling.ts";
 import { mkdir, writeFile } from "node:fs/promises";
-import { cpus, platform, release, totalmem } from "node:os";
+import { cpus, loadavg, platform, release, totalmem } from "node:os";
 import { resolve } from "node:path";
-import { composerBenchmarkBaseline } from "./baselines/composer.v1.ts";
-import type { ComposerNormalizedBaseline } from "./baselines/composer.v1.ts";
+import { composerBenchmarkBaseline } from "./baselines/composer.v2.ts";
+import type { ComposerNormalizedBaseline } from "./baselines/composer.v2.ts";
 
 interface OperationSample {
   readonly name: string;
+  readonly taskMs: number;
   readonly frames: FrameSample;
   readonly retained: boolean;
 }
 
 interface ComposerBenchmarkRun {
+  readonly hostLoadAverageStart: readonly number[];
+  readonly hostLoadAverageEnd: readonly number[];
   readonly calibrationMs: number;
+  readonly calibrationTaskMs: number;
   readonly operations: readonly OperationSample[];
 }
 
@@ -40,7 +46,7 @@ async function calibrate(page: Page): Promise<number> {
   });
 }
 
-async function measure(page: Page, name: string, operation: () => Promise<boolean>): Promise<OperationSample> {
+async function measureFrames(page: Page, name: string, operation: () => Promise<boolean>): Promise<Omit<OperationSample, "taskMs">> {
   await startFrameSampling(page);
   let retained = false;
   let frames: FrameSample;
@@ -50,12 +56,17 @@ async function measure(page: Page, name: string, operation: () => Promise<boolea
       operation(),
       new Promise<boolean>((_resolve, reject) => { operationTimeout = setTimeout(() => reject(new Error(`${name} did not settle within 10 seconds`)), 10_000); }),
     ]);
-    await page.evaluate(() => new Promise<void>(resolveFrame => requestAnimationFrame(() => requestAnimationFrame(() => requestAnimationFrame(() => resolveFrame())))));
+    await settleBenchmarkRendering(page);
   } finally {
     if (operationTimeout !== undefined) clearTimeout(operationTimeout);
     frames = await finishFrameSampling(page);
   }
   return Object.freeze({ name, frames, retained });
+}
+
+async function measure(page: Page, clock: BrowserCpuClock, name: string, operation: () => Promise<boolean>): Promise<OperationSample> {
+  const sample = await clock.measure(() => measureFrames(page, name, operation));
+  return Object.freeze({ ...sample.value, taskMs: sample.taskMs });
 }
 
 function operation(run: ComposerBenchmarkRun, name: string): OperationSample {
@@ -65,7 +76,7 @@ function operation(run: ComposerBenchmarkRun, name: string): OperationSample {
 }
 
 function normalizedSummary(runs: readonly ComposerBenchmarkRun[]): ComposerNormalizedBaseline {
-  const normalized = (name: string) => median(runs.map(run => operation(run, name).frames.durationMs / run.calibrationMs));
+  const normalized = (name: string) => median(runs.map(run => operation(run, name).taskMs / run.calibrationTaskMs));
   return Object.freeze({
     configureTitle: normalized("configure-title"),
     addRemove: normalized("add-remove"),
@@ -84,17 +95,19 @@ function driftFailures(current: ComposerNormalizedBaseline): readonly string[] {
 }
 
 async function choose(page: Page, label: string, option: string): Promise<void> {
-  await page.getByRole("button", { name: new RegExp(`^${label} `, "u") }).click();
+  await page.locator(".loupe-composer-axis-bar").getByRole("button", { name: new RegExp(`^${label} `, "u") }).click();
   await page.getByRole("listbox").getByRole("option", { name: option, exact: true }).click();
 }
 
 async function runOnce(browser: Browser): Promise<ComposerBenchmarkRun> {
+  const hostLoadAverageStart = Object.freeze(loadavg());
   const context = await browser.newContext({ viewport: { width: 1200, height: 800 } });
   const page = await context.newPage();
+  let clock: BrowserCpuClock | undefined;
   try {
+    clock = await createBrowserCpuClock(page);
     await page.goto("/composer");
     await expect(page.locator('[data-sheen-portal="root"]')).toHaveAttribute("data-sheen-ready", "true");
-    const calibrationMs = await calibrate(page);
     const frame = page.frameLocator('iframe[title="Editable AdminApp preview"]');
     const editor = page.locator(".loupe-composer-page");
     const app = frame.locator(".sheen-admin-app");
@@ -103,87 +116,118 @@ async function runOnce(browser: Browser): Promise<ComposerBenchmarkRun> {
     const draft = frame.getByRole("textbox", { name: "Search accounts", exact: true });
     await expect(app).toBeVisible();
     await expect(table).toBeVisible();
+    await settleBenchmarkRendering(page);
+    const calibration = await clock.measure(() => calibrate(page));
+    const calibrationMs = calibration.value;
+    const calibrationTaskMs = calibration.taskMs;
     await editor.evaluate(element => element.setAttribute("data-benchmark-editor", "retained"));
     await app.evaluate(element => element.setAttribute("data-benchmark-app", "retained"));
     await table.evaluate(element => element.setAttribute("data-benchmark-table", "retained"));
     await builder.evaluate(element => element.setAttribute("data-benchmark-builder", "retained"));
     await draft.fill("Benchmark draft");
     await draft.evaluate(element => element.setAttribute("data-benchmark-draft", "retained"));
-    const shellRetained = async (): Promise<boolean> => await editor.getAttribute("data-benchmark-editor") === "retained"
-      && await app.getAttribute("data-benchmark-app") === "retained"
-      && await builder.getAttribute("data-benchmark-builder") === "retained"
-      && await draft.getAttribute("data-benchmark-draft") === "retained"
-      && await draft.inputValue() === "Benchmark draft";
-    const retained = async (): Promise<boolean> => await shellRetained()
-      && await table.getAttribute("data-benchmark-table") === "retained";
+    const owners = await page.evaluateHandle(() => {
+      const editor = document.querySelector('[data-benchmark-editor="retained"]');
+      const iframe = document.querySelector('iframe[title="Editable AdminApp preview"]');
+      const viewport = document.querySelector(".loupe-composer-viewport");
+      if (!(editor instanceof HTMLElement) || !(iframe instanceof HTMLIFrameElement) || !(viewport instanceof HTMLElement)) throw new Error("Missing Composer benchmark editor owners");
+      const preview = iframe.contentDocument;
+      const previewWindow = iframe.contentWindow;
+      if (!preview || !previewWindow) throw new Error("The Composer benchmark requires a same-origin preview");
+      const app = preview.querySelector('[data-benchmark-app="retained"]');
+      const builder = preview.querySelector('[data-benchmark-builder="retained"]');
+      const table = preview.querySelector('[data-benchmark-table="retained"]');
+      const draft = preview.querySelector('[data-benchmark-draft="retained"]');
+      if (!app || !builder || !table || !(draft instanceof previewWindow.window.HTMLInputElement)) throw new Error("Missing Composer benchmark preview owners");
+      return { editor, iframe, viewport, preview, app, builder, table, draft,
+        rule: preview.querySelector('[data-benchmark-rule="retained"]'), row: preview.querySelector('[data-benchmark-row="retained"]') };
+    });
+    const retained = (mode: "phone" | "table" | "query") => owners.evaluate((nodes, mode) => {
+      const shell = nodes.editor.isConnected && nodes.iframe.isConnected && nodes.iframe.contentDocument === nodes.preview
+        && nodes.app.isConnected && nodes.builder.isConnected && nodes.draft.isConnected
+        && nodes.app.contains(nodes.builder) && nodes.app.contains(nodes.draft) && nodes.draft.value === "Benchmark draft";
+      if (mode === "phone" && getComputedStyle(nodes.viewport).width !== "390px") throw new Error("Composer phone viewport did not become 390px wide");
+      if (!shell || mode === "phone") return shell;
+      if (!nodes.table.isConnected || !nodes.app.contains(nodes.table)) return false;
+      return mode !== "query" || (nodes.rule?.isConnected === true && nodes.row?.isConnected === true
+        && nodes.builder.contains(nodes.rule) && nodes.table.contains(nodes.row));
+    }, mode);
     const operations: OperationSample[] = [];
 
-    operations.push(await measure(page, "configure-title", async () => {
+    await settleBenchmarkRendering(page);
+    operations.push(await measure(page, clock, "configure-title", async () => {
       await frame.getByRole("group", { name: "PageHeader block", exact: true }).click();
       const title = page.getByRole("textbox", { name: "Title", exact: true });
       await title.fill("Benchmark accounts");
       await title.press("Tab");
       await expect(frame.getByRole("heading", { name: "Benchmark accounts", level: 1 })).toBeVisible();
-      return retained();
+      return retained("table");
     }));
 
     const nodes = frame.locator("[data-composer-node-id]");
     const nodeCount = await nodes.count();
-    operations.push(await measure(page, "add-remove", async () => {
+    operations.push(await measure(page, clock, "add-remove", async () => {
       await page.locator('[data-composer-palette-component="Text"]').getByRole("button", { name: "Add", exact: true }).click();
       await expect(nodes).toHaveCount(nodeCount + 1);
       await page.getByRole("button", { name: "Remove", exact: true }).click();
       await expect(nodes).toHaveCount(nodeCount);
-      return retained();
+      return retained("table");
     }));
 
     const scope = frame.locator(".loupe-composer-preview-scope");
-    operations.push(await measure(page, "theme-switch", async () => {
+    operations.push(await measure(page, clock, "theme-switch", async () => {
       await choose(page, "Theme", "Paper");
       await expect(scope).toHaveAttribute("data-sheen-theme", "paper");
-      return retained();
+      return retained("table");
     }));
 
-    const iframe = page.locator('iframe[title="Editable AdminApp preview"]');
-    await iframe.evaluate(element => element.setAttribute("data-benchmark-frame", "retained"));
-    operations.push(await measure(page, "viewport-switch", async () => {
+    operations.push(await measure(page, clock, "viewport-switch", async () => {
       await choose(page, "Viewport", "Phone, 390 × 844");
-      await expect(page.locator(".loupe-composer-viewport")).toHaveCSS("width", "390px");
-      return await iframe.getAttribute("data-benchmark-frame") === "retained" && await shellRetained();
+      return retained("phone");
     }));
     await choose(page, "Viewport", "Desktop, 1440 × 900");
     await expect(table).toBeVisible();
     await table.evaluate(element => element.setAttribute("data-benchmark-table", "retained"));
+    await owners.evaluate(nodes => {
+      const table = nodes.preview.querySelector('[data-benchmark-table="retained"]');
+      if (!table) throw new Error("Missing restored Composer benchmark table");
+      nodes.table = table;
+    });
 
     const initialRule = builder.getByRole("group", { name: "Query rule: Status", exact: true });
     await initialRule.evaluate(element => element.setAttribute("data-benchmark-rule", "retained"));
     const retainedRow = table.locator('tbody tr[data-row-id="record-0001"]');
     await retainedRow.evaluate(element => element.setAttribute("data-benchmark-row", "retained"));
-    operations.push(await measure(page, "query-edit", async () => {
+    await owners.evaluate(nodes => {
+      nodes.rule = nodes.preview.querySelector('[data-benchmark-rule="retained"]');
+      nodes.row = nodes.preview.querySelector('[data-benchmark-row="retained"]');
+      if (!nodes.rule || !nodes.row) throw new Error("Missing Composer benchmark query owners");
+    });
+    operations.push(await measure(page, clock, "query-edit", async () => {
       await builder.getByRole("button", { name: "Add rule", exact: true }).first().click();
       const accountRule = builder.getByRole("group", { name: "Query rule: Account", exact: true });
       await accountRule.getByRole("textbox", { name: "Value", exact: true }).fill("Aperture 001");
       await expect(table.locator("tbody tr[data-row-id]")).toHaveCount(1);
-      return await retained()
-        && await initialRule.getAttribute("data-benchmark-rule") === "retained"
-        && await retainedRow.getAttribute("data-benchmark-row") === "retained";
+      return retained("query");
     }));
-    return Object.freeze({ calibrationMs, operations: Object.freeze(operations) });
+    return Object.freeze({ hostLoadAverageStart, hostLoadAverageEnd: Object.freeze(loadavg()), calibrationMs, calibrationTaskMs, operations: Object.freeze(operations) });
   } finally {
-    await context.close();
+    try { await clock?.close(); } finally { await context.close(); }
   }
 }
 
-test("Composer edits retain the application and satisfy calibrated frame stability gates", async ({ browser }) => {
+test("Composer edits retain the application and satisfy calibrated frame stability gates", async ({ browser }, testInfo) => {
   test.setTimeout(300_000);
+  const capture = isCpuBaselineCapture();
   const runs: ComposerBenchmarkRun[] = [];
   for (let index = 0; index < composerBenchmarkBaseline.runs; index += 1) runs.push(await runOnce(browser));
   const normalized = normalizedSummary(runs);
   const latest = composerBenchmarkBaseline.history.at(-1);
-  if (!latest) throw new Error("Composer benchmark baseline history must not be empty");
-  const failures = [...driftFailures(normalized)];
+  if (!capture && !latest) throw new Error("Composer CPU benchmark baseline history must not be empty");
+  const failures = capture ? [] : [...driftFailures(normalized)];
   const metricNames: readonly (keyof ComposerNormalizedBaseline)[] = ["configureTitle", "addRemove", "themeSwitch", "viewportSwitch", "queryEdit"];
   for (const name of metricNames) {
+    if (capture || !latest) continue;
     const maximum = latest.normalized[name] * (1 + composerBenchmarkBaseline.maximumRegression);
     if (normalized[name] > maximum) failures.push(`${name} normalized median ${normalized[name].toFixed(4)} exceeds ${maximum.toFixed(4)}`);
   }
@@ -217,12 +261,16 @@ test("Composer edits retain the application and satisfy calibrated frame stabili
     if (!summary.retained) failures.push(`${summary.name} replaced an accepted editor, application, table, rule, row, or draft owner`);
   }
   const artifact = Object.freeze({
-    schema: 1,
+    schema: 2,
+    measurement: cpuMeasurement,
+    qualification: capture ? "baseline-capture" : "regression",
     recordedAt: new Date().toISOString(),
     commit: process.env.GITHUB_SHA ?? null,
     environment: Object.freeze({ runner: process.env.RUNNER_NAME ?? "local", runnerOS: process.env.RUNNER_OS ?? platform(), runnerImage: process.env.ImageOS ?? null, runnerImageVersion: process.env.ImageVersion ?? null, node: process.version, osRelease: release(), cpuCount: cpus().length, cpuModel: cpus()[0]?.model ?? "unknown", memoryBytes: totalmem(), browser: browser.version(), playwright: composerBenchmarkBaseline.playwright }),
     baseline: composerBenchmarkBaseline,
     calibrationsMs: Object.freeze(runs.map(run => run.calibrationMs)),
+    calibrationTaskMs: Object.freeze(runs.map(run => run.calibrationTaskMs)),
+    runs: Object.freeze(runs),
     normalized,
     rawMedianMs: Object.freeze({
       configureTitle: median(runs.map(run => operation(run, "configure-title").frames.durationMs)),
@@ -236,7 +284,8 @@ test("Composer edits retain the application and satisfy calibrated frame stabili
   });
   const artifacts = resolve(process.cwd(), "test-results/bench");
   await mkdir(artifacts, { recursive: true });
-  await writeFile(resolve(artifacts, "composer-benchmark.json"), `${JSON.stringify(artifact, null, 2)}\n`, "utf8");
+  const artifactName = testInfo.repeatEachIndex === 0 ? "composer-benchmark.json" : `composer-benchmark.repeat-${testInfo.repeatEachIndex}.json`;
+  await writeFile(resolve(artifacts, artifactName), `${JSON.stringify(artifact, null, 2)}\n`, "utf8");
   process.stdout.write(`${JSON.stringify({ normalized: artifact.normalized, operations: artifact.operations }, null, 2)}\n`);
   expect(failures, failures.join("\n")).toEqual([]);
 });

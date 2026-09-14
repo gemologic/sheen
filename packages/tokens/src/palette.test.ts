@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { describe, expect, it } from "vitest";
 import { obsidian, themes } from "./themes.ts";
-import { auditChartPalette, chartPaletteThresholds, simulateColorVision, validateChartPalette, xyzToCam16Ucs } from "./palette.ts";
+import { auditChartPalette, cam16UcsDistance, chartPaletteThresholds, simulateColorVision, validateChartPalette, xyzToCam16Ucs } from "./palette.ts";
 import type { ColorVisionSimulation } from "./palette.ts";
 import type { Mode, Tokens } from "./schema.ts";
 
@@ -106,5 +106,22 @@ describe("chart palette qualification", () => {
     const audit = auditChartPalette(obsidian.dark);
     expect(audit.achromatopsia.minimumAdjacent.distance).toBeGreaterThan(0);
     expect(validateChartPalette(obsidian.dark).some(message => message.includes("achromatopsia"))).toBe(false);
+  });
+
+  it("preserves pair distances and tie ordering when reusing each color conversion", () => {
+    for (const theme of themes) for (const mode of ["dark", "light"] satisfies Mode[]) {
+      const tokens = theme[mode];
+      const colors = [tokens["chart-1"], tokens["chart-2"], tokens["chart-3"], tokens["chart-4"], tokens["chart-5"], tokens["chart-6"], tokens["chart-7"], tokens["chart-8"]];
+      const audit = auditChartPalette(tokens);
+      for (const simulation of ["normal", "protanopia", "deuteranopia", "tritanopia", "achromatopsia"] satisfies ("normal" | ColorVisionSimulation)[]) {
+        const values = simulation === "normal" ? colors : colors.map(color => simulateColorVision(color, simulation));
+        const pairs = values.flatMap((first, index) => values.slice(index + 1).map((second, offset) => ({
+          first: index + 1, second: index + offset + 2, distance: cam16UcsDistance(first, second),
+        })));
+        const ordered = [...pairs].sort((left, right) => left.distance - right.distance);
+        const adjacent = pairs.filter(pair => pair.second === pair.first + 1).sort((left, right) => left.distance - right.distance);
+        expect(audit[simulation], `${theme.id}/${mode}/${simulation}`).toEqual({ minimumPair: ordered[0], minimumAdjacent: adjacent[0] });
+      }
+    }
   });
 });
