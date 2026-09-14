@@ -4,6 +4,7 @@
 
 - `llms.txt` is the compact component index. It contains every exported component, every sheen-authored prop signature, a one-line summary, and the first validated example.
 - `llms-full.txt` contains all authored prop descriptions and defaults, accessibility and keyboard guidance, semantic tokens, do/don't guidance, and every validated example.
+- `apps/loupe/public/llms.txt` and `apps/loupe/public/llms-full.txt` are identical generated copies served locally and included in the GitHub Pages artifact at [`/llms.txt`](https://sheen.gemologic.dev/llms.txt) and [`/llms-full.txt`](https://sheen.gemologic.dev/llms-full.txt). The public copies are ignored and regenerated before each Pages build.
 - `dist/skill/SKILL.md` and `dist/skill/llms.txt` form the vendorable skill directory. The bundled skill points agents at the same compact inventory and repeats the non-negotiable package, hydration, refresh, and pagination rules.
 
 Do not edit any of those files by hand. Change the component metadata, example, or generator and rerun `pnpm manifest`. Generation fails before writing if the manifest shape is invalid, a component lacks a canonical example, or compact context exceeds its budget.

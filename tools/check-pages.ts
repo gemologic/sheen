@@ -42,7 +42,12 @@ assert.match(
 assert.match(landing, /href="https:\/\/github\.com\/gemologic\/sheen"/u);
 assert.doesNotMatch(landing, /href="\/gallery"/u, "The static landing page must not advertise server-backed gallery routes");
 await access(join(publicDirectory, ".nojekyll"));
+for (const name of ["llms.txt", "llms-full.txt"]) {
+  const expected = await readFile(join(root, name));
+  assert.ok(expected.length > 0, `${name} must contain generated agent guidance`);
+  assert.deepEqual(await readFile(join(publicDirectory, name)), expected, `${name} is missing or stale in the static Pages artifact`);
+}
 await assertAbsent(join(output, "server"));
 await assertAbsent(join(publicDirectory, "api"));
 
-process.stdout.write(`GitHub Pages artifact contains ${pagesRoutes.length} static routes with no server output.\n`);
+process.stdout.write(`GitHub Pages artifact contains ${pagesRoutes.length} static routes and current compact/full agent guidance with no server output.\n`);

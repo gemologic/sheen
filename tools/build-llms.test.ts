@@ -1,5 +1,8 @@
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { COMPACT_CONTEXT_MAX_BYTES, enforceCompactContextBudget, generateCompactContext, generateFullContext } from "./build-llms.ts";
+import { COMPACT_CONTEXT_MAX_BYTES, enforceCompactContextBudget, generateCompactContext, generateFullContext, writeGeneratedContext } from "./build-llms.ts";
 import type { SheenManifest } from "./build-llms.ts";
 
 const manifest = {
@@ -21,6 +24,31 @@ const manifest = {
 } satisfies SheenManifest;
 
 describe("generated agent context", () => {
+  it("writes and refreshes identical repository and public agent documents", async () => {
+    const root = await mkdtemp(join(tmpdir(), "sheen-public-context-"));
+    try {
+      for (const summary of ["Triggers an application action.", "Triggers the updated application action."]) {
+        const updated = {
+          ...manifest,
+          components: manifest.components.map(component => ({ ...component, summary })),
+        } satisfies SheenManifest;
+        await writeFile(join(root, "sheen.manifest.json"), JSON.stringify(updated));
+        const result = await writeGeneratedContext(root);
+        expect(result.components).toBe(updated.components.length);
+        for (const { name, expected } of [
+          { name: "llms.txt", expected: generateCompactContext(updated) },
+          { name: "llms-full.txt", expected: generateFullContext(updated) },
+        ]) {
+          expect(await readFile(join(root, name), "utf8")).toBe(expected);
+          expect(await readFile(join(root, "apps", "loupe", "public", name), "utf8")).toBe(expected);
+        }
+        expect(await readFile(join(root, "dist", "skill", "llms.txt"), "utf8")).toBe(generateCompactContext(updated));
+      }
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
   it("keeps the compact inventory canonical and excludes inherited platform noise", () => {
     const compact = generateCompactContext(manifest);
     expect(compact).toContain('Button(children:node,tone?:"neutral"|"accent",items:ro s[],onPress:()=>v)');

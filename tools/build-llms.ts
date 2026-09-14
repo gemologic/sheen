@@ -258,10 +258,16 @@ export async function writeGeneratedContext(root: string): Promise<{ readonly co
   const full = generateFullContext(manifest);
   const compactBytes = enforceCompactContextBudget(compact);
   const skillRoot = join(root, "dist", "skill");
-  await mkdir(skillRoot, { recursive: true });
+  const publicRoot = join(root, "apps", "loupe", "public");
+  await Promise.all([
+    mkdir(skillRoot, { recursive: true }),
+    mkdir(publicRoot, { recursive: true }),
+  ]);
   await Promise.all([
     writeFile(join(root, "llms.txt"), compact),
     writeFile(join(root, "llms-full.txt"), full),
+    writeFile(join(publicRoot, "llms.txt"), compact),
+    writeFile(join(publicRoot, "llms-full.txt"), full),
     writeFile(join(skillRoot, "llms.txt"), compact),
     writeFile(join(skillRoot, "SKILL.md"), skillInstructions()),
   ]);
@@ -272,5 +278,5 @@ const invokedPath = process.argv[1] ? pathToFileURL(resolve(process.argv[1])).hr
 if (invokedPath === import.meta.url) {
   const root = dirname(fileURLToPath(new URL("../package.json", import.meta.url)));
   const result = await writeGeneratedContext(root);
-  console.log(`Generated compact/full context and vendorable skill for ${result.components} components; compact=${result.compactBytes}B`);
+  console.log(`Generated compact/full context, public documents, and vendorable skill for ${result.components} components; compact=${result.compactBytes}B`);
 }

@@ -1,5 +1,15 @@
+import { readFile } from "node:fs/promises";
 import { expect, test } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
+
+for (const name of ["llms.txt", "llms-full.txt"]) {
+  test(`serves /${name} as current plain-text agent guidance`, async ({ request }) => {
+    const response = await request.get(`/${name}`);
+    expect(response.status()).toBe(200);
+    expect(response.headers()["content-type"]).toMatch(/^text\/plain(?:;|$)/u);
+    expect(await response.body()).toEqual(await readFile(new URL(`../../${name}`, import.meta.url)));
+  });
+}
 
 test("serves and hydrates the prerendered public landing page", async ({ page }) => {
   const errors: string[] = [];
