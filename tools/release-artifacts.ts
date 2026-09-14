@@ -30,7 +30,7 @@ interface ReleaseArtifactManifest {
   readonly schemaVersion: 1;
   readonly version: string;
   readonly distributionTag: "latest" | "next";
-  readonly publicationMode: "bootstrap" | "stage";
+  readonly publicationMode: "bootstrap" | "publish";
   readonly artifacts: readonly ReleaseArtifact[];
 }
 
@@ -63,7 +63,7 @@ function releaseArtifact(value: unknown): value is ReleaseArtifact {
 function releaseArtifactManifest(value: unknown): value is ReleaseArtifactManifest {
   return record(value) && value.schemaVersion === 1 && nonempty(value.version)
     && (value.distributionTag === "latest" || value.distributionTag === "next")
-    && (value.publicationMode === "bootstrap" || value.publicationMode === "stage")
+    && (value.publicationMode === "bootstrap" || value.publicationMode === "publish")
     && Array.isArray(value.artifacts) && value.artifacts.every(releaseArtifact);
 }
 
@@ -99,7 +99,7 @@ async function packRelease(
   outputArgument: string,
   expectedVersion: string,
   distributionTag: "latest" | "next",
-  publicationMode: "bootstrap" | "stage",
+  publicationMode: "bootstrap" | "publish",
 ): Promise<void> {
   validatePublication(expectedVersion, distributionTag);
   const output = resolve(outputArgument);
@@ -137,7 +137,7 @@ async function verifyRelease(
   outputArgument: string,
   expectedVersion: string,
   distributionTag: "latest" | "next",
-  publicationMode: "bootstrap" | "stage",
+  publicationMode: "bootstrap" | "publish",
 ): Promise<void> {
   validatePublication(expectedVersion, distributionTag);
   const output = resolve(outputArgument);
@@ -166,10 +166,10 @@ async function verifyRelease(
 }
 
 const [command, outputArgument, expectedVersion, distributionTag, publicationMode] = process.argv.slice(2);
-assert.ok(command === "pack" || command === "verify", "usage: release-artifacts.ts <pack|verify> <directory> <version> <next|latest> <bootstrap|stage>");
+assert.ok(command === "pack" || command === "verify", "usage: release-artifacts.ts <pack|verify> <directory> <version> <next|latest> <bootstrap|publish>");
 assert.ok(nonempty(outputArgument), "release artifact directory is required");
 assert.ok(nonempty(expectedVersion), "release version is required");
 assert.ok(distributionTag === "latest" || distributionTag === "next", "release distribution tag must be next or latest");
-assert.ok(publicationMode === "bootstrap" || publicationMode === "stage", "publication mode must be bootstrap or stage");
+assert.ok(publicationMode === "bootstrap" || publicationMode === "publish", "publication mode must be bootstrap or publish");
 if (command === "pack") await packRelease(outputArgument, expectedVersion, distributionTag, publicationMode);
 else await verifyRelease(outputArgument, expectedVersion, distributionTag, publicationMode);

@@ -10,18 +10,18 @@ on:
       distribution_tag:
         description: Prereleases use next; stable releases use latest
         required: true
-        default: next
+        default: latest
         type: choice
         options:
           - next
           - latest
       publication_mode:
-        description: Bootstrap creates packages with a temporary token; stage uses npm OIDC
+        description: Publish uses npm OIDC; bootstrap creates new packages with a temporary token
         required: true
-        default: stage
+        default: publish
         type: choice
         options:
-          - stage
+          - publish
           - bootstrap
 
 concurrency:
@@ -125,11 +125,11 @@ jobs:
           SHEEN_RELEASE_DIRECTORY: ${{ runner.temp }}/sheen-release
           SHEEN_RELEASE_VERSION: ${{ inputs.version }}
           SHEEN_DISTRIBUTION_TAG: ${{ inputs.distribution_tag }}
-      - name: Stage existing packages through npm OIDC
-        if: inputs.publication_mode == 'stage'
+      - name: Publish existing packages through npm OIDC
+        if: inputs.publication_mode == 'publish'
         run: |
           for tarball in "$SHEEN_RELEASE_DIRECTORY"/*.tgz; do
-            npm stage publish "$tarball" --tag "$SHEEN_DISTRIBUTION_TAG" --access public --provenance
+            npm publish "$tarball" --tag "$SHEEN_DISTRIBUTION_TAG" --access public --provenance
           done
         env:
           SHEEN_RELEASE_DIRECTORY: ${{ runner.temp }}/sheen-release

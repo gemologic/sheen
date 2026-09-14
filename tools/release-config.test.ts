@@ -89,10 +89,16 @@ describe("release configuration", () => {
     assert.match(publish, /needs: prepare/u);
     assert.match(publish, /environment:\n      name: npm/u);
     assert.match(publish, /id-token: write/u);
-    assert.match(publish, /npm stage publish/u);
+    assert.match(publish, /distribution_tag:\n(?:.*\n)*?        default: latest/u);
+    assert.match(publish, /publication_mode:\n(?:.*\n)*?        default: publish/u);
+    assert.doesNotMatch(publish, /npm stage publish/u);
     assert.match(publish, /bootstrap-npm\.ts/u);
     assert.match(publish, /NODE_AUTH_TOKEN: \$\{\{ secrets\.NPM_TOKEN \}\}/u);
     assert.match(publish, /if: inputs\.publication_mode == 'bootstrap'/u);
+    const oidc = publish.slice(publish.indexOf("      - name: Publish existing packages through npm OIDC\n"));
+    assert.match(oidc, /if: inputs\.publication_mode == 'publish'/u);
+    assert.ok(oidc.includes('npm publish "$tarball" --tag "$SHEEN_DISTRIBUTION_TAG" --access public --provenance'));
+    assert.doesNotMatch(oidc, /NODE_AUTH_TOKEN|NPM_TOKEN|_authToken/u);
   });
 
   it("retains browser diagnostics when publication preparation fails", async () => {
