@@ -1570,13 +1570,15 @@ export function DataTable<Row extends object>(props: DataTableProps<Row>): JSX.E
   if (typeof rowHeight !== "string" || rowHeight.trim() === "") throw new Error("rowHeight must be a nonempty CSS length");
   const effectiveDensity = (): DataTableDensity => density() ?? theme.state().density;
   const estimatedRowHeight = (): number => props.estimatedRowHeight ?? (effectiveDensity() === "compact" ? 28 : effectiveDensity() === "spacious" ? 42 : 34);
-  if (!Number.isFinite(estimatedRowHeight()) || estimatedRowHeight() <= 0) throw new Error("estimatedRowHeight must be a positive finite number");
+  let measuredDensity = effectiveDensity();
+  let measuredRowHeight = estimatedRowHeight();
+  if (!Number.isFinite(measuredRowHeight) || measuredRowHeight <= 0) throw new Error("estimatedRowHeight must be a positive finite number");
   const initialViewportHeight = props.initialViewportHeight ?? 400;
   if (!Number.isFinite(initialViewportHeight) || initialViewportHeight <= 0) throw new Error("initialViewportHeight must be a positive finite number");
   const virtualizer = createVirtualizer<HTMLDivElement, HTMLTableRowElement>({
     get count() { return rowCount(); },
     getScrollElement: () => viewport ?? null,
-    estimateSize: estimatedRowHeight,
+    estimateSize: () => measuredRowHeight,
     getItemKey: index => props.variableRowHeight ? rowAt(index)?.key ?? index : index,
     initialRect: { width: 1024, height: initialViewportHeight },
     overscan: 8,
@@ -1593,11 +1595,14 @@ export function DataTable<Row extends object>(props: DataTableProps<Row>): JSX.E
       for (const element of viewport?.querySelectorAll<HTMLTableRowElement>("tbody tr[data-row-key]") ?? []) virtualizer.measureElement(element);
     }
   });
-  let measuredDensity = effectiveDensity();
   createEffect(() => {
     const currentDensity = effectiveDensity();
-    if (virtualizerMounted && currentDensity !== measuredDensity) virtualizer.measure();
+    const height = estimatedRowHeight();
+    if (!Number.isFinite(height) || height <= 0) throw new Error("estimatedRowHeight must be a positive finite number");
+    const changed = height !== measuredRowHeight || currentDensity !== measuredDensity;
+    measuredRowHeight = height;
     measuredDensity = currentDensity;
+    if (virtualizerMounted && changed) virtualizer.measure();
   });
   const renderedRowCache = new Map<string, RenderedRow<Row>>();
   const renderedRows = createMemo<readonly RenderedRow<Row>[]>(() => {
@@ -2186,7 +2191,9 @@ export function DataTable<Row extends object>(props: DataTableProps<Row>): JSX.E
           <tbody style={{ height: `${virtualizer.getTotalSize()}px` }}>
             <For each={renderedRows()}>{current => {
               const row = () => current.row();
-              const dataRow = () => displayDataRow(row());
+              const dataRow = treePresentation ? () => displayDataRow(row()) : createMemo(() => displayDataRow(row()), undefined, {
+                equals: (previous, next) => previous?.row === next?.row,
+              });
               const groupRow = () => displayGroupRow(row());
               const labelColumn = () => {
                 const visible = visibleDefinitions();
@@ -2200,10 +2207,10 @@ export function DataTable<Row extends object>(props: DataTableProps<Row>): JSX.E
                     </Show>
                   </Show>
                   <For each={visibleDefinitions()}>{column => {
-                    const edit = createMemo(() => {
+                    const edit = column.definition.editor ? createMemo(() => {
                       const value = dataRow();
                       return value ? cellEditRecord(value.row, column) : undefined;
-                    });
+                    }) : () => undefined;
                     const state = () => editSnapshot(edit());
                     const invalid = () => {
                       const currentState = state();

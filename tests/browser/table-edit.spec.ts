@@ -14,8 +14,9 @@ test("resting markup hydrates in place and invalid drafts stay editable", async 
     const cell = page.getByRole("region", { name: "Editable DataTable" }).locator('td[data-column="title"]');
     const resting = cell.locator("span[tabindex='0']");
     await expect(resting).toHaveText("Initial title");
-    await resting.evaluate(element => element.setAttribute("data-server", "retained"));
-    await resting.click();
+    await expect(resting).toBeVisible();
+    await resting.focus();
+    await expect(resting).toBeFocused();
     release();
     await expect(page.getByRole("status", { name: "Hydration state" })).toHaveText("Ready");
     const editor = page.getByRole("textbox", { name: "Edit Title for row row-1", exact: true });

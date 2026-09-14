@@ -34,12 +34,14 @@ test("continuous client mode virtualizes one complete bounded result without pag
   await section.getByRole("button", { name: "Compact table" }).click();
   await expect(firstRow).toHaveCSS("height", "28px");
   await expect(table.locator('[data-row-id="client-1"]')).toHaveCSS("transform", "matrix(1, 0, 0, 1, 0, 28)");
+  await expect(table.locator("tbody")).toHaveCSS("height", "8400px");
   await expect(table.locator("thead th").first()).toHaveCSS("height", "28px");
   await expect(section.getByRole("button", { name: "Columns", exact: true })).toHaveCSS("height", "26px");
   await expect(firstRow).toHaveAttribute("data-density-identity", "retained");
   await section.getByRole("button", { name: "Spacious table" }).click();
   await expect(firstRow).toHaveCSS("height", "42px");
   await expect(table.locator('[data-row-id="client-1"]')).toHaveCSS("transform", "matrix(1, 0, 0, 1, 0, 42)");
+  await expect(table.locator("tbody")).toHaveCSS("height", "12600px");
   expect(await table.locator("tbody tr[data-row-id]").count()).toBeLessThan(300);
   await expect(section.getByRole("navigation", { name: "Pagination" })).toHaveCount(0);
   const viewport = section.locator(".sheen-data-table-viewport");

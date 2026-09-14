@@ -7,7 +7,7 @@ async function ready(page: Page): Promise<void> {
   await expect(page.locator('[data-sheen-portal="root"]')).toHaveAttribute("data-sheen-ready", "true");
 }
 
-test("color-only theme updates do not rescan the client query, while locale updates do", async ({ page }) => {
+test("color-only theme updates avoid rescans and read-only cells retain refresh and filter identity", async ({ page }) => {
   await page.goto("/table-benchmark?profile=true");
   await ready(page);
   const activate = async (control: string) => page.locator(`[data-benchmark-${control}]`).evaluate(element => {
@@ -37,6 +37,40 @@ test("color-only theme updates do not rescan the client query, while locale upda
   await expect(table).toHaveAttribute("aria-rowcount", "1001");
   await expect(row).toHaveAttribute("data-query-theme-retained", "true");
   await expect(search).toBeFocused();
+  const cell = row.locator('td[data-column="updated"]');
+  const cellOwner = await cell.elementHandle();
+  if (!cellOwner) throw new Error("Expected a read-only custom cell");
+  try {
+    const time = await cell.locator("time").getAttribute("datetime");
+    if (!time) throw new Error("Expected the accepted custom-cell timestamp");
+    await activate("refresh");
+    await expect(cell.locator("time")).not.toHaveAttribute("datetime", time);
+    expect(await cellOwner.evaluate(element => element.isConnected)).toBe(true);
+    await expect(row).toHaveAttribute("data-query-theme-retained", "true");
+    await expect(search).toBeFocused();
+  } finally {
+    await cellOwner.dispose();
+  }
+  const account = row.locator(".loupe-table-benchmark-account");
+  const accountOwner = await account.elementHandle();
+  if (!accountOwner) throw new Error("Expected a read-only account cell");
+  try {
+    const name = await account.locator("strong").innerText();
+    await page.getByRole("region", { name: "Table benchmark surface", exact: true }).getByRole("button", { name: "+ Filter", exact: true }).click();
+    const picker = page.getByRole("dialog", { name: "Filter columns", exact: true });
+    await picker.getByRole("searchbox", { name: "Search filter columns", exact: true }).fill("Name");
+    await picker.getByRole("button", { name: "Name", exact: true }).click();
+    const editor = page.getByRole("dialog", { name: "+ Filter: Name", exact: true });
+    await editor.getByRole("button", { name: /Operator/u }).click();
+    await page.getByRole("option", { name: "contains", exact: true }).click();
+    await editor.getByRole("textbox", { name: "Value", exact: true }).fill(name);
+    await editor.getByRole("button", { name: "Apply filter", exact: true }).click();
+    await expect(table).toHaveAttribute("aria-rowcount", "2");
+    expect(await accountOwner.evaluate(element => element.isConnected)).toBe(true);
+    await expect(row).toHaveAttribute("data-query-theme-retained", "true");
+  } finally {
+    await accountOwner.dispose();
+  }
 });
 
 function searchField(scope: Locator, name: string): Locator {
