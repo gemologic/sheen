@@ -1,7 +1,7 @@
 import { connect } from "node:net";
 import { expect, test } from "@playwright/test";
 
-async function cancelIncompleteUpload(baseURL: string): Promise<void> {
+async function cancelUpload(baseURL: string, complete: boolean): Promise<void> {
   const url = new URL(baseURL);
   const socket = connect({ host: url.hostname, port: Number(url.port) });
   try {
@@ -12,9 +12,10 @@ async function cancelIncompleteUpload(baseURL: string): Promise<void> {
         else reject(new Error("Expected the real server to accept the upload headers"));
       });
     });
-    socket.write(`POST /api/optimistic HTTP/1.1\r\nHost: ${url.host}\r\nContent-Type: application/json\r\nContent-Length: 100\r\nExpect: 100-continue\r\n\r\n`);
+    const payload = complete ? JSON.stringify({ reject: false }) : "partial";
+    socket.write(`POST /api/optimistic HTTP/1.1\r\nHost: ${url.host}\r\nContent-Type: application/json\r\nContent-Length: ${complete ? Buffer.byteLength(payload) : 100}\r\nExpect: 100-continue\r\n\r\n`);
     await continued;
-    await new Promise<void>((resolve, reject) => { socket.write("partial", error => error ? reject(error) : resolve()); });
+    await new Promise<void>((resolve, reject) => { socket.write(payload, error => error ? reject(error) : resolve()); });
     const closed = new Promise<void>(resolve => { socket.once("close", () => resolve()); });
     socket.resetAndDestroy();
     await closed;
@@ -36,9 +37,10 @@ test("a disconnected Nitro upload does not cover another page with Vite's error 
   await expect(input).toBeFocused();
   await input.fill("Retained while another connection closes");
   await input.evaluate(element => element.setAttribute("data-retained-input", "yes"));
-  // Warm the real API, then cancel its body transfer rather than inventing an abort error.
+  // Cancel parsed bodies while the real API is cold, then repeat both body-transfer states after warming it.
+  for (let attempt = 0; attempt < 3; attempt++) await cancelUpload(baseURL, true);
   expect((await request.post("/api/optimistic", { data: { reject: false } })).status()).toBe(200);
-  for (let attempt = 0; attempt < 3; attempt++) await cancelIncompleteUpload(baseURL);
+  for (const complete of [false, true]) for (let attempt = 0; attempt < 3; attempt++) await cancelUpload(baseURL, complete);
   expect((await request.post("/api/optimistic", { data: { reject: false } })).status()).toBe(200);
   expect(websocketErrors).toEqual([]);
   await expect(page.locator("vite-error-overlay")).toHaveCount(0);

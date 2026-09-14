@@ -90,6 +90,8 @@ export function createPaneRestoration(router: Accessor<RouterAdapter | undefined
         });
         createEffect(() => { options.ready?.(); schedule(); });
         onCleanup(() => {
+          // Capture late scroll events even when traversal omits the router's before-navigation notification.
+          save();
           projections.delete(viewport);
           unregister();
           if (frame !== undefined) view.cancelAnimationFrame(frame);

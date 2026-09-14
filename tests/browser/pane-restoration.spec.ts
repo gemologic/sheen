@@ -1,4 +1,50 @@
 import { expect, test } from "@playwright/test";
+import type { Page } from "@playwright/test";
+
+async function independentEntries(page: Page) {
+  const main = page.getByRole("region", { name: "Restored content", exact: true });
+  const current = page.getByRole("status", { name: "Current page", exact: true });
+  const entry = page.getByRole("status", { name: "History entry", exact: true });
+  await expect(entry).not.toHaveText("server");
+  const first = await entry.innerText();
+  await main.hover();
+  await page.mouse.wheel(0, 700);
+  await expect.poll(() => main.evaluate(element => element.scrollTop)).toBe(700);
+  await page.getByRole("link", { name: "Page B", exact: true }).click();
+  await expect(current).toHaveText("?page=b");
+  await expect.poll(() => main.evaluate(element => element.scrollTop)).toBe(0);
+  const middle = await entry.innerText();
+  await page.getByRole("link", { name: "Page A", exact: true }).click();
+  await expect(current).toHaveText("?page=a");
+  await expect.poll(() => main.evaluate(element => element.scrollTop)).toBe(0);
+  await main.hover();
+  await page.mouse.wheel(0, 200);
+  await expect.poll(() => main.evaluate(element => element.scrollTop)).toBe(200);
+  const last = await entry.innerText();
+  expect(new Set([first, middle, last]).size).toBe(3);
+  await page.goBack();
+  await expect(current).toHaveText("?page=b");
+  await expect(entry).toHaveText(middle);
+  await expect.poll(() => main.evaluate(element => element.scrollTop)).toBe(0);
+  await page.goBack();
+  await expect(current).toHaveText("?page=a");
+  await expect(entry).toHaveText(first);
+  await expect.poll(() => main.evaluate(element => element.scrollTop)).toBe(700);
+  await page.goForward();
+  await expect(current).toHaveText("?page=b");
+  await expect(entry).toHaveText(middle);
+  await expect.poll(() => main.evaluate(element => element.scrollTop)).toBe(0);
+  await page.goForward();
+  await expect(current).toHaveText("?page=a");
+  await expect(entry).toHaveText(last);
+  await expect.poll(() => main.evaluate(element => element.scrollTop)).toBe(200);
+  await page.goBack();
+  await expect(current).toHaveText("?page=b");
+  await page.getByRole("link", { name: "Page A", exact: true }).click();
+  await expect(current).toHaveText("?page=a");
+  await expect(entry).not.toHaveText(last);
+  await expect.poll(() => main.evaluate(element => element.scrollTop)).toBe(0);
+}
 
 test("remounting a shell after pending restoration starts with fresh offsets", async ({ page }) => {
   const errors: string[] = [];
@@ -33,19 +79,94 @@ test("same-URL history entries keep independent offsets and replaced forward ent
   const main = page.getByRole("region", { name: "Restored content", exact: true });
   await page.getByRole("button", { name: "Refresh rows", exact: true }).click();
   await expect(main).toContainText("revision 1");
-  await main.evaluate(element => { element.scrollTop = 700; });
-  await page.getByRole("link", { name: "Page B", exact: true }).click();
+  await independentEntries(page);
+});
+
+test("history entries remain independent after a long bounded browser session", async ({ page, browserName }) => {
+  await page.goto("/pane-restoration?page=a");
+  await page.getByRole("button", { name: "Refresh rows", exact: true }).click();
+  const main = page.getByRole("region", { name: "Restored content", exact: true });
+  await expect(main).toContainText("revision 1");
+  for (let index = 0; index < 60; index++) {
+    const next = index % 2 === 0 ? "B" : "A";
+    await page.getByRole("link", { name: `Page ${next}`, exact: true }).click();
+    await expect(page.getByRole("status", { name: "Current page", exact: true })).toHaveText(`?page=${next.toLowerCase()}`);
+  }
+  if (browserName === "chromium") expect(await page.evaluate(() => history.length)).toBeLessThan(61);
   await expect.poll(() => main.evaluate(element => element.scrollTop)).toBe(0);
-  await page.getByRole("link", { name: "Page A", exact: true }).click();
+  await independentEntries(page);
+  const accepted = await page.getByRole("status", { name: "History entry", exact: true }).innerText();
+  await main.hover();
+  // Change scroll after this frame's scroll events, then traverse before the next frame can emit them.
+  await main.evaluate(element => new Promise<void>(resolve => requestAnimationFrame(() => {
+    element.scrollTop = 123;
+    history.back();
+    resolve();
+  })));
+  await expect(page.getByRole("status", { name: "Current page", exact: true })).toHaveText("?page=b");
   await expect.poll(() => main.evaluate(element => element.scrollTop)).toBe(0);
-  await main.evaluate(element => { element.scrollTop = 200; });
-  await page.goBack(); await page.goBack();
-  await expect.poll(() => main.evaluate(element => element.scrollTop)).toBe(700);
-  await page.goForward(); await page.goForward();
-  await expect.poll(() => main.evaluate(element => element.scrollTop)).toBe(200);
+  await page.goForward();
+  await expect(page.getByRole("status", { name: "History entry", exact: true })).toHaveText(accepted);
+  await expect.poll(() => main.evaluate(element => element.scrollTop)).toBe(123);
+  await page.getByRole("button", { name: "Toggle history editor dirty", exact: true }).click();
+  await expect(page.getByRole("status", { name: "History editor dirty", exact: true })).toHaveText("true");
+  await main.evaluate(element => { element.focus({ preventScroll: true }); element.scrollTop = 123; });
+  await expect.poll(() => main.evaluate(element => element.scrollTop)).toBe(123);
+  await page.evaluate(() => history.back());
+  const prompt = page.getByRole("alertdialog", { name: "Discard unsaved changes?", exact: true });
+  await expect(prompt).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(prompt).toBeHidden();
+  await expect(page.getByRole("status", { name: "History editor dirty", exact: true })).toHaveText("true");
+  await expect(page.getByRole("status", { name: "History entry", exact: true })).toHaveText(accepted);
+  await expect.poll(() => main.evaluate(element => element.scrollTop)).toBe(123);
+  await page.getByRole("button", { name: "Toggle history editor dirty", exact: true }).click();
+});
+
+test("replacement, copied route state and remounted adapter owners preserve entry identity", async ({ page }) => {
+  await page.addInitScript(() => {
+    Reflect.set(history, Symbol.for("sheen-test-native-push"), history.pushState);
+    Reflect.set(history, Symbol.for("sheen-test-native-replace"), history.replaceState);
+  });
+  await page.goto("/pane-restoration?page=a");
+  const entry = page.getByRole("status", { name: "History entry", exact: true });
+  await expect(entry).not.toHaveText("server");
+  const initial = await entry.innerText();
+  expect(await page.evaluate(() => history.pushState === Reflect.get(history, Symbol.for("sheen-test-native-push")))).toBe(false);
+  await page.evaluate(() => Reflect.set(history, Symbol.for("sheen-test-owned-push"), history.pushState));
+  const toggle = page.getByRole("button", { name: "Toggle entry observer", exact: true });
+  const observer = page.getByRole("status", { name: "Observer history entry", exact: true });
+  await toggle.click();
+  await expect(observer).toHaveText(initial);
+  expect(await page.evaluate(() => history.pushState === Reflect.get(history, Symbol.for("sheen-test-owned-push")))).toBe(true);
+  await page.getByRole("button", { name: "Replace with Page B", exact: true }).click();
+  await expect(page.getByRole("status", { name: "Current page", exact: true })).toHaveText("?page=b");
+  await expect(entry).toHaveText(initial);
+  await expect(observer).toHaveText(initial);
+  await expect(page.getByRole("status", { name: "Application route state", exact: true })).toContainText("Aperture");
+  expect(await page.evaluate(() => history.state)).toMatchObject({ workspace: "Aperture", account: { id: "account-42" } });
+  await page.getByRole("button", { name: "Push Page B with copied state", exact: true }).click();
+  await expect(entry).not.toHaveText(initial);
+  const pushed = await entry.innerText();
+  await expect(observer).toHaveText(pushed);
+  expect(await page.evaluate(() => history.state)).toMatchObject({ workspace: "Aperture", account: { id: "account-42" } });
   await page.goBack();
-  await page.getByRole("link", { name: "Page A", exact: true }).click();
-  await expect.poll(() => main.evaluate(element => element.scrollTop)).toBe(0);
+  await expect(entry).toHaveText(initial);
+  await expect(observer).toHaveText(initial);
+  await toggle.click();
+  await expect(observer).toHaveCount(0);
+  await toggle.click();
+  await expect(observer).toHaveText(initial);
+  await page.goForward();
+  await expect(entry).toHaveText(pushed);
+  await expect(observer).toHaveText(pushed);
+  await page.getByRole("link", { name: "Leave fixture", exact: true }).click();
+  await expect(page).toHaveURL(/\/browser-status$/);
+  expect(await page.evaluate(() => history.pushState === Reflect.get(history, Symbol.for("sheen-test-native-push")))).toBe(true);
+  expect(await page.evaluate(() => history.replaceState === Reflect.get(history, Symbol.for("sheen-test-native-replace")))).toBe(true);
+  await page.goBack();
+  await expect(entry).toHaveText(pushed);
+  expect(await page.evaluate(() => history.pushState === Reflect.get(history, Symbol.for("sheen-test-owned-push")))).toBe(false);
 });
 
 test("ready short results settle at the boundary and later growth cannot revive an obsolete target", async ({ page }) => {

@@ -1,4 +1,5 @@
 import { connect } from "node:net";
+import type { IncomingMessage } from "node:http";
 import { PassThrough } from "node:stream";
 import { text } from "node:stream/consumers";
 import { pipeline } from "node:stream/promises";
@@ -13,8 +14,10 @@ afterEach(async () => { await Promise.all(servers.splice(0).map(server => server
 async function fixture() {
   let receiveBody: () => void = () => {};
   let forwardError: (error: unknown) => void = () => {};
+  let receiveRequest: (request: IncomingMessage) => void = () => {};
   const received = new Promise<void>(resolve => { receiveBody = resolve; });
   const forwarded = new Promise<unknown>(resolve => { forwardError = resolve; });
+  const requestReceived = new Promise<IncomingMessage>(resolve => { receiveRequest = resolve; });
   const errors: string[] = [];
   const logger = createLogger("silent");
   const logError = logger.error.bind(logger);
@@ -37,10 +40,14 @@ async function fixture() {
             const stream = new PassThrough();
             void pipeline(stream, response).catch((error: unknown) => { next(error); forwardError(error); });
             stream.write("Partial response");
-          } else if (request.url === "/upload" || request.url === "/upload-failure") {
+          } else if (request.url === "/complete-upload") {
+            request.once("error", (error: unknown) => { next(error); forwardError(error); });
+            receiveRequest(request);
+          } else if (request.url === "/upload" || request.url === "/upload-failure" || request.url === "/upload-reset-failure") {
             request.once("data", receiveBody);
             void text(request).then(() => { response.end("Accepted"); }).catch((error: unknown) => {
-              const failure = request.url === "/upload-failure" ? new Error("Unrelated failure after disconnection") : error;
+              const failure = request.url === "/upload-failure" ? new Error("Unrelated failure after disconnection") :
+                request.url === "/upload-reset-failure" ? Object.assign(new Error("aborted"), { code: "ECONNRESET" }) : error;
               next(failure);
               forwardError(failure);
             });
@@ -53,7 +60,7 @@ async function fixture() {
   await server.listen();
   const address = server.httpServer?.address();
   if (!address || typeof address === "string") throw new Error("Expected a TCP dev server");
-  return { port: address.port, errors, received, forwarded };
+  return { port: address.port, errors, received, forwarded, requestReceived };
 }
 
 async function disconnectUpload(current: Awaited<ReturnType<typeof fixture>>, path: string): Promise<unknown> {
@@ -74,6 +81,24 @@ test("an actual incomplete HTTP upload does not broadcast an error to unrelated 
   expect(current.errors).toEqual([]);
   const response = await fetch(`http://127.0.0.1:${current.port}/healthy`);
   expect(await response.text()).toBe("Healthy");
+});
+
+test("a parsed but unread HTTP upload can be cancelled without broadcasting an error", async () => {
+  const current = await fixture();
+  const socket = connect({ host: "127.0.0.1", port: current.port });
+  try {
+    await new Promise<void>((resolve, reject) => { socket.once("connect", resolve); socket.once("error", reject); });
+    socket.write("POST /complete-upload HTTP/1.1\r\nHost: 127.0.0.1\r\nContent-Length: 7\r\n\r\npayload");
+    const request = await current.requestReceived;
+    await expect.poll(() => request.complete).toBe(true);
+    expect(request.readableEnded).toBe(false);
+    socket.resetAndDestroy();
+    const error = await current.forwarded;
+    expect(error).toMatchObject({ message: "aborted", code: "ECONNRESET" });
+    expect(request.errored).toBe(error);
+    expect(current.errors).toEqual([]);
+    expect(await (await fetch(`http://127.0.0.1:${current.port}/healthy`)).text()).toBe("Healthy");
+  } finally { socket.destroy(); }
 });
 
 test("application errors and reset errors on complete requests still reach Vite", async () => {
@@ -103,4 +128,11 @@ test("disconnecting a request does not conceal an unrelated application failure"
   await disconnectUpload(current, "/upload-failure");
   expect(current.errors).toHaveLength(1);
   expect(current.errors[0]).toContain("Unrelated failure after disconnection");
+});
+
+test("a matching application reset error is not the incoming stream's cancellation error", async () => {
+  const current = await fixture();
+  await disconnectUpload(current, "/upload-reset-failure");
+  expect(current.errors).toHaveLength(1);
+  expect(current.errors[0]).toContain("aborted");
 });

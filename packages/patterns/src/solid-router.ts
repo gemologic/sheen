@@ -1,6 +1,81 @@
 import { useBeforeLeave, useIsRouting, useLocation, useNavigate } from "@solidjs/router";
 import { createEffect, createSignal, on, onCleanup, onMount } from "solid-js";
-import type { NavigationAttempt, RouterAdapter } from "./router.ts";
+import type { NavigationAttempt, RouterAdapter, RouterLocation } from "./router.ts";
+
+const entryKeyField = "__sheen_entry_key";
+
+function readEntryKey(state: unknown): string | undefined {
+  if (typeof state === "object" && state !== null && entryKeyField in state &&
+      typeof state[entryKeyField] === "string" && state[entryKeyField].length > 0) return state[entryKeyField];
+  return undefined;
+}
+
+function readDepth(state: unknown): number | undefined {
+  if (typeof state === "object" && state !== null && "_depth" in state && typeof state._depth === "number" &&
+      Number.isSafeInteger(state._depth) && state._depth >= 0) return state._depth;
+  return undefined;
+}
+
+interface HistoryOwner {
+  references: number;
+  entryKey: () => string | undefined;
+  dispose: () => void;
+}
+const historyOwners = new WeakMap<History, HistoryOwner>();
+
+/** Share native write ownership without an extra history call for each navigation. */
+function ownHistory(history: History, crypto: Crypto): { entryKey: () => string | undefined; release: () => void } {
+  let owner = historyOwners.get(history);
+  if (owner) owner.references++;
+  else {
+    const nativePush = history.pushState;
+    const nativeReplace = history.replaceState;
+    let disposed = false;
+    const freshKey = () => `sheen-${Array.from(crypto.getRandomValues(new Uint32Array(4)), value => value.toString(16).padStart(8, "0")).join("")}`;
+    function push(this: History, state: unknown, unused: string, url?: string | URL | null) {
+      if (disposed || this !== history) return nativePush.call(this, state, unused, url);
+      const current: unknown = history.state;
+      const depth = readDepth(current);
+      // Solid Router skips its second write when depth is present. Monotonic depth survives bounded history.
+      const metadata = { [entryKeyField]: freshKey(), ...(depth === undefined ? {} : { _depth: depth + 1 }) };
+      nativePush.call(this, Object.assign({}, state, metadata), unused, url);
+    }
+    function replace(this: History, state: unknown, unused: string, url?: string | URL | null) {
+      if (disposed || this !== history) return nativeReplace.call(this, state, unused, url);
+      const current: unknown = history.state;
+      const depth = readDepth(current);
+      const metadata = { [entryKeyField]: readEntryKey(current) ?? freshKey(), ...(depth === undefined ? {} : { _depth: depth }) };
+      nativeReplace.call(this, Object.assign({}, state, metadata), unused, url);
+    }
+    history.pushState = push;
+    history.replaceState = replace;
+    owner = {
+      references: 1,
+      entryKey() {
+        const state: unknown = history.state;
+        const key = readEntryKey(state);
+        if (key !== undefined) return key;
+        if (typeof state !== "object" || state === null) return undefined;
+        history.replaceState(state, "");
+        return readEntryKey(history.state);
+      },
+      dispose() {
+        disposed = true;
+        if (history.pushState === push) history.pushState = nativePush;
+        if (history.replaceState === replace) history.replaceState = nativeReplace;
+        historyOwners.delete(history);
+      },
+    };
+    historyOwners.set(history, owner);
+  }
+  const acquired = owner;
+  let released = false;
+  return { entryKey: acquired.entryKey, release() {
+    if (released) return;
+    released = true;
+    if (--acquired.references === 0) acquired.dispose();
+  } };
+}
 
 /**
  * Adapts the owning Solid Router context to Sheen's router-independent shell
@@ -11,31 +86,18 @@ export function useSolidRouterAdapter(): RouterAdapter {
   const location = useLocation();
   const navigate = useNavigate();
   const routing = useIsRouting();
-  const [entryKey, setEntryKey] = createSignal<string>();
-  const entries = new Map<number, string>();
-  let generation = 0;
-  let intent: "push" | "replace" | "traverse" | undefined;
-
+  const [committed, setCommitted] = createSignal<RouterLocation>(
+    { pathname: location.pathname, search: location.search, hash: location.hash },
+    { equals: (previous, next) => previous.entryKey === next.entryKey && previous.pathname === next.pathname &&
+      previous.search === next.search && previous.hash === next.hash },
+  );
   onMount(() => {
+    const history = ownHistory(window.history, window.crypto);
+    onCleanup(history.release);
     createEffect(on([() => location.pathname, () => location.search, () => location.hash, () => location.state, routing], () => {
       if (routing()) return;
-      const state: unknown = window.history.state;
-      const depth = typeof state === "object" && state !== null && "_depth" in state && typeof state._depth === "number" ? state._depth : undefined;
-      if (depth === undefined || !Number.isSafeInteger(depth) || depth < 0) {
-        setEntryKey(undefined);
-        intent = undefined;
-        return;
-      }
-      if (intent === "push") for (const known of entries.keys()) if (known >= depth) entries.delete(known);
-      const key = entries.get(depth) ?? `entry-${++generation}`;
-      entries.delete(depth);
-      entries.set(depth, key);
-      if (entries.size > 256) {
-        const oldest = entries.keys().next();
-        if (!oldest.done) entries.delete(oldest.value);
-      }
-      setEntryKey(key);
-      intent = undefined;
+      const key = history.entryKey();
+      setCommitted({ pathname: location.pathname, search: location.search, hash: location.hash, ...(key === undefined ? {} : { entryKey: key }) });
     }));
   });
 
@@ -48,7 +110,6 @@ export function useSolidRouterAdapter(): RouterAdapter {
     bypass.clear();
   });
   useBeforeLeave(event => {
-    intent = typeof event.to === "number" ? "traverse" : event.options?.replace ? "replace" : "push";
     for (const registration of [...registrations]) {
       if (!registrations.has(registration)) continue;
       if (bypass.has(registration)) {
@@ -80,10 +141,7 @@ export function useSolidRouterAdapter(): RouterAdapter {
   });
 
   return {
-    location: () => {
-      const key = entryKey();
-      return { pathname: location.pathname, search: location.search, hash: location.hash, ...(key === undefined ? {} : { entryKey: key }) };
-    },
+    location: committed,
     navigate: (to, options) => {
       if (typeof to === "number") navigate(to);
       else navigate(to, options);

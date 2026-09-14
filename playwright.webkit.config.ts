@@ -39,6 +39,8 @@ export default defineConfig({
       "**/shell-drawer-overlay.spec.ts",
       "**/shell-drawer-motion.spec.ts",
       "**/shell-drawer-scroll.spec.ts",
+      "**/pane-restoration.spec.ts",
+      "**/dev-request-cancellation.spec.ts",
       "**/sidebar-route-restoration.spec.ts",
       "**/dialogs.spec.ts",
       "**/floating.spec.ts",
