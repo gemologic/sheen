@@ -1,5 +1,27 @@
 # @gemologic/sheen-patterns
 
+## 0.1.0
+
+### Minor Changes
+
+- a46a080: Publish the first Sheen release-candidate line with dark-first themes, accessible application primitives, compact AdminApp patterns, data tables, date controls, charts, code viewers, semantic icons, lint rules, scaffolding, and generated agent guidance.
+
+### Patch Changes
+
+- 9c53f21: Preserve native history-entry identity through bounded browser history, replacements, copied application state and adapter remounts. Share and clean up history-write ownership, incorporating monotonic router depth and entry identity into the existing native writes instead of adding calls that can exceed WebKit's history quota. Publish settled route coordinates and entry keys atomically so pane restoration never observes mixed identities. Capture final settled pane offsets on location cleanup, including when native traversal omits the router's own before-navigation notification.
+- a46a080: Polish compact focus, shortcut-key, and icon-button presentation. Add decorative dropdown item icons and optional trigger-width menu sizing, and use the matched-width behavior for expanded AdminApp sidebar selectors.
+- a46a080: Add a deterministic AuthLayout base plus focused OAuth/OIDC and responsive brand-split authentication starters.
+- 293072e: Retain AdminApp action controls by group/action ID, StatusBar counts by label, and StatGroup metric positions when accepted data replaces model objects. Resolve inline stat definitions once and keep color-only theme changes out of status number formatting.
+- a46a080: Add the Studio surface theme and nearest-scope Phosphor artwork selection. Keep AdminApp chrome comfortable by default, allow DataTable to opt into a local density, preserve action icon color through AdminApp wrappers, and keep collapsed Admin rail destinations centered and unobstructed by secondary action menus.
+- 08f2a63: Resolve Toolbar keyboard navigation against the current measured layout, including keys arriving before the resize allocation frame. Preserve overflow focus, open-menu freezing, and native filter editing.
+- Updated dependencies [a46a080]
+- Updated dependencies [a46a080]
+- Updated dependencies [4c53735]
+- Updated dependencies [4c53735]
+- Updated dependencies [f235435]
+- Updated dependencies [a46a080]
+  - @gemologic/sheen@0.1.0
+
 ## 0.1.0-rc.2
 
 ### Patch Changes
