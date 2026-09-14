@@ -258,25 +258,34 @@ export function AdminAppFixture(props: AdminAppFixtureProps) {
   const authorized = () => state() !== "permission";
   const longContent = createMemo(() => parameters().get("content") === "long");
   const [applicationSearch, setApplicationSearch] = createSignal("");
+  const overviewIcon = <HomeIcon decorative />;
+  const accountsIcon = <UsersIcon decorative />;
+  const inboxIcon = <InboxIcon decorative />;
+  const settingsIcon = <SettingsIcon decorative />;
+  const auditIcon = <InboxIcon decorative />;
+  const serviceStatusIcon = <SettingsIcon decorative />;
+  const accountsBadge = <Badge>{rowCount().toLocaleString("en-US")}</Badge>;
+  const inboxBadge = <Badge tone="accent">{inboxUnread()}</Badge>;
+  const productMark = <span>N</span>;
   const navigation = createMemo<AdminNavigationModel>(() => ({ id: "primary", label: "Primary navigation", items: [
-    { kind: "link", id: "overview", label: "Overview", href: routeHref("/admin"), icon: <HomeIcon decorative />, actions: { label: "Overview actions", items: [
+    { kind: "link", id: "overview", label: "Overview", href: routeHref("/admin"), icon: overviewIcon, actions: { label: "Overview actions", items: [
       { kind: "action", id: "refresh-overview", label: "Refresh dashboard", get disabled() { return refreshing(); }, onSelect: () => { void refresh(); } },
     ] } },
-    { kind: "link", id: "accounts", label: longContent() ? "Accounts requiring unusually detailed operational review" : "Accounts", href: routeHref("/admin/accounts"), match: "prefix", icon: <UsersIcon decorative />, badge: <Badge>{rowCount().toLocaleString("en-US")}</Badge>, actions: { label: "Accounts actions", items: [
+    { kind: "link", id: "accounts", label: longContent() ? "Accounts requiring unusually detailed operational review" : "Accounts", href: routeHref("/admin/accounts"), match: "prefix", icon: accountsIcon, badge: accountsBadge, actions: { label: "Accounts actions", items: [
       { kind: "action", id: "preview-account", label: "Preview first account", onSelect: () => openDetails(snapshot().rows[0]?.id ?? "") },
     ] } },
-    { kind: "link", id: "inbox", label: "Inbox", href: routeHref("/admin/inbox"), match: "prefix", icon: <InboxIcon decorative />, badge: inboxUnread() > 0 ? <Badge tone="accent">{inboxUnread()}</Badge> : undefined, actions: { label: "Inbox actions", items: [
+    { kind: "link", id: "inbox", label: "Inbox", href: routeHref("/admin/inbox"), match: "prefix", icon: inboxIcon, badge: inboxUnread() > 0 ? inboxBadge : undefined, actions: { label: "Inbox actions", items: [
       { kind: "action", id: "mark-inbox-read", label: "Mark inbox read", disabled: inboxUnread() === 0, onSelect: () => setInboxUnread(0) },
     ] } },
     { kind: "group", id: "configuration", label: "Configuration", items: [
-      { kind: "link", id: "settings", label: "Settings", href: routeHref("/admin/settings"), match: "prefix", icon: <SettingsIcon decorative /> },
+      { kind: "link", id: "settings", label: "Settings", href: routeHref("/admin/settings"), match: "prefix", icon: settingsIcon },
     ] },
   ] }));
   const secondaryNavigation = createMemo<AdminNavigationModel>(() => ({ id: "secondary", label: "Secondary navigation", items: [
-    { kind: "link", id: "audit", label: "Audit log", href: routeHref("/admin/audit"), match: "prefix", icon: <InboxIcon decorative /> },
-    { kind: "link", id: "service-status", label: "Service status", href: routeHref("/admin/status"), match: "prefix", icon: <SettingsIcon decorative /> },
+    { kind: "link", id: "audit", label: "Audit log", href: routeHref("/admin/audit"), match: "prefix", icon: auditIcon },
+    { kind: "link", id: "service-status", label: "Service status", href: routeHref("/admin/status"), match: "prefix", icon: serviceStatusIcon },
   ] }));
-  const product = createMemo(() => ({ name: longContent() ? "Northstar International Operations and Reliability" : "Northstar", href: routeHref("/admin"), mark: <span>N</span> }));
+  const product = createMemo(() => ({ name: longContent() ? "Northstar International Operations and Reliability" : "Northstar", href: routeHref("/admin"), mark: productMark }));
   let refreshRequest: AbortController | undefined;
   let refreshToken = 0;
   const pathname = createMemo(() => props.view ? `/admin/${props.view}` : "/admin");

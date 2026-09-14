@@ -47,3 +47,38 @@ test("copied retention markers cannot hide a replaced native content owner", asy
     await owners.dispose();
   }
 });
+
+test("sidebar URL settings retain navigation SVGs, badges, and the product mark", async ({ page }) => {
+  const nodes = await page.evaluateHandle(() => {
+    const navigation = document.querySelector(".sheen-sidebar-navigation");
+    if (!navigation) throw new Error("Expected the sidebar navigation");
+    const icons = [...navigation.querySelectorAll(".sheen-nav-item-icon svg")];
+    const badges = [...navigation.querySelectorAll(".sheen-badge")];
+    const mark = document.querySelector(".sheen-admin-product-mark > span");
+    if (icons.length === 0 || badges.length !== 2 || !mark) throw new Error("Expected navigation visuals and the product mark");
+    return { icons, badges, mark };
+  });
+  try {
+    for (const collapsed of [true, false]) {
+      await page.locator(".sheen-sidebar-toggle-desktop").click();
+      await expect(page.locator(".sheen-sidebar-toggle-desktop")).toHaveAttribute("aria-expanded", String(!collapsed));
+      if (collapsed) await expect(page.locator(".sheen-admin-app")).toHaveAttribute("data-sidebar-collapsed", "true");
+      else await expect(page.locator(".sheen-admin-app")).not.toHaveAttribute("data-sidebar-collapsed", "true");
+      expect(await nodes.evaluate(visuals => visuals.icons.every(icon => icon.isConnected)
+        && visuals.badges.every(badge => badge.isConnected) && visuals.mark.isConnected)).toBe(true);
+      const destination = await page.locator('.sheen-sidebar-navigation a[href^="/admin/accounts?"]').getAttribute("href");
+      if (!destination) throw new Error("Expected the accounts destination");
+      expect(new URL(destination, page.url()).searchParams.get("sidebar")).toBe(collapsed ? "collapsed" : null);
+      await expect(page.locator(".sheen-sidebar-navigation .sheen-badge").first()).toHaveText("12,000");
+    }
+    await page.getByText("Customize starter", { exact: true }).click();
+    await page.locator(".loupe-admin-customize").getByRole("button", { name: /^Workload /u }).click();
+    await page.locator(".sheen-select-content").getByRole("option", { name: "Representative · 240 rows", exact: true }).click();
+    await expect(page.locator("[data-admin-starter-content]")).toHaveAttribute("data-admin-row-count", "240");
+    await expect(page.locator(".sheen-sidebar-navigation .sheen-badge").first()).toHaveText("240");
+    expect(await nodes.evaluate(visuals => visuals.icons.every(icon => icon.isConnected)
+      && visuals.badges.every(badge => badge.isConnected) && visuals.mark.isConnected)).toBe(true);
+  } finally {
+    await nodes.dispose();
+  }
+});

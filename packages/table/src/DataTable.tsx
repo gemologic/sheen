@@ -230,8 +230,8 @@ interface DisplayDataRow<Row extends object> {
   readonly row: StableRow<Row>;
   readonly parentId: string | null;
   readonly depth: number;
-  position: number;
-  setSize: number;
+  readonly position: number;
+  readonly setSize: number;
   readonly canExpand: boolean;
   readonly expanded: boolean;
   readonly unloaded: boolean;
@@ -883,12 +883,8 @@ export function DataTable<Row extends object>(props: DataTableProps<Row>): JSX.E
   }
   function flatDisplayRow(row: StableRow<Row>, index: number, setSize: number): DisplayDataRow<Row> {
     const existing = flatDisplayCache.get(row.id);
-    if (existing) {
-      existing.position = index + 1;
-      existing.setSize = setSize;
-      return existing;
-    }
-    const created: DisplayDataRow<Row> = { kind: "data", key: `row:${row.id}`, row, parentId: null, depth: 1, position: index + 1, setSize, canExpand: false, expanded: false, unloaded: false, pending: false, error: null };
+    if (existing && existing.row === row && existing.position === index + 1 && existing.setSize === setSize) return existing;
+    const created: DisplayDataRow<Row> = Object.freeze({ kind: "data", key: `row:${row.id}`, row, parentId: null, depth: 1, position: index + 1, setSize, canExpand: false, expanded: false, unloaded: false, pending: false, error: null });
     flatDisplayCache.set(row.id, created);
     return created;
   }
@@ -1606,22 +1602,24 @@ export function DataTable<Row extends object>(props: DataTableProps<Row>): JSX.E
   const renderedRowCache = new Map<string, RenderedRow<Row>>();
   const renderedRows = createMemo<readonly RenderedRow<Row>[]>(() => {
     const retained = new Set<string>();
-    const rows = virtualizer.getVirtualItems().flatMap(item => {
+    const rows: RenderedRow<Row>[] = [];
+    for (const item of virtualizer.getVirtualItems()) {
       const row = rowAt(item.index);
-      if (!row) return [];
+      if (!row) continue;
       retained.add(row.key);
       const existing = renderedRowCache.get(row.key);
       if (existing) {
         existing.updateRow(row);
         existing.updateItem(item);
-        return [existing];
+        rows.push(existing);
+        continue;
       }
-      const [currentRow, setCurrentRow] = createSignal(row, { equals: false });
-      const [currentItem, setCurrentItem] = createSignal(item, { equals: false });
+      const [currentRow, setCurrentRow] = createSignal(row);
+      const [currentItem, setCurrentItem] = createSignal(item);
       const rendered = Object.freeze({ key: row.key, row: currentRow, updateRow: (next: DisplayRow<Row>): void => { setCurrentRow(next); }, item: currentItem, updateItem: (next: VirtualItem): void => { setCurrentItem(next); } });
       renderedRowCache.set(row.key, rendered);
-      return [rendered];
-    });
+      rows.push(rendered);
+    }
     for (const id of renderedRowCache.keys()) if (!retained.has(id)) renderedRowCache.delete(id);
     return rows;
   });

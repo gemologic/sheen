@@ -18,6 +18,7 @@ interface TraceEvent {
   readonly timestamp: number;
   readonly process: number;
   readonly thread: number;
+  readonly duration: number | null;
 }
 
 interface TraceFrameSample {
@@ -26,6 +27,7 @@ interface TraceFrameSample {
   readonly events: number;
   readonly dataLoss: boolean;
   readonly eventCounts: Readonly<Record<string, number>>;
+  readonly garbageCollections: readonly { readonly kind: string; readonly startMs: number; readonly durationMs: number | null }[];
 }
 
 interface MotionSample {
@@ -97,9 +99,10 @@ function summarizeTrace(events: readonly TraceEvent[], dataLoss: boolean): Trace
       events: ordered.length,
       dataLoss,
       eventCounts: Object.freeze(eventCounts),
+      garbageCollections: Object.freeze(events.filter(event => event.name === "MinorGC" || event.name === "MajorGC").map(event => Object.freeze({ kind: event.name, startMs: (event.timestamp - (ordered[0] ?? event.timestamp)) / 1_000, durationMs: event.duration === null ? null : event.duration / 1_000 }))),
     });
   }
-  return Object.freeze({ source: "unavailable", intervals: Object.freeze([]), events: 0, dataLoss, eventCounts: Object.freeze(eventCounts) });
+  return Object.freeze({ source: "unavailable", intervals: Object.freeze([]), events: 0, dataLoss, eventCounts: Object.freeze(eventCounts), garbageCollections: Object.freeze([]) });
 }
 
 async function captureTrace<Result>(session: CDPSession, operation: () => Promise<Result>): Promise<{ readonly result: Result; readonly trace: TraceFrameSample }> {
@@ -109,8 +112,8 @@ async function captureTrace<Result>(session: CDPSession, operation: () => Promis
     if (!record(payload) || !Array.isArray(payload.value)) return;
     for (const value of payload.value) {
       if (!record(value) || typeof value.name !== "string" || !finite(value.ts) || !finite(value.pid) || !finite(value.tid)) continue;
-      if (!value.name.includes("Frame") && value.name !== "DrawFrame" && value.name !== "CompositeLayers") continue;
-      events.push({ name: value.name, timestamp: value.ts, process: value.pid, thread: value.tid });
+      if (!value.name.includes("Frame") && value.name !== "DrawFrame" && value.name !== "CompositeLayers" && value.name !== "MinorGC" && value.name !== "MajorGC") continue;
+      events.push({ name: value.name, timestamp: value.ts, process: value.pid, thread: value.tid, duration: finite(value.dur) ? value.dur : null });
     }
   };
   const complete = (payload: unknown): void => {
@@ -436,7 +439,7 @@ function driftFailures(current: TableNormalizedBaseline, history: readonly { rea
   return Object.freeze(failures);
 }
 
-test("calibrated table workloads stay within normalized and absolute frame gates", async ({ browser }) => {
+test("calibrated table workloads stay within normalized and absolute frame gates", async ({ browser }, testInfo) => {
   test.setTimeout(300_000);
   const cpuModel = cpus()[0]?.model ?? "unknown";
   const runnerClass = process.env.GITHUB_ACTIONS === "true" ? process.env.SHEEN_BENCHMARK_RUNNER_CLASS ?? "github:unconfigured" : `local:${cpuModel}`;
@@ -496,7 +499,8 @@ test("calibrated table workloads stay within normalized and absolute frame gates
   });
   const artifacts = resolve(process.cwd(), "test-results/bench");
   await mkdir(artifacts, { recursive: true });
-  await writeFile(resolve(artifacts, "table-benchmark.json"), `${JSON.stringify(artifact, null, 2)}\n`, "utf8");
+  const artifactName = testInfo.repeatEachIndex === 0 ? "table-benchmark.json" : `table-benchmark.repeat-${testInfo.repeatEachIndex}.json`;
+  await writeFile(resolve(artifacts, artifactName), `${JSON.stringify(artifact, null, 2)}\n`, "utf8");
   process.stdout.write(`${JSON.stringify(artifact.summary, null, 2)}\n`);
   expect(failures, failures.join("\n")).toEqual([]);
 });

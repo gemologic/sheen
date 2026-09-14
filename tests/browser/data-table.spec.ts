@@ -33,11 +33,13 @@ test("continuous client mode virtualizes one complete bounded result without pag
   await firstRow.evaluate(element => element.setAttribute("data-density-identity", "retained"));
   await section.getByRole("button", { name: "Compact table" }).click();
   await expect(firstRow).toHaveCSS("height", "28px");
+  await expect(table.locator('[data-row-id="client-1"]')).toHaveCSS("transform", "matrix(1, 0, 0, 1, 0, 28)");
   await expect(table.locator("thead th").first()).toHaveCSS("height", "28px");
   await expect(section.getByRole("button", { name: "Columns", exact: true })).toHaveCSS("height", "26px");
   await expect(firstRow).toHaveAttribute("data-density-identity", "retained");
   await section.getByRole("button", { name: "Spacious table" }).click();
   await expect(firstRow).toHaveCSS("height", "42px");
+  await expect(table.locator('[data-row-id="client-1"]')).toHaveCSS("transform", "matrix(1, 0, 0, 1, 0, 42)");
   expect(await table.locator("tbody tr[data-row-id]").count()).toBeLessThan(300);
   await expect(section.getByRole("navigation", { name: "Pagination" })).toHaveCount(0);
   const viewport = section.locator(".sheen-data-table-viewport");
@@ -72,7 +74,9 @@ test("continuous client refresh preserves the first visible row anchor", async (
     const visibleTop = element.querySelector("thead")?.getBoundingClientRect().bottom ?? bounds.top;
     const row = [...element.querySelectorAll<HTMLElement>("tbody tr[data-row-id]")].find(candidate => candidate.getBoundingClientRect().bottom > visibleTop);
     if (!row?.dataset.rowId) throw new Error("Expected a visible anchor row");
-    return { id: row.dataset.rowId, offset: row.getBoundingClientRect().top - bounds.top };
+    const rowIndex = Number(row.getAttribute("aria-rowindex"));
+    if (!Number.isInteger(rowIndex) || rowIndex < 2) throw new Error("Expected a logical row index");
+    return { id: row.dataset.rowId, offset: row.getBoundingClientRect().top - bounds.top, rowIndex };
   });
   const anchorRow = viewport.locator(`[data-row-id="${anchor.id}"]`);
   await anchorRow.evaluate(element => {
@@ -92,6 +96,7 @@ test("continuous client refresh preserves the first visible row anchor", async (
   }, anchor.id);
   expect(Math.abs(nextOffset - anchor.offset)).toBeLessThanOrEqual(1);
   await expect(anchorRow).toHaveAttribute("data-anchor-identity", "retained");
+  await expect(anchorRow).toHaveAttribute("aria-rowindex", String(anchor.rowIndex + 1));
   await expect(anchorRow).toBeFocused();
 });
 
