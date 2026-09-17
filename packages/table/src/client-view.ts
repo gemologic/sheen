@@ -54,7 +54,7 @@ export function createClientView<Row>(rows: readonly Row[], state: ClientViewSta
     else facetGroups.set(filter, [column]);
   }
   const facets = Object.freeze([...facetGroups].flatMap(([filter, columns]) =>
-    countClientFacets(filterClientRows(searched, filter, options.filterColumns, options), columns, options)));
+    countClientFacets(filter === state.filter ? filtered : filterClientRows(searched, filter, options.filterColumns, options), columns, options)));
   const view = sortClientRows(filtered, state.sorting, options.sortColumns, options);
   const page = paginateClientRows(view, pagination);
   return { view, rows: page.rows, total: page.total, pagination: page.pagination, facets };

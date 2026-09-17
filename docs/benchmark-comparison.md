@@ -9,13 +9,13 @@ Commit and push the workflow and helper to the default branch first. GitHub requ
 ```sh
 gh workflow run benchmark-compare.yml --repo gemologic/sheen \
   -f base=d86a879170afa2a24bf11552b4a0ef50577532f3 \
-  -f candidate=529f3de12acaeafbf65f9eebe5a1fc08d1ce04b4
+  -f candidate=main
 gh run list --repo gemologic/sheen --workflow benchmark-compare.yml --limit 5
 gh run watch RUN_ID --repo gemologic/sheen
 gh run download RUN_ID --repo gemologic/sheen --dir /tmp/sheen-comparison-RUN_ID
 ```
 
-Use full 40-character commit SHAs for repeatable comparisons, or a branch/tag name. Abbreviated SHAs are not supported by checkout and are interpreted as branch/tag names. Defaults identify the commit before the Studio redesign and the redesign commit. The dispatch ref supplies the workflow, helper, and shared harness; it does not select the application versions. Run only trusted repository commits: installation and builds execute their code.
+Use full 40-character commit SHAs for repeatable comparisons, or a branch/tag name. Abbreviated SHAs are not supported by checkout and are interpreted as branch/tag names. Defaults compare the commit before the Studio redesign with current `main`; resolved SHAs are recorded in provenance. To isolate new optimization work, select the commit immediately before those changes as `base`. The dispatch ref supplies the workflow, helper, and shared harness; it does not select the application versions. Run only trusted repository commits: installation and builds execute their code.
 
 ## Read the results
 
@@ -23,7 +23,7 @@ Each job summary shows the normalized CPU median for both commits and the percen
 
 Inspect all five paired `detailsDock` percentage changes and their spread. Consistent positive changes suggest application regression; similar results for both commits above the local baseline suggest a runner-specific offset. Order-dependent or widely scattered results require further sampling. Five runner pairs are an initial diagnostic, not proof of a stable distribution. Do not select only passing runs or replace missing measurements with zero.
 
-Existing CPU and frame gates remain active. A budget failure still produces the normal JSON artifact, the second commit is measured, and the reporting step marks the job failed. Missing artifacts, installation/build failures, and timeouts are incomplete evidence, not performance passes. Commands have a five-minute timeout. There are no automatic retries and capture mode remains disabled.
+Existing CPU and frame gates remain active in both measurements. Every candidate failure fails the comparison. A completed base measurement that fails only recognized CPU/frame/Long Task budgets is reported as a historical warning, with the original nonzero exit and complete failures retained. Base correctness failures, unknown failure types, missing/malformed artifacts, commit mismatches, installation/build failures, and timeouts still fail the job. The reporter requires five runs and rejects baseline-capture artifacts. Commands have a five-minute timeout. There are no automatic retries and capture mode remains disabled. This changes comparison reporting only; required main CI still enforces every existing limit.
 
 ## Shared harness and limits
 

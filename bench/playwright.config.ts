@@ -1,7 +1,7 @@
 import { defineConfig, devices } from "@playwright/test";
 
 const port = process.env.SHEEN_BENCHMARK_PORT ?? "4173";
-if (!/^\d{2,5}$/u.test(port)) throw new Error("SHEEN_BENCHMARK_PORT must be a TCP port number");
+if (!/^\d{2,5}$/u.test(port) || Number(port) > 65535) throw new Error("SHEEN_BENCHMARK_PORT must be a TCP port number");
 const profile = process.env.SHEEN_TABLE_PROFILE === "true";
 const admin = process.env.SHEEN_ADMIN_BENCHMARK === "true";
 const date = process.env.SHEEN_DATE_BENCHMARK === "true";
@@ -19,7 +19,7 @@ export default defineConfig({
   outputDir: "../test-results/bench-playwright",
   use: { ...devices["Desktop Chrome"], baseURL: `http://127.0.0.1:${port}`, trace: "off", video: "off", screenshot: "off" },
   webServer: {
-    command: `pnpm --filter loupe exec vite preview --host 127.0.0.1 --port ${port}`,
+    command: `pnpm --filter loupe exec vite preview --host 127.0.0.1 --port ${port} --strictPort`,
     url: `http://127.0.0.1:${port}`,
     reuseExistingServer: process.env.SHEEN_BENCHMARK_REUSE_SERVER === "true",
     timeout: 60_000,

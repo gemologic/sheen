@@ -45,23 +45,33 @@ function prepare(): void {
     harness: sha("harness"), base: sha("base"), candidate: sha("candidate"),
     first: process.env.FIRST, playwright: expectedPlaywright,
     runId: process.env.GITHUB_RUN_ID, runAttempt: process.env.GITHUB_RUN_ATTEMPT,
-    note: "Diagnostic paired comparison; original defaults differ. Theme-switch is Plex to Plex before, Inter to Plex after. No baseline capture or budget changes.",
+    note: "Diagnostic paired comparison. Inspect selected commits for workload changes: pre-redesign theme-switch is Plex to Plex; Studio redesign is Inter to Plex. No baseline capture or budget changes.",
   }, null, 2)}\n`);
 }
 
 function report(): void {
-  const lines = ["# AdminApp paired comparison", "", "Diagnostic only. Ratios compare candidate/base on this runner. Existing budget failures remain failures.", "", "Theme-switch includes the intentional font-transition change and is not an identical workload.", ""];
+  const lines = ["# AdminApp paired comparison", "", "Candidate gates determine qualification. Completed base budget failures are historical warnings; incomplete measurements and correctness failures fail either side.", "", "Ratios compare candidate/base on this runner. Check the selected commits: theme-switch can include different font transitions across the redesign.", ""];
   const measurements = new Map<string, unknown>();
+  const provenance = readJson(`${output}/provenance.json`);
   let failed = false;
   for (const target of ["base", "candidate"]) {
     try {
       const artifact = readJson(`${target}/test-results/bench/admin-app-benchmark.json`);
       const status = readFileSync(`${output}/${target}-exit-code.txt`, "utf8").trim();
       const failures = field(artifact, "failures");
-      if (field(artifact, "measurement") !== "cdp-task-duration-thread-ticks-v1" || !Array.isArray(failures)) throw new Error("Unexpected artifact schema");
+      const runs = field(artifact, "runs");
+      if (field(artifact, "schema") !== 3 || field(artifact, "qualification") !== "regression" ||
+        field(artifact, "measurement") !== "cdp-task-duration-thread-ticks-v1" || !Array.isArray(failures) ||
+        !failures.every(value => typeof value === "string") || !Array.isArray(runs) || runs.length !== 5 ||
+        field(artifact, "commit") !== field(provenance, target)) throw new Error("Unexpected, incomplete, or mismatched artifact");
       measurements.set(target, field(artifact, "normalized"));
       lines.push(`## ${target}`, "", `Commit: ${String(field(artifact, "commit"))}. Exit: ${status}.`, "", "```json", JSON.stringify(failures, null, 2), "```", "");
-      if (status !== "0" || failures.length > 0) failed = true;
+      // Only recognized historical performance limits are advisory. Never mask
+      // a crash, timeout, stale artifact, or owner/layout/workload failure.
+      const baseBudgetOnly = target === "base" && status === "1" && failures.length > 0 && failures.every(value =>
+        typeof value === "string" && /^(?:\w+ normalized median [\d.]+ exceeds [\d.]+|[\w-]+ reported \d+ frames over [\d.]+ms|[\w-]+ reported \d+ Long Tasks|[\w-]+ p99 [\d.]+ms exceeds [\d.]+ms)$/u.test(value));
+      if (baseBudgetOnly) lines.push("> Historical base exceeded a performance budget. Candidate results remain independently gated.", "");
+      else if (status !== "0" || failures.length > 0) failed = true;
     } catch (error) {
       failed = true;
       lines.push(`## ${target}`, "", `Incomplete measurement: ${String(error)}. Inspect build and benchmark logs.`, "");

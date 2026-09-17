@@ -10,7 +10,7 @@ on:
       candidate:
         description: After full 40-character commit SHA, branch, or tag
         required: true
-        default: 529f3de12acaeafbf65f9eebe5a1fc08d1ce04b4
+        default: main
         type: string
 permissions:
   contents: read

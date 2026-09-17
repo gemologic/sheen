@@ -18,6 +18,21 @@ const options: ClientViewOptions<Row> = {
 const state: ClientViewState = { search: "alpha", filter: { kind: "and", children: [] }, sorting: [], pagination: { pageIndex: 0, pageSize: 1 } };
 
 describe("complete client view", () => {
+  it("evaluates a shared numeric predicate once per row while retaining facet counts", () => {
+    let reads = 0;
+    const result = createClientView(rows, { ...state, search: "", pagination: false,
+      filter: { kind: "number", column: "amount", operator: "gte", value: 2 } }, {
+      ...options,
+      getValue: (row, column) => {
+        if (column === "amount") reads++;
+        return options.getValue(row, column);
+      },
+    });
+    expect(reads).toBe(rows.length);
+    expect(result.rows).toEqual([rows[0], rows[2], rows[3]]);
+    expect(result.facets[0]?.options).toEqual([{ value: "open", count: 3 }, { value: "closed", count: 0 }, { value: "archived", count: 0 }]);
+    expect(result.facets[1]?.options).toEqual([{ value: "retail", count: 2 }, { value: "enterprise", count: 1 }]);
+  });
   it("ranks, filters, counts facets, sorts, and pages in the specified order", () => {
     const result = createClientView(rows, {
       ...state,
