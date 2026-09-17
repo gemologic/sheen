@@ -11,6 +11,7 @@ import { createOverlayStack } from "./layers.ts";
 import type { OverlayStack } from "./layers.ts";
 import { englishMessages, resolveMessages } from "./messages.ts";
 import type { Messages } from "./messages.ts";
+import { NumberFormatContext, createNumberFormatCache } from "./number-format-cache.ts";
 
 interface ThemeRuntime {
   state: Accessor<ThemeState>;
@@ -112,6 +113,7 @@ export interface ThemeProviderProps extends ParentProps {
 }
 
 export function ThemeProvider(props: ThemeProviderProps): JSX.Element {
+  const numberFormat = createNumberFormatCache();
   const themes = () => props.themes ?? bundledThemeMetadata;
   const defaults: ThemeState = {
     ...defaultThemeState,
@@ -162,15 +164,16 @@ export function ThemeProvider(props: ThemeProviderProps): JSX.Element {
       }
     },
   });
-  return <ThemeContext.Provider value={context}><I18nProvider locale={locale()} direction={direction()}>
+  return <ThemeContext.Provider value={context}><NumberFormatContext.Provider value={numberFormat}><I18nProvider locale={locale()} direction={direction()}>
     {props.children}
     <PortalTarget kind="root" ready={ready()} ref={setPortal} state={ready() ? state() : undefined} mode={mode()} themes={themes()} />
-  </I18nProvider></ThemeContext.Provider>;
+  </I18nProvider></NumberFormatContext.Provider></ThemeContext.Provider>;
 }
 
 export interface ThemeScopeProps extends ParentProps, ThemeOverrides { controllable?: boolean; class?: string; messages?: Partial<Messages> }
 
 export function ThemeScope(props: ThemeScopeProps): JSX.Element {
+  const numberFormat = createNumberFormatCache();
   const parent = useTheme();
   const [local, setLocal] = createSignal<Partial<ThemeState>>({});
   const [portal, setPortal] = createSignal<HTMLElement>();
@@ -209,11 +212,11 @@ export function ThemeScope(props: ThemeScopeProps): JSX.Element {
     if (props.locale !== undefined) result.locale = props.locale;
     return result;
   };
-  return <ThemeContext.Provider value={context}><I18nProvider locale={locale()} direction={direction()}>
+  return <ThemeContext.Provider value={context}><NumberFormatContext.Provider value={numberFormat}><I18nProvider locale={locale()} direction={direction()}>
     <section id={id} class={props.class} {...attributes(state(), mode(), themes())} dir={state().direction} lang={state().locale}>
       {props.children}
       <PortalTarget kind="scope" ref={setPortal} state={state()} mode={mode()} themes={themes()} />
       <script nonce={parent.nonce} innerHTML={createScopeScript(overrides(), parent.defaults, themes())} />
     </section>
-  </I18nProvider></ThemeContext.Provider>;
+  </I18nProvider></NumberFormatContext.Provider></ThemeContext.Provider>;
 }

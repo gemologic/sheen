@@ -25,6 +25,8 @@ export type ColumnFilter =
 export interface UnsafeTanStackColumnOptions { readonly [option: string]: unknown }
 
 interface ColumnBase<Row extends object> {
+  /** Extra row fields used by a custom cell, including its event handlers. Omit to depend on the whole row. */
+  readonly cellDependencies?: readonly (keyof Row & string)[];
   readonly id: string;
   readonly header: string;
   readonly footer?: string | ((rows: readonly Row[]) => JSX.Element);
@@ -68,6 +70,7 @@ interface ResolvedColumn<Row extends object> {
   readonly header: string;
   readonly accessor: ((row: Row) => ColumnValue) | null;
   readonly cell: ((value: ColumnValue, row: Row) => JSX.Element) | null;
+  readonly cellDependencies: readonly (keyof Row & string)[] | null;
   readonly footer: string | ((rows: readonly Row[]) => JSX.Element) | null;
   readonly width: ColumnWidth;
   readonly minWidth: number | null;
@@ -103,7 +106,7 @@ class DefinedColumns<Row extends object> implements SheenColumns<Row> {
   [inspectColumns](): readonly ResolvedColumn<Row>[] { return this.#definitions; }
 }
 
-const baseKeys = new Set(["id", "header", "accessor", "cell", "footer", "width", "minWidth", "maxWidth", "align", "numeric", "pin", "visible", "search", "sensitive", "editor", "filter", "sort", "aggregate", "__unsafe_tanstack"]);
+const baseKeys = new Set(["id", "header", "accessor", "cell", "cellDependencies", "footer", "width", "minWidth", "maxWidth", "align", "numeric", "pin", "visible", "search", "sensitive", "editor", "filter", "sort", "aggregate", "__unsafe_tanstack"]);
 function assertRecord(value: unknown, label: string): asserts value is Record<string, unknown> {
   if (typeof value !== "object" || value === null || Array.isArray(value)) throw new Error(`${label} must be an object`);
   const prototype = Object.getPrototypeOf(value);
@@ -214,6 +217,12 @@ export function defineColumns<Row extends object>(values: readonly SheenColumnIn
     const accessor = checkedAccessor(sourceAccessor, `${label}.accessor`);
     const cell = functions.cell;
     if (cell !== null && typeof cell !== "function") throw new Error(`${label}.cell must be a function`);
+    const dependencies = typedValue.cellDependencies;
+    if (dependencies !== undefined && (cell === null || input.editor !== undefined || !Array.isArray(dependencies)
+      || dependencies.some(key => typeof key !== "string" || !key.trim()) || new Set(dependencies).size !== dependencies.length)) {
+      throw new Error(`${label}.cellDependencies requires unique nonempty row keys and a noneditable custom cell`);
+    }
+    const cellDependencies = dependencies === undefined ? null : Object.freeze([...dependencies]);
     if (accessor === null && cell === null) throw new Error(`${label} must define an accessor or display cell`);
     if (accessor === null && (input.filter !== undefined || input.sort !== undefined || input.aggregate !== undefined || input.search !== undefined)) throw new Error(`${label} display columns cannot search, filter, sort, or aggregate`);
     if (input.footer !== undefined && typeof input.footer !== "string" && typeof input.footer !== "function") throw new Error(`${label}.footer must be a string or function`);
@@ -247,7 +256,7 @@ export function defineColumns<Row extends object>(values: readonly SheenColumnIn
       assertRecord(input.__unsafe_tanstack, `${label}.__unsafe_tanstack`);
       unsafeTanStack = Object.freeze({ ...input.__unsafe_tanstack });
     }
-    definitions.push(Object.freeze({ id: input.id, header: input.header, accessor, cell, footer: functions.footer, width, minWidth, maxWidth, align, numeric, pin, visible, search, sensitive, editor, filter, faceted, sort, aggregate, unsafeTanStack }));
+    definitions.push(Object.freeze({ id: input.id, header: input.header, accessor, cell, cellDependencies, footer: functions.footer, width, minWidth, maxWidth, align, numeric, pin, visible, search, sensitive, editor, filter, faceted, sort, aggregate, unsafeTanStack }));
     index++;
   }
   return new DefinedColumns(Object.freeze(definitions));

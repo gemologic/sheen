@@ -95479,7 +95479,7 @@
           "inherited": false
         },
         "columns": {
-          "description": "Opaque column definitions returned by defineColumns.",
+          "description": "Opaque column definitions returned by defineColumns. Noneditable custom cells may declare cellDependencies for extra row fields; accessor values always invalidate, and omitted dependencies retain whole-row invalidation. Include fields captured by event handlers and replace row data immutably.",
           "type": "SheenColumns<Row>",
           "required": true,
           "inherited": false

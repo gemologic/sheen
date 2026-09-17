@@ -8,13 +8,14 @@ Commit and push the workflow and helper to the default branch first. GitHub requ
 
 ```sh
 gh workflow run benchmark-compare.yml --repo gemologic/sheen \
-  -f base=d86a879 -f candidate=529f3de
+  -f base=d86a879170afa2a24bf11552b4a0ef50577532f3 \
+  -f candidate=529f3de12acaeafbf65f9eebe5a1fc08d1ce04b4
 gh run list --repo gemologic/sheen --workflow benchmark-compare.yml --limit 5
 gh run watch RUN_ID --repo gemologic/sheen
 gh run download RUN_ID --repo gemologic/sheen --dir /tmp/sheen-comparison-RUN_ID
 ```
 
-Prefer full commit SHAs for repeatable future comparisons. Defaults identify the commit before the Studio redesign and the redesign commit. The dispatch ref supplies the workflow, helper, and shared harness; it does not select the application versions. Run only trusted repository commits: installation and builds execute their code.
+Use full 40-character commit SHAs for repeatable comparisons, or a branch/tag name. Abbreviated SHAs are not supported by checkout and are interpreted as branch/tag names. Defaults identify the commit before the Studio redesign and the redesign commit. The dispatch ref supplies the workflow, helper, and shared harness; it does not select the application versions. Run only trusted repository commits: installation and builds execute their code.
 
 ## Read the results
 

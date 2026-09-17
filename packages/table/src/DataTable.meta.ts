@@ -6,7 +6,7 @@ interface ExampleRow { readonly id: string; readonly name: string; readonly amou
 export default defineMeta<DataTableProps<ExampleRow>>({
   name: "DataTable", package: "@gemologic/sheen-table", category: "data", summary: "Virtualized continuous or paginated data with phone cards, selection, layouts, groups, and trees.",
   props: {
-    columns: { description: "Opaque column definitions returned by defineColumns." },
+    columns: { description: "Opaque column definitions returned by defineColumns. Noneditable custom cells may declare cellDependencies for extra row fields; accessor values always invalidate, and omitted dependencies retain whole-row invalidation. Include fields captured by event handlers and replace row data immutably." },
     getRowId: { description: "Returns a stable, unique, nonempty row ID." },
     caption: { description: "Required accessible table caption, visually hidden by default." },
     variant: { description: "Standalone frame or application-pane integration; omission follows context." },

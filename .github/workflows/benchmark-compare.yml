@@ -3,14 +3,14 @@ on:
   workflow_dispatch:
     inputs:
       base:
-        description: Before commit SHA or ref
+        description: Before full 40-character commit SHA, branch, or tag
         required: true
-        default: d86a879
+        default: d86a879170afa2a24bf11552b4a0ef50577532f3
         type: string
       candidate:
-        description: After commit SHA or ref
+        description: After full 40-character commit SHA, branch, or tag
         required: true
-        default: 529f3de
+        default: 529f3de12acaeafbf65f9eebe5a1fc08d1ce04b4
         type: string
 permissions:
   contents: read

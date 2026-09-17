@@ -1131,7 +1131,8 @@ export function DataTable<Row extends object>(props: DataTableProps<Row>): JSX.E
     return Object.freeze({ definition, state, updateState, variable: `--sheen-table-column-${index}`, sortDescriptionId: createUniqueId() });
   });
   const columnRecordById = new Map(columnRecords.map(column => [column.definition.id, column]));
-  const orderedColumnStates = createMemo(() => orderColumnStates(acceptedState().columns));
+  const acceptedColumns = createMemo(() => acceptedState().columns);
+  const orderedColumnStates = createMemo(() => orderColumnStates(acceptedColumns()));
   const summaryEligible = createMemo(() => {
     const ids = props.summarizeColumns ?? [];
     const unique = new Set<string>();
@@ -1144,7 +1145,9 @@ export function DataTable<Row extends object>(props: DataTableProps<Row>): JSX.E
   });
   const [restoredSummaries, setRestoredSummaries] = createSignal<ReadonlySet<string>>(new Set());
   const columnSummaries = createMemo(() => summaryEligible().size === 0 ? [] : summarizedColumns(orderedColumnStates(), constrainedColumnValues(acceptedState().filter), summaryEligible(), restoredSummaries()));
-  const summarizedIds = createMemo(() => new Set(columnSummaries().map(item => item.column)));
+  const summarizedIds = createMemo(() => new Set(columnSummaries().map(item => item.column)), undefined, {
+    equals: (previous, next) => previous.size === next.size && [...previous].every(id => next.has(id)),
+  });
   const summaryLabel = (id: string): string => {
     const summary = columnSummaries().find(item => item.column === id);
     const definition = columnRecordById.get(id)?.definition;
@@ -2087,8 +2090,13 @@ export function DataTable<Row extends object>(props: DataTableProps<Row>): JSX.E
     </span>;
   }
   function DataCellContent(cellProps: { readonly row: DisplayDataRow<Row>; readonly column: (typeof columnRecords)[number]; readonly first: boolean; readonly edit: CellEditRecord | undefined }): JSX.Element {
-    const value = () => cellProps.column.definition.accessor?.(cellProps.row.row.value()) ?? null;
-    const content = () => cellProps.edit ? <EditableCellValue row={cellProps.row} column={cellProps.column} record={cellProps.edit} /> : cellProps.column.definition.cell?.(value(), cellProps.row.row.value()) ?? defaultCell(value());
+    const definition = cellProps.column.definition;
+    const input = createMemo(() => {
+      const row = cellProps.row.row.value();
+      return { row, value: definition.accessor?.(row) ?? null };
+    }, undefined, { equals: (previous, next) => Object.is(previous.value, next.value) && (definition.cell === null
+      || (definition.cellDependencies === null ? previous.row === next.row : definition.cellDependencies.every(key => Object.is(previous.row[key], next.row[key])))) });
+    const content = () => cellProps.edit ? <EditableCellValue row={cellProps.row} column={cellProps.column} record={cellProps.edit} /> : definition.cell?.(input().value, input().row) ?? defaultCell(input().value);
     if (!treePresentation || !cellProps.first) return <>{content()}</>;
     return <div class="sheen-data-table-tree-cell" style={{ "--sheen-table-depth": Math.max(0, cellProps.row.depth - 1) }}>
       <Show when={cellProps.row.canExpand} fallback={<span class="sheen-data-table-expander-space" aria-hidden="true" />}>

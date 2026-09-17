@@ -2,6 +2,7 @@ import { ActivityTimeline, Badge, Button, Card, EmptyState, Input, Link, Meter, 
 import type { ActivityTimelineItem, ThemeOverrides, ThemeState } from "@gemologic/sheen";
 import type { ChartData } from "@gemologic/sheen-charts/core";
 import { Sparkline, StatGroup } from "@gemologic/sheen-charts/svg";
+import type { StatProps } from "@gemologic/sheen-charts/svg";
 import { TimeSeries } from "@gemologic/sheen-charts/time-series";
 import { accentNames, bundledThemeMetadata, isAccentName } from "@gemologic/sheen-tokens";
 import type { AccentName } from "@gemologic/sheen-tokens";
@@ -19,14 +20,14 @@ import type { AdminAccountRow, AdminWorkload, AdminWorkloadSnapshot, AdminWorklo
 import { AdminPolicies } from "./admin-policies.tsx";
 
 const columns = defineColumns<AdminAccountRow>([
-  { id: "name", header: "Account", accessor: row => row.name, search: true, filter: { type: "text" }, sort: "text", width: "fill", cell: (value, row) => <span class="loupe-admin-account-cell"><strong>{String(value)}</strong><small>{row.id}</small></span> },
+  { id: "name", header: "Account", accessor: row => row.name, search: true, filter: { type: "text" }, sort: "text", width: "fill", cellDependencies: ["id"], cell: (value, row) => <span class="loupe-admin-account-cell"><strong>{String(value)}</strong><small>{row.id}</small></span> },
   { id: "owner", header: "Owner", accessor: row => row.owner, search: true, filter: { type: "text" }, sort: "text", width: 180 },
-  { id: "status", header: "Status", accessor: row => row.status, filter: { type: "enum", options: ["Active", "Review", "Paused"], faceted: true }, sort: "text", width: 120, cell: value => <Badge tone={value === "Active" ? "success" : value === "Review" ? "warning" : "neutral"}>{value === "Active" ? <CheckIcon /> : value === "Review" ? <InfoIcon /> : <RemoveIcon />}{String(value)}</Badge> },
+  { id: "status", header: "Status", accessor: row => row.status, filter: { type: "enum", options: ["Active", "Review", "Paused"], faceted: true }, sort: "text", width: 120, cellDependencies: [], cell: value => <Badge tone={value === "Active" ? "success" : value === "Review" ? "warning" : "neutral"}>{value === "Active" ? <CheckIcon /> : value === "Review" ? <InfoIcon /> : <RemoveIcon />}{String(value)}</Badge> },
   { id: "plan", header: "Plan", accessor: row => row.plan, search: true, filter: { type: "enum", options: ["Enterprise", "Growth", "Core"], faceted: true }, sort: "text", width: 120 },
   { id: "region", header: "Region", accessor: row => row.region, search: true, filter: { type: "enum", options: ["US East", "US West", "EU Central", "Asia Pacific"], faceted: true }, sort: "text", width: 130 },
-  { id: "balance", header: "Balance (USD)", accessor: row => row.balance, filter: { type: "number" }, sort: "number", numeric: true, width: 140, cell: (_value, row) => <NumberText value={row.balance} format={{ minimumFractionDigits: 2, maximumFractionDigits: 2 }} /> },
-  { id: "requests", header: "Requests", accessor: row => row.requests, filter: { type: "number" }, sort: "number", numeric: true, width: 120, cell: (_value, row) => <NumberText value={row.requests} format={{ maximumFractionDigits: 0 }} /> },
-  { id: "utilization", header: "Utilization", accessor: row => row.utilization, filter: { type: "number" }, sort: "number", numeric: true, width: 140, cell: (_value, row) => <span class="loupe-admin-utilization"><Meter label={`${row.name} utilization`} value={row.utilization} min={0} max={100} low={45} high={82} optimum={55} /><NumberText value={row.utilization / 100} format={{ style: "percent", minimumFractionDigits: 1, maximumFractionDigits: 1 }} /></span> },
+  { id: "balance", header: "Balance (USD)", accessor: row => row.balance, filter: { type: "number" }, sort: "number", numeric: true, width: 140, cellDependencies: [], cell: value => <NumberText value={Number(value)} format={{ minimumFractionDigits: 2, maximumFractionDigits: 2 }} /> },
+  { id: "requests", header: "Requests", accessor: row => row.requests, filter: { type: "number" }, sort: "number", numeric: true, width: 120, cellDependencies: [], cell: value => <NumberText value={Number(value)} format={{ maximumFractionDigits: 0 }} /> },
+  { id: "utilization", header: "Utilization", accessor: row => row.utilization, filter: { type: "number" }, sort: "number", numeric: true, width: 140, cellDependencies: ["name"], cell: (value, row) => <span class="loupe-admin-utilization"><Meter label={`${row.name} utilization`} value={Number(value)} min={0} max={100} low={45} high={82} optimum={55} /><NumberText value={Number(value) / 100} format={{ style: "percent", minimumFractionDigits: 1, maximumFractionDigits: 1 }} /></span> },
   { id: "updated", header: "Updated", accessor: row => row.updated, search: true, sort: "text", width: 120 },
 ]);
 
@@ -563,16 +564,17 @@ function OverviewContent(props: Pick<AdminStarterPageProps, "rows" | "summary" |
     return `${trafficFormatter().formatRange(start, end)} UTC`;
   });
   const utilizationVisual = <Meter label="Mean account utilization" value={props.summary.utilization} min={0} max={100} />;
+  const stats: readonly StatProps[] = [
+    { label: "Accounts", get value() { return props.rows.length; }, format: { maximumFractionDigits: 0 } },
+    { label: "Active", get value() { return props.summary.active; }, format: { maximumFractionDigits: 0 } },
+    { label: "Needs review", get value() { return props.summary.review; }, format: { maximumFractionDigits: 0 } },
+    { label: "Managed balance (USD)", get value() { return props.summary.balance; }, format: { notation: "compact", style: "currency", currency: "USD", maximumFractionDigits: 1 } },
+    { label: "Monthly requests", get value() { return props.summary.requests; }, format: { notation: "compact", maximumFractionDigits: 1 } },
+    { label: "Mean utilization", get value() { return props.summary.utilization / 100; }, format: { style: "percent", minimumFractionDigits: 1, maximumFractionDigits: 1 }, visual: utilizationVisual },
+  ];
   return <div class="loupe-admin-overview" data-admin-workload={props.workload} data-admin-row-count={props.rows.length} data-admin-chart-points={props.chartPoints}>
     <Text class="loupe-admin-overview-context" tone="muted">Current account snapshot · Traffic: {trafficRange()}</Text>
-    <StatGroup class="loupe-admin-stat-group" label="Operational summary" stats={[
-      { label: "Accounts", value: props.rows.length, format: { maximumFractionDigits: 0 } },
-      { label: "Active", value: props.summary.active, format: { maximumFractionDigits: 0 } },
-      { label: "Needs review", value: props.summary.review, format: { maximumFractionDigits: 0 } },
-      { label: "Managed balance (USD)", value: props.summary.balance, format: { notation: "compact", style: "currency", currency: "USD", maximumFractionDigits: 1 } },
-      { label: "Monthly requests", value: props.summary.requests, format: { notation: "compact", maximumFractionDigits: 1 } },
-      { label: "Mean utilization", value: props.summary.utilization / 100, format: { style: "percent", minimumFractionDigits: 1, maximumFractionDigits: 1 }, visual: utilizationVisual },
-    ]} />
+    <StatGroup class="loupe-admin-stat-group" label="Operational summary" stats={stats} />
     <section class="loupe-admin-dashboard-grid" aria-label="Traffic and service health">
       <div class="loupe-admin-chart-card loupe-admin-chart-card-wide">
         <TimeSeries label="Workspace traffic" summary="Requests, events, and background jobs per minute." xLabel="UTC time" series={trafficSeries} data={props.traffic}

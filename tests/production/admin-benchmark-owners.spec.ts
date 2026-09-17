@@ -8,6 +8,37 @@ test.beforeEach(async ({ page }) => {
   await expect(page.locator(".sheen-time-series")).toHaveAttribute("data-enhanced", "true");
 });
 
+test("dashboard workload changes and refresh reuse compact formatters and metric owners", async ({ page }) => {
+  const stats = page.getByRole("group", { name: "Operational summary" });
+  const balance = stats.locator("dl").filter({ has: page.getByText("Managed balance (USD)", { exact: true }) }).locator(".sheen-number-text");
+  const initial = await balance.textContent();
+  const owner = await balance.evaluateHandle(element => element);
+  await page.evaluate(() => {
+    document.documentElement.dataset.compactFormatters = "0";
+    Intl.NumberFormat = new Proxy(Intl.NumberFormat, { construct(target, args, newTarget) {
+      const options: unknown = args[1];
+      if (typeof options === "object" && options !== null && Reflect.get(options, "notation") === "compact") {
+        document.documentElement.dataset.compactFormatters = String(Number(document.documentElement.dataset.compactFormatters) + 1);
+      }
+      return Reflect.construct(target, args, newTarget);
+    } });
+  });
+  try {
+    await page.getByText("Customize starter", { exact: true }).click();
+    await page.locator(".loupe-admin-customize").getByRole("button", { name: /^Workload /u }).click();
+    await page.locator(".sheen-select-content").getByRole("option", { name: "Representative · 240 rows", exact: true }).click();
+    await expect(stats.locator("dl").first()).toContainText("240");
+    await expect(balance).not.toHaveText(initial ?? "");
+    await page.getByRole("button", { name: "Refresh", exact: true }).first().click();
+    await expect(page.locator(".sheen-status-bar").getByText(/^Revision \d+ ·/u)).toHaveText(/^Revision 2 · \d+ chart samples$/u);
+    expect(await owner.evaluate(element => element.isConnected)).toBe(true);
+    expect(initial).not.toBeNull();
+    await expect(page.locator("html")).toHaveAttribute("data-compact-formatters", "0");
+  } finally {
+    await owner.dispose();
+  }
+});
+
 test("atomic benchmark checks retain real heavy app owners through native chrome actions", async ({ page }) => {
   const owners = await captureAdminAppOwners(page);
   const retained = (mode: Parameters<typeof retainedAdminAppOwners>[1]) => owners.evaluate(retainedAdminAppOwners, mode);

@@ -5,6 +5,17 @@ import type { SheenColumnInput } from "./columns.ts";
 interface Row { readonly symbol: string; readonly pnl: number }
 
 describe("opaque table columns", () => {
+  it("copies explicit cell dependencies and rejects ambiguous declarations", () => {
+    const dependencies: (keyof Row & string)[] = ["symbol"];
+    const columns = defineColumns<Row>([{ id: "pnl", header: "P&L", accessor: row => row.pnl, cellDependencies: dependencies, cell: (value, row) => `${row.symbol}: ${value}` }]);
+    dependencies.push("pnl");
+    expect(readColumnDefinitions(columns)[0]?.cellDependencies).toEqual(["symbol"]);
+    expect(() => defineColumns<Row>([{ id: "pnl", header: "P&L", accessor: row => row.pnl, cellDependencies: [] }])).toThrow("noneditable custom cell");
+    expect(() => defineColumns<Row>([{ id: "pnl", header: "P&L", accessor: row => row.pnl, cell: String, cellDependencies: ["symbol", "symbol"] }])).toThrow("unique");
+    expect(() => defineColumns<Row>([{ id: "pnl", header: "P&L", accessor: row => row.pnl, cell: String, cellDependencies: [], editor: { type: "number" } }])).toThrow("noneditable custom cell");
+    // @ts-expect-error dependency names belong to the row model
+    defineColumns<Row>([{ id: "pnl", header: "P&L", accessor: row => row.pnl, cell: String, cellDependencies: ["missing"] }]);
+  });
   it("normalizes sheen fields and projects state schema behind an opaque value", () => {
     const options = ["buy", "sell"];
     const unsafe = { enableHiding: false };

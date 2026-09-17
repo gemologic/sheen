@@ -48,3 +48,43 @@ The final normal command, `SHEEN_ADMIN_BENCHMARK=true SHEEN_BENCHMARK_PORT=4187 
 | Retained refresh | 0.5333 | 0.5313 | 0.5247 | 1.0548 |
 
 These displayed values are rounded only for readability; the gates compare full-precision values. Every artifact reports zero failures, retained owners, zero Long Tasks, zero unexpected content layout shifts, and a maximum frame of approximately 33.4ms, below 50ms. Scroll p99 and footprint checks also pass. This establishes local qualification on the recorded environment, not hosted CI or hardware equivalence.
+
+## September 17 paired comparison and allocation review
+
+[Hosted comparison 35221081817](https://github.com/gemologic/sheen/actions/runs/35221081817) collected five runner pairs with the common diagnostic harness. All ten application measurements passed CPU gates. Candidate Pair 3 recorded one 50.1ms theme-switch frame and one 50ms retained-refresh Long Task. Median paired CPU changes were theme +27.3%, search +27.4%, refresh +12.1%, and details dock -11.2%. These are changes against the preceding application commit, not percentages over the allowed budget.
+
+The CPU clock brackets the native browser interaction, browser-side locator/assertion work, ownership checks, and settling frames. It counts active renderer tasks, including JavaScript, style/layout, and canvas work, divided by the same-context calibration CPU. It excludes idle waits and is not a single frame's duration or isolated handler timing. Search includes filling and scrolling the input into view, filtering 12,000 rows, and publishing the result. Refresh regenerates the account/chart snapshot and updates accepted content. Theme switching now changes fonts and text sizes; the older workload kept Plex throughout. The richer table cells and dashboard also increase rendering and allocation work. The paired results alone do not attribute each percentage to a specific function.
+
+Production CDP diagnostics found allocation/GC and layout work across these paths. Native Intl instrumentation counted zero number-formatter constructions on theme switch, three on search, 79 on clearing search, and 89 on refresh. Optimizations coalesce adjacent unstyled NumberText parts into one text run, retain the table's column projection when only query state or an unchanged summary set is published, and keep dashboard stat definitions/format options stable while their values remain reactive. No font, visual content, benchmark boundary, or budget was removed or relaxed.
+
+One fresh local five-sample run before the edits and the final three preserved after runs produced:
+
+| Normalized CPU | Before | After 1 | After 2 | After 3 | Change using after median |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Theme switch | 0.3075 | 0.3288 | 0.3191 | 0.3305 | +6.9% |
+| Table search | 0.2297 | 0.2295 | 0.2255 | 0.2319 | -0.1% |
+| Retained refresh | 0.4612 | 0.4431 | 0.4673 | 0.4600 | -0.3% |
+
+All three complete nine-operation after runs passed CPU, frame, Long Task, footprint, and retention gates. An earlier three-run batch suggested a 4.7% refresh improvement, but that did not reproduce in the final batch; its raw JSON was cleared by the subsequent browser suite. Search and refresh are effectively unchanged in the preserved comparison, while theme is higher. These small local samples establish neither a reliable CPU improvement nor the cause of the theme difference. They do not erase the hosted before/after increases or qualify a replacement baseline. A fresh hosted comparison against the unoptimized redesign is still needed. The deterministic improvements established here are fewer plain-number rendering branches, stable column projections, and reuse of dashboard compact formatters and metric owners.
+
+Validation: production build, root and Loupe types, targeted ESLint, six NumberText/constrained-column unit tests, six production browser tests, and six Chromium constrained-column/stat-visual tests. The added production test observes real native Intl constructors and retained metric elements across a workload change and refresh, checks new displayed values, and requires zero replacement compact-formatters. Browser profiling was separate from qualification. Local raw artifacts are preserved in `/tmp/sheen-optimization-20260917/`; no hosted or WebKit qualification is claimed for these edits.
+
+## September 17 cell retention and formatter reuse
+
+The next pass adds explicit `defineColumns` `cellDependencies` for noneditable custom cells. Existing custom renderers still invalidate on whole-row replacement unless they opt in; the accessor value and all declared extra row fields must match to retain a cell subtree. The admin starter declares dependencies for account names, status, numeric cells, and utilization. Changed balances/requests still update, while unchanged badges, account names, and utilization meters survive refresh. The field contract, including captured event-handler dependencies and immutable updates, is documented in `table-columns.md`.
+
+NumberText now shares equivalent native number formatters within its ThemeProvider/ThemeScope. Each scope owns at most 32 cached entries; no formatter cache crosses SSR request boundaries. Locale and plain option values determine identity, including changes to a previously supplied options object. Options with accessors or custom prototypes use native construction without caching. Native diagnostics on the same heavy flow now record 0 constructions for theme switch, 0 for search, 1 for search clearing, and 2 for refresh, versus the earlier 0/3/79/89. Those counts are diagnostic observations, not timing gates.
+
+The theme diagnostic recorded one chart canvas clear/redraw, so renderer scheduling was left unchanged. Search profiles still include filtering, scrolling, DOM updates, browser-side queries, layout, and garbage collection; no search algorithm or assertion boundary was changed to improve the score.
+
+Three normal five-sample AdminApp runs passed every existing CPU, frame, Long Task, layout, footprint, and retention gate. Compared with the preceding preserved three-run batch:
+
+| Normalized CPU | Previous median | New run 1 | New run 2 | New run 3 | Median change |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Theme switch | 0.3288 | 0.3218 | 0.3337 | 0.3212 | -2.1% |
+| Table search | 0.2295 | 0.2354 | 0.2242 | 0.2190 | -2.3% |
+| Retained refresh | 0.4600 | 0.4197 | 0.4043 | 0.4055 | -11.9% |
+
+All three refresh measurements are below every refresh measurement in the preceding batch. This supports a local refresh improvement; the smaller search/theme differences remain inconclusive. The batches ran at different times on the same local machine, not as interleaved randomized comparisons. Hosted confirmation is still needed, and no budgets were changed. Raw artifacts are preserved in `/tmp/sheen-retention-20260917/`.
+
+Validation includes nine targeted unit tests, eight Chromium production tests, the two new retention tests against production WebKit, the complete table benchmark, production build, root/Loupe types, targeted ESLint, manifest/example generation, all ten package-content checks, and isolated consumer/type/bundle checks. The browser tests cover retained native cell nodes, changed accessor values, changed declared row fields, current keyboard event handlers, default whole-row invalidation, SSR text, locale changes, and real Intl constructor reuse.
