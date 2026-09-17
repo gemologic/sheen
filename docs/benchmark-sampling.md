@@ -18,6 +18,8 @@ Where supported, the sampler also records [Long Animation Frames](https://w3c.gi
 
 ## CPU regression metric
 
+For paired measurements on fresh GitHub runners, use the manual [AdminApp comparison workflow](./benchmark-comparison.md). It preserves existing gates and compares both application commits with a shared diagnostic harness.
+
 Local `--repeat-each` runs preserve later artifacts as `*-benchmark.repeat-N.json` rather than overwriting the first run's canonical artifact. CI's single run keeps its existing filename. This preserves failing raw runs even when a later repeat passes.
 
 AdminApp, date, and Composer use `bench/cpu-sampling.ts`: a dedicated Chromium CDP session enables `Performance` with `timeDomain: "threadTicks"`, then measures the increase in `TaskDuration` around the entire frame-measurement callback. CPU reads bracket observer installation, the native operation, correctness/retention checks, settling, and the final observer drain. Calibration uses the same counter around its deterministic callback. Fixtures, including Composer's preview app and table, must be ready and drain three rendering frames before calibration so initial rendering does not inflate its denominator. The normalized gate is the median of five **interaction task-CPU / calibration task-CPU** ratios, not elapsed time divided by a CPU loop. Missing, invalid, non-increasing counters and overlapping samples fail closed. Each session is detached before its context closes.
