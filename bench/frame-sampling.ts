@@ -1,17 +1,33 @@
 import type { Page } from "@playwright/test";
 
+export interface ScriptSample {
+  readonly startOffsetMs: number | null;
+  readonly durationMs: number | null;
+  readonly executionStartOffsetMs: number | null;
+  readonly forcedStyleAndLayoutDurationMs: number | null;
+  readonly pauseDurationMs: number | null;
+  readonly sourceURL: string | null;
+  readonly sourceFunctionName: string | null;
+  readonly sourceCharPosition: number | null;
+  readonly invoker: string | null;
+  readonly invokerType: string | null;
+  readonly windowAttribution: string | null;
+}
+
 export interface LongAnimationFrameSample {
   readonly startOffsetMs: number;
   readonly durationMs: number;
   readonly blockingDurationMs: number | null;
   readonly renderStartOffsetMs: number | null;
   readonly styleAndLayoutStartOffsetMs: number | null;
+  readonly scripts: readonly ScriptSample[];
 }
 
 export interface FrameSample {
   readonly durationMs: number;
   readonly intervals: readonly number[];
   readonly longTasks: readonly number[];
+  readonly longTaskTimings: readonly { readonly startOffsetMs: number; readonly durationMs: number; readonly name: string }[];
   readonly longAnimationFrames: readonly LongAnimationFrameSample[];
   readonly unexpectedLayoutShift: number;
   readonly unexpectedLayoutShiftSources: readonly string[];
@@ -36,6 +52,7 @@ export async function startFrameSampling(page: Page, options: { readonly separat
     const start = performance.now();
     const intervals: number[] = [];
     const longTasks: number[] = [];
+    const longTaskTimings: { startOffsetMs: number; durationMs: number; name: string }[] = [];
     const longAnimationFrames: LongAnimationFrameSample[] = [];
     let unexpectedLayoutShift = 0;
     const unexpectedLayoutShiftSources = new Set<string>();
@@ -45,7 +62,10 @@ export async function startFrameSampling(page: Page, options: { readonly separat
 
     const collect = (entries: readonly PerformanceEntry[]): void => {
       for (const entry of entries) {
-        if (entry.entryType === "longtask") longTasks.push(entry.duration);
+        if (entry.entryType === "longtask") {
+          longTasks.push(entry.duration);
+          longTaskTimings.push({ startOffsetMs: entry.startTime - start, durationMs: entry.duration, name: entry.name });
+        }
         if (entry.entryType === "long-animation-frame") {
           const timing = (name: string): number | null => {
             const value: unknown = Reflect.get(entry, name);
@@ -53,7 +73,32 @@ export async function startFrameSampling(page: Page, options: { readonly separat
           };
           const renderStart = timing("renderStart");
           const styleAndLayoutStart = timing("styleAndLayoutStart");
+          const scripts: ScriptSample[] = [];
+          const rawScripts: unknown = Reflect.get(entry, "scripts");
+          if (Array.isArray(rawScripts)) {
+            for (const script of rawScripts) {
+              if (typeof script !== "object" || script === null) continue;
+              const number = (name: string): number | null => {
+                const value: unknown = Reflect.get(script, name);
+                return typeof value === "number" && Number.isFinite(value) ? value : null;
+              };
+              const offset = (name: string): number | null => {
+                const value = number(name);
+                return value === null || value === 0 ? null : value - start;
+              };
+              const string = (name: string): string | null => {
+                const value: unknown = Reflect.get(script, name);
+                return typeof value === "string" ? value : null;
+              };
+              scripts.push({ startOffsetMs: offset("startTime"), durationMs: number("duration"),
+                executionStartOffsetMs: offset("executionStart"),
+                forcedStyleAndLayoutDurationMs: number("forcedStyleAndLayoutDuration"), pauseDurationMs: number("pauseDuration"),
+                sourceURL: string("sourceURL"), sourceFunctionName: string("sourceFunctionName"), sourceCharPosition: number("sourceCharPosition"),
+                invoker: string("invoker"), invokerType: string("invokerType"), windowAttribution: string("windowAttribution") });
+            }
+          }
           longAnimationFrames.push({ startOffsetMs: entry.startTime - start, durationMs: entry.duration,
+            scripts,
             blockingDurationMs: timing("blockingDuration"),
             renderStartOffsetMs: renderStart === null || renderStart === 0 ? null : renderStart - start,
             styleAndLayoutStartOffsetMs: styleAndLayoutStart === null || styleAndLayoutStart === 0 ? null : styleAndLayoutStart - start });
@@ -107,7 +152,7 @@ export async function startFrameSampling(page: Page, options: { readonly separat
         collect(observer.takeRecords());
         observer.disconnect();
         root.removeAttribute(markerAttribute);
-        receive({ durationMs: performance.now() - start, intervals, longTasks, longAnimationFrames, unexpectedLayoutShift,
+        receive({ durationMs: performance.now() - start, intervals, longTasks, longTaskTimings, longAnimationFrames, unexpectedLayoutShift,
           unexpectedLayoutShiftSources: [...unexpectedLayoutShiftSources], transientOverlayLayoutShift });
       });
     }, { once: true });

@@ -85,10 +85,17 @@ test("frame sampling reports blocked main-thread work through the settled final 
   expect(Math.max(0, ...result.longTasks), diagnostics).toBeGreaterThanOrEqual(50);
   expect(Math.max(0, ...result.intervals), diagnostics).toBeGreaterThan(50);
   expect(result.longAnimationFrames.some(frame => frame.durationMs >= 50 && frame.blockingDurationMs !== null), diagnostics).toBe(true);
+  expect(result.longTaskTimings.map(task => task.durationMs)).toEqual(result.longTasks);
+  expect(result.longTaskTimings.some(task => task.startOffsetMs >= 0 && task.durationMs >= 50)).toBe(true);
+  expect(result.longAnimationFrames.flatMap(frame => frame.scripts).some(script =>
+    script.durationMs !== null && script.durationMs >= 50 && script.invokerType === "user-callback" &&
+    script.invoker !== null && script.invoker.length > 0 && script.windowAttribution === "self" &&
+    script.executionStartOffsetMs !== null && script.forcedStyleAndLayoutDurationMs !== null), diagnostics).toBe(true);
   await startFrameSampling(page);
   await page.evaluate(() => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));
   const fresh = await finishFrameSampling(page);
   expect(fresh.longTasks).toEqual([]);
+  expect(fresh.longTaskTimings).toEqual([]);
 });
 
 test("thread-time CPU sampling counts work without charging idle frame waits", async ({ page }) => {

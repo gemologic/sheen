@@ -18,6 +18,10 @@ Where supported, the sampler also records [Long Animation Frames](https://w3c.gi
 
 ## CPU regression metric
 
+Long Animation Frame diagnostics also retain individual script timings, invoker/type, source URL/function/character position, forced style/layout time, pause time, and window attribution. Long Tasks retain their start offsets and names in `longTaskTimings`, alongside the unchanged `longTasks` duration array used by gates. All offsets share the sampler installation origin. Unsupported fields are null; browser-withheld source names/URLs can be empty. These are passive observer records, not an enabled profiler, and script durations are wall time rather than thread CPU. Missing script attribution does not prove the browser was idle. Existing artifacts remain interpretable without these additive fields.
+
+Hosted comparison [35261753598](https://github.com/gemologic/sheen/actions/runs/35261753598) passed every CPU gate. Search CPU improved in every pair (median paired change -27.3%), as did retained refresh (-9.3%). Pair 1 recorded a 50.1ms theme frame in both versions. Pair 4 candidate search run 5 recorded a 101ms Long Task and an 83.4ms frame, while the entire interaction consumed only 45.198ms of renderer thread CPU. That discrepancy warrants attribution, not a claim that search executed 101ms of JavaScript. The old artifact cannot distinguish off-CPU scheduling/waits from other browser causes. Keep the failed samples and all current limits; inspect the added attribution on the next hosted failure before choosing an application fix or proposing a runner policy change.
+
 For paired measurements on fresh GitHub runners, use the manual [AdminApp comparison workflow](./benchmark-comparison.md). It preserves existing gates and compares both application commits with a shared diagnostic harness.
 
 Local `--repeat-each` runs preserve later artifacts as `*-benchmark.repeat-N.json` rather than overwriting the first run's canonical artifact. CI's single run keeps its existing filename. This preserves failing raw runs even when a later repeat passes.
