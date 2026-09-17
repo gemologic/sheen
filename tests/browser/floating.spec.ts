@@ -75,6 +75,48 @@ test("Tooltip supports focus, shortcut text, hoverable content, Escape, and nati
   await expect(tooltip).toHaveCount(0);
 });
 
+test("Escape keeps a tooltip dismissed while its trigger remains focused across pointer movement", async ({ page }) => {
+  await page.goto("/floating");
+  const trigger = page.getByRole("button", { name: "Save workspace", exact: true });
+  const outside = page.getByRole("button", { name: "Outside action", exact: true });
+  const tooltip = page.getByRole("tooltip");
+  await trigger.focus();
+  await trigger.hover();
+  await expect(tooltip).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(tooltip).toHaveCount(0);
+  await outside.hover();
+  await trigger.hover();
+  await expect(trigger).toBeFocused();
+  // Observe beyond the open delay so a queued hover cannot silently reopen it.
+  await page.waitForTimeout(800);
+  await expect(tooltip).toHaveCount(0);
+  await outside.hover();
+  await outside.focus();
+  await trigger.hover();
+  await expect(tooltip).toBeVisible();
+});
+
+test("Escape keeps a tooltip dismissed while its trigger remains hovered across focus movement", async ({ page }) => {
+  await page.goto("/floating");
+  const trigger = page.getByRole("button", { name: "Save workspace", exact: true });
+  const outside = page.getByRole("button", { name: "Outside action", exact: true });
+  const tooltip = page.getByRole("tooltip");
+  await trigger.hover();
+  await trigger.focus();
+  await expect(tooltip).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(tooltip).toHaveCount(0);
+  await outside.focus();
+  await trigger.focus();
+  await page.waitForTimeout(800);
+  await expect(tooltip).toHaveCount(0);
+  await outside.focus();
+  await outside.hover();
+  await trigger.focus();
+  await expect(tooltip).toBeVisible();
+});
+
 test("Popover preserves drafts, unwinds nested layers, and respects controlled rejection", async ({ page }) => {
   await page.goto("/floating");
   const trigger = page.getByRole("button", { name: "Open view options", exact: true });

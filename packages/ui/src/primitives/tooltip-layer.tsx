@@ -18,12 +18,15 @@ export function createTooltipLayer(trigger: Accessor<HTMLElement | undefined>, d
   onMount(() => {
     const element = trigger();
     if (!element) return;
-    const releaseDismissal = () => { dismissedWhileEngaged = false; };
-    element.addEventListener("blur", releaseDismissal);
-    element.addEventListener("pointerleave", releaseDismissal);
+    // Focus and hover can overlap. Ending just one must not undo Escape
+    // while the other still keeps this interaction engaged.
+    const releaseFocus = () => { if (!element.matches(":hover")) dismissedWhileEngaged = false; };
+    const releasePointer = () => { if (element.ownerDocument.activeElement !== element) dismissedWhileEngaged = false; };
+    element.addEventListener("blur", releaseFocus);
+    element.addEventListener("pointerleave", releasePointer);
     onCleanup(() => {
-      element.removeEventListener("blur", releaseDismissal);
-      element.removeEventListener("pointerleave", releaseDismissal);
+      element.removeEventListener("blur", releaseFocus);
+      element.removeEventListener("pointerleave", releasePointer);
     });
     if (!disabled() && (element.ownerDocument.activeElement === element || element.matches(":hover"))) setOpen(true);
   });
