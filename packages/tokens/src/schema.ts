@@ -90,6 +90,8 @@ export const semanticDefaults = {
   "text-h2-size": "20px", "text-h2-leading": "28px", "text-h2-weight": "600",
   "text-h3-size": "16px", "text-h3-leading": "24px", "text-h3-weight": "600",
   "text-h4-size": "14px", "text-h4-leading": "20px", "text-h4-weight": "600",
+  "text-stat-size": "30px", "text-stat-leading": "34px", "text-stat-weight": "600", "text-stat-tracking": "-0.03em",
+  "text-title-tracking": "-0.014em",
   "icon-size-sm": "14px", "icon-size-md": "16px", "icon-size-lg": "20px", "icon-stroke": "1.5",
   "elevation-raised": "0 1px 3px #00000033", "elevation-overlay": "0 8px 24px #00000044", "elevation-modal": "0 16px 48px #00000066",
   "surface-radius": "8px",
@@ -102,8 +104,13 @@ export type Tokens = Readonly<Record<TokenName, string>>;
 export type Mode = "light" | "dark";
 export type PrimitiveMap = Readonly<Record<string, string>>;
 
-export const currentSchemaVersion = 3;
+export const currentSchemaVersion = 4;
 export const versionedDefaults: Partial<Record<TokenName, { introduced: number; value: string }>> = {
+  "text-stat-size": { introduced: 4, value: "30px" },
+  "text-stat-leading": { introduced: 4, value: "34px" },
+  "text-stat-weight": { introduced: 4, value: "{text-h2-weight}" },
+  "text-stat-tracking": { introduced: 4, value: "-0.03em" },
+  "text-title-tracking": { introduced: 4, value: "-0.014em" },
   "color-border-control": { introduced: 2, value: "{color-border-strong}" },
   "color-focus-ring-offset": { introduced: 2, value: "{color-bg}" },
   "color-neutral": { introduced: 3, value: "{color-fg}" },

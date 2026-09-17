@@ -305,40 +305,32 @@ test("column layout controls have a bounded dark visual baseline", async ({ page
 test("polished table chrome spans light compact and contrast spacious RTL configurations", async ({ page }) => {
   await page.setViewportSize({ width: 900, height: 700 });
   await page.goto("/data-table");
-  await expect(page.locator('[data-sheen-portal="root"]')).toHaveAttribute("data-sheen-ready", "true");
-  const section = page.getByRole("region", { name: "Column interaction example" });
-  const root = section.locator(".sheen-data-table");
-  const table = section.getByRole("table", { name: "Interactive columns" });
-  await table.getByRole("button", { name: "Name", exact: true }).click();
-  await table.getByRole("button", { name: "Amount", exact: true }).click({ modifiers: ["Shift"] });
-  await openColumns(page, section, "Interactive columns");
-  await page.getByRole("menuitem", { name: "Name", exact: true }).hover();
-  await page.getByRole("menuitemradio", { name: "Pin to start" }).click();
-  await page.keyboard.press("Escape");
-  await page.keyboard.press("Escape");
-
-  await root.evaluate(element => {
-    const scope = element.closest("[data-sheen-theme]");
-    if (!scope) throw new Error("Expected a theme scope");
-    scope.setAttribute("data-sheen-theme", "paper");
-    scope.setAttribute("data-sheen-mode", "light");
-    scope.setAttribute("data-sheen-density", "compact");
-  });
-  await table.getByRole("separator", { name: "Resize Name" }).focus();
-  await expect(table.locator('tr[data-row-id="client-0"]')).toHaveCSS("height", "28px");
-  await expect(root).toHaveScreenshot("data-table-columns-paper-light-compact.png", { maxDiffPixelRatio: 0.004 });
-
-  await root.evaluate(element => {
-    const scope = element.closest("[data-sheen-theme]");
-    if (!scope) throw new Error("Expected a theme scope");
-    scope.setAttribute("data-sheen-theme", "contrast");
-    scope.setAttribute("data-sheen-mode", "light");
-    scope.setAttribute("data-sheen-density", "spacious");
-  });
-  await section.getByRole("button", { name: "Use RTL column layout" }).click();
-  await table.getByRole("separator", { name: "Resize Name" }).focus();
-  await expect(table.locator('tr[data-row-id="client-0"]')).toHaveCSS("height", "42px");
-  await expect(root).toHaveScreenshot("data-table-columns-contrast-light-spacious-rtl.png", { maxDiffPixelRatio: 0.004 });
+  for (const configuration of [
+    { theme: "paper", density: "compact", height: 28, rtl: false, snapshot: "data-table-columns-paper-light-compact.png" },
+    { theme: "contrast", density: "spacious", height: 42, rtl: true, snapshot: "data-table-columns-contrast-light-spacious-rtl.png" },
+  ]) {
+    await page.evaluate(configuration => localStorage.setItem("sheen", JSON.stringify({ theme: configuration.theme, density: configuration.density, mode: "light" })), configuration);
+    await page.reload();
+    await expect(page.locator('[data-sheen-portal="root"]')).toHaveAttribute("data-sheen-ready", "true");
+    const section = page.getByRole("region", { name: "Column interaction example" });
+    const root = section.locator(".sheen-data-table");
+    const table = section.getByRole("table", { name: "Interactive columns" });
+    await table.getByRole("button", { name: "Name", exact: true }).click();
+    await table.getByRole("button", { name: "Amount", exact: true }).click({ modifiers: ["Shift"] });
+    await openColumns(page, section, "Interactive columns");
+    await page.getByRole("menuitem", { name: "Name", exact: true }).hover();
+    await page.getByRole("menuitemradio", { name: "Pin to start" }).click();
+    await page.keyboard.press("Escape");
+    await page.keyboard.press("Escape");
+    if (configuration.rtl) await section.getByRole("button", { name: "Use RTL column layout" }).click();
+    await table.getByRole("separator", { name: "Resize Name" }).focus();
+    await expect(table.locator('tr[data-row-id="client-0"]')).toHaveCSS("height", `${configuration.height}px`);
+    const positions = await table.locator("tbody tr[data-row-id]").evaluateAll(rows => rows.slice(0, 3).map(row => row.getBoundingClientRect().top));
+    expect(positions).toHaveLength(3);
+    expect((positions[1] ?? 0) - (positions[0] ?? 0)).toBe(configuration.height);
+    expect((positions[2] ?? 0) - (positions[1] ?? 0)).toBe(configuration.height);
+    await expect(root).toHaveScreenshot(configuration.snapshot, { maxDiffPixelRatio: 0.004 });
+  }
 });
 
 test("variable-height rows measure wrapped content and remain populated while scrolling", async ({ page }) => {

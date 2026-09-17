@@ -586,7 +586,7 @@
           "inherited": false
         },
         "color": {
-          "description": "Semantic chart, market, or accent token name.",
+          "description": "Semantic chart, market, accent, foreground, or muted token name.",
           "default": "chart-1",
           "type": "import(\"./chart-types.ts\").ChartColorToken",
           "required": false,
@@ -655,6 +655,12 @@
           "required": true,
           "inherited": false
         },
+        "format": {
+          "description": "Optional locale-aware Intl.NumberFormat options; requires a numeric value. Fractions and units use muted text.",
+          "type": "Intl.NumberFormatOptions",
+          "required": false,
+          "inherited": false
+        },
         "trend": {
           "description": "Optional directional state; requires trendLabel.",
           "type": "StatTrend",
@@ -664,6 +670,18 @@
         "trendLabel": {
           "description": "Required visible non-color description when trend is supplied.",
           "type": "string",
+          "required": false,
+          "inherited": false
+        },
+        "valence": {
+          "description": "Meaning of the change, independent of direction; positive, negative, or neutral. Requires a trend and defaults to neutral.",
+          "type": "import(\"./chart-types.ts\").StatValence",
+          "required": false,
+          "inherited": false
+        },
+        "visual": {
+          "description": "Optional supplementary JSX, such as a labeled Sparkline or Meter based on actual data. The text value remains complete. Preserve the visual node when refreshing its data.",
+          "type": "JSX.Element",
           "required": false,
           "inherited": false
         },
@@ -677,10 +695,12 @@
       "tokens": [
         "--sheen-color-fg",
         "--sheen-color-fg-muted",
-        "--sheen-color-market-up",
-        "--sheen-color-market-down",
-        "--sheen-color-market-flat",
-        "--sheen-text-h2-size"
+        "--sheen-color-success",
+        "--sheen-color-danger",
+        "--sheen-text-stat-size",
+        "--sheen-text-stat-leading",
+        "--sheen-text-stat-weight",
+        "--sheen-text-stat-tracking"
       ],
       "a11y": {
         "role": "term and definition",
@@ -688,16 +708,24 @@
       },
       "examples": [
         {
-          "title": "Directional metric",
-          "code": "<Stat label=\"Error rate\" value=\"0.18%\" trend=\"down\" trendLabel=\"0.04 points lower\" />"
+          "title": "Improving error rate",
+          "code": "<Stat label=\"Error rate\" value=\"0.18%\" trend=\"down\" valence=\"positive\" trendLabel=\"0.04 points lower\" />"
+        },
+        {
+          "title": "Utilization with a track",
+          "imports": "import { Meter } from \"@gemologic/sheen\";",
+          "setup": "const utilizationVisual = <Meter label=\"Used capacity\" value={65} min={0} max={100} />;",
+          "code": "<Stat label=\"Utilization\" value={0.65} format={{ style: \"percent\" }} visual={utilizationVisual} />"
         }
       ],
       "guidance": {
         "do": [
-          "State the direction and magnitude in trendLabel."
+          "State the direction and magnitude in trendLabel.",
+          "Set valence from the metric's meaning; lower errors are positive, higher latency is negative."
         ],
         "dont": [
-          "Do not rely on arrow shape or color to communicate a change."
+          "Do not rely on arrow shape or color to communicate a change.",
+          "Do not infer whether a change is good from its direction."
         ]
       },
       "source": "packages/charts/src/Stat.tsx",
@@ -42306,7 +42334,7 @@
           "inherited": false
         },
         "actionGroups": {
-          "description": "Semantic primary, utility, and help action groups with native Button or Link behavior.",
+          "description": "Semantic primary, utility, and help action groups with native Button or Link behavior. Optional group presentation='overflow' puts infrequent controls in a scoped, keyboard-operable popover; use icon factories for deferred rendering there.",
           "type": "readonly AdminActionGroup[] | undefined",
           "required": false,
           "inherited": false
@@ -42481,10 +42509,16 @@
       },
       "guidance": {
         "do": [
-          "Treat placements and appearance as stable server input; use themes and accents for global brand axes and admin aliases for shell-specific surfaces."
+          "Treat placements and appearance as stable server input; use themes and accents for global brand axes and admin aliases for shell-specific surfaces.",
+          "Give each page one focal working region: a metric/chart overview, a collection toolbar and rows, a registry and create form, or settings with save/discard controls.",
+          "Use at most one filled accent action per active task surface; dialogs own a separate task and destructive confirmations use danger semantics.",
+          "Use semantic surface depth and explicit locale-aware numeric precision. Keep counts factual and consistent with the accepted workspace scope.",
+          "Compose structured fields from named controls with group counts and field-specific errors; preserve native form values and drafts through refresh."
         ],
         "dont": [
-          "Do not remount AdminApp during refresh or use it as a global arbitrary-content modal manager."
+          "Do not remount AdminApp during refresh or use it as a global arbitrary-content modal manager.",
+          "Do not invent historical trends, account-creation actions, or low-contrast text to fill a composition. Keep developer diagnostics in the explicit design lab.",
+          "Do not count accent actions across unrelated runtime surfaces with a global JSX rule or animate layout content on mount."
         ]
       },
       "source": "packages/patterns/src/AdminApp.tsx",
@@ -95588,6 +95622,12 @@
           "required": false,
           "inherited": false
         },
+        "summarizeColumns": {
+          "description": "Opt-in filterable, noneditable, nonsensitive accessor IDs. Exact accepted constraints replace eligible visible columns with labeled full-query counts and a restore action. Never samples page rows or facets, never rewrites saved visibility, and retains at least one column. Explicit restoration lasts for this table owner.",
+          "type": "readonly string[]",
+          "required": false,
+          "inherited": false
+        },
         "export": {
           "description": "Client export is enabled by default; false hides it, while options constrain formats and set a filename base.",
           "type": "false | DataTableExportOptions",
@@ -95640,6 +95680,11 @@
           "title": "Bounded continuous data",
           "setup": "const columns = defineColumns<{ readonly id: string; readonly name: string; readonly amount: number }>([\n  { id: \"name\", header: \"Name\", accessor: row => row.name, search: true },\n  { id: \"amount\", header: \"Amount\", accessor: row => row.amount, numeric: true },\n]);\nconst rows = [{ id: \"one\", name: \"Alpha\", amount: 12 }, { id: \"two\", name: \"Beta\", amount: 34 }];",
           "code": "<DataTable data={rows} columns={columns} getRowId={row => row.id} caption=\"Accounts\" pagination={false} mobileLayout={{ pageSize: 20, titleColumn: \"name\" }} initialViewportHeight={160} />"
+        },
+        {
+          "title": "Summarize an accepted constant field",
+          "setup": "const columns = defineColumns<{ readonly id: string; readonly name: string; readonly status: string }>([\n  { id: \"name\", header: \"Name\", accessor: row => row.name },\n  { id: \"status\", header: \"Status\", accessor: row => row.status, filter: { type: \"enum\", options: [\"Active\", \"Paused\"] } },\n]);\nconst rows = [{ id: \"one\", name: \"Alpha\", status: \"Active\" }, { id: \"two\", name: \"Beta\", status: \"Paused\" }];",
+          "code": "<DataTable data={rows} columns={columns} getRowId={row => row.id} caption=\"Active accounts\" summarizeColumns={[\"status\"]} filter={{ kind: \"enum\", column: \"status\", operator: \"in\", values: [\"Active\"] }} initialViewportHeight={160} />"
         }
       ],
       "composer": {
@@ -214468,6 +214513,2746 @@
       },
       "source": "packages/ui/src/primitives/NumberField.tsx",
       "demo": "packages/ui/src/primitives/NumberField.demo.tsx"
+    },
+    {
+      "name": "NumberText",
+      "package": "@gemologic/sheen",
+      "category": "typography",
+      "summary": "Typesets a finite number with locale-aware grouping, precision, and quieter fractional digits and units.",
+      "props": {
+        "value": {
+          "description": "Finite numeric value. Percent formats accept a fraction: 0.65 means 65 percent.",
+          "type": "number",
+          "required": true,
+          "inherited": false
+        },
+        "format": {
+          "description": "Intl.NumberFormat options for explicit precision, currency, units, or compact notation.",
+          "type": "Intl.NumberFormatOptions",
+          "required": false,
+          "inherited": false
+        },
+        "title": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "class": {
+          "description": "Class merged onto the native span; other native attributes and ref target that span.",
+          "type": "string | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onChange": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.ChangeEventHandlerUnion<T, Event> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "id": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "ref": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "T | ((el: T) => void) | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onPointerDown": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, PointerEvent, JSX.EventHandler<T, PointerEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "use:eventListener": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "import(\"@solid-primitives/event-listener\").EventListenerDirectiveProps | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "innerText": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | number | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "accesskey": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "autocapitalize": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.HTMLAutocapitalize | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "autocorrect": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "\"off\" | \"on\" | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "contenteditable": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "false | true | \"true\" | \"false\" | \"plaintext-only\" | \"inherit\" | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "dir": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.HTMLDir | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "draggable": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "false | true | \"true\" | \"false\" | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "enterkeyhint": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "\"enter\" | \"done\" | \"go\" | \"next\" | \"previous\" | \"search\" | \"send\" | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "exportparts": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "hidden": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "false | true | \"hidden\" | \"until-found\" | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "inert": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "false | true | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "inputmode": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "\"none\" | \"search\" | \"decimal\" | \"email\" | \"numeric\" | \"tel\" | \"text\" | \"url\" | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "is": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "lang": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "part": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "popover": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "false | true | \"auto\" | \"manual\" | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "spellcheck": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "false | true | \"true\" | \"false\" | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "translate": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "\"yes\" | \"no\" | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "accessKey": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "autoCapitalize": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.HTMLAutocapitalize | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "contentEditable": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "false | true | \"plaintext-only\" | \"inherit\" | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "exportParts": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "inputMode": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "\"none\" | \"search\" | \"decimal\" | \"email\" | \"numeric\" | \"tel\" | \"text\" | \"url\" | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "itemid": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "itemprop": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "itemref": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "itemscope": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "false | true | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "itemtype": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "itemId": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "itemProp": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "itemRef": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "itemScope": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "false | true | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "itemType": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "about": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "datatype": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "inlist": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "any",
+          "required": false,
+          "inherited": true
+        },
+        "prefix": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "property": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "resource": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "typeof": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "vocab": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "contextmenu": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "contextMenu": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "innerHTML": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "textContent": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | number | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "autofocus": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "false | true | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "elementtiming": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "nonce": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "slot": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "style": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | JSX.CSSProperties | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "tabindex": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | number | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "tabIndex": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | number | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "classList": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.ClassList | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "$ServerOnly": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "false | true | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onAbort": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, UIEvent, JSX.EventHandler<T, UIEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onAnimationCancel": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, AnimationEvent, JSX.EventHandler<T, AnimationEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onAnimationEnd": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, AnimationEvent, JSX.EventHandler<T, AnimationEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onAnimationIteration": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, AnimationEvent, JSX.EventHandler<T, AnimationEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onAnimationStart": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, AnimationEvent, JSX.EventHandler<T, AnimationEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onAuxClick": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, PointerEvent, JSX.EventHandler<T, PointerEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onBeforeCopy": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, ClipboardEvent, JSX.EventHandler<T, ClipboardEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onBeforeCut": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, ClipboardEvent, JSX.EventHandler<T, ClipboardEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onBeforeInput": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.InputEventHandlerUnion<T, InputEvent> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onBeforeMatch": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onBeforePaste": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, ClipboardEvent, JSX.EventHandler<T, ClipboardEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onBeforeToggle": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, ToggleEvent, JSX.EventHandler<T, ToggleEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onBeforeXRSelect": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onBlur": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.FocusEventHandlerUnion<T, FocusEvent> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onCancel": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onCanPlay": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onCanPlayThrough": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onClick": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, MouseEvent, JSX.EventHandler<T, MouseEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onClose": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onCommand": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onCompositionEnd": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, CompositionEvent, JSX.EventHandler<T, CompositionEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onCompositionStart": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, CompositionEvent, JSX.EventHandler<T, CompositionEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onCompositionUpdate": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, CompositionEvent, JSX.EventHandler<T, CompositionEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onContentVisibilityAutoStateChange": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, ContentVisibilityAutoStateChangeEvent, JSX.EventHandler<T, ContentVisibilityAutoStateChangeEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onContextLost": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onContextMenu": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, PointerEvent, JSX.EventHandler<T, PointerEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onContextRestored": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onCopy": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, ClipboardEvent, JSX.EventHandler<T, ClipboardEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onCueChange": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onCut": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, ClipboardEvent, JSX.EventHandler<T, ClipboardEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onDblClick": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, MouseEvent, JSX.EventHandler<T, MouseEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onDrag": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, DragEvent, JSX.EventHandler<T, DragEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onDragEnd": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, DragEvent, JSX.EventHandler<T, DragEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onDragEnter": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, DragEvent, JSX.EventHandler<T, DragEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onDragExit": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, DragEvent, JSX.EventHandler<T, DragEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onDragLeave": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, DragEvent, JSX.EventHandler<T, DragEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onDragOver": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, DragEvent, JSX.EventHandler<T, DragEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onDragStart": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, DragEvent, JSX.EventHandler<T, DragEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onDrop": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, DragEvent, JSX.EventHandler<T, DragEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onDurationChange": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onEmptied": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onEnded": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onError": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, ErrorEvent, JSX.EventHandler<T, ErrorEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onFocus": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.FocusEventHandlerUnion<T, FocusEvent> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onFocusIn": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.FocusEventHandlerUnion<T, FocusEvent> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onFocusOut": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.FocusEventHandlerUnion<T, FocusEvent> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onFormData": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, FormDataEvent, JSX.EventHandler<T, FormDataEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onFullscreenChange": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onFullscreenError": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onGotPointerCapture": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, PointerEvent, JSX.EventHandler<T, PointerEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onInput": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.InputEventHandlerUnion<T, InputEvent> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onInvalid": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onKeyDown": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, KeyboardEvent, JSX.EventHandler<T, KeyboardEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onKeyPress": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, KeyboardEvent, JSX.EventHandler<T, KeyboardEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onKeyUp": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, KeyboardEvent, JSX.EventHandler<T, KeyboardEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onLoad": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onLoadedData": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onLoadedMetadata": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onLoadStart": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onLostPointerCapture": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, PointerEvent, JSX.EventHandler<T, PointerEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onMouseDown": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, MouseEvent, JSX.EventHandler<T, MouseEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onMouseEnter": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, MouseEvent, JSX.EventHandler<T, MouseEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onMouseLeave": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, MouseEvent, JSX.EventHandler<T, MouseEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onMouseMove": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, MouseEvent, JSX.EventHandler<T, MouseEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onMouseOut": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, MouseEvent, JSX.EventHandler<T, MouseEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onMouseOver": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, MouseEvent, JSX.EventHandler<T, MouseEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onMouseUp": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, MouseEvent, JSX.EventHandler<T, MouseEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onPaste": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, ClipboardEvent, JSX.EventHandler<T, ClipboardEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onPause": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onPlay": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onPlaying": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onPointerCancel": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, PointerEvent, JSX.EventHandler<T, PointerEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onPointerEnter": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, PointerEvent, JSX.EventHandler<T, PointerEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onPointerLeave": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, PointerEvent, JSX.EventHandler<T, PointerEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onPointerMove": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, PointerEvent, JSX.EventHandler<T, PointerEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onPointerOut": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, PointerEvent, JSX.EventHandler<T, PointerEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onPointerOver": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, PointerEvent, JSX.EventHandler<T, PointerEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onPointerRawUpdate": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, PointerEvent, JSX.EventHandler<T, PointerEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onPointerUp": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, PointerEvent, JSX.EventHandler<T, PointerEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onProgress": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, ProgressEvent<EventTarget>, JSX.EventHandler<T, ProgressEvent<EventTarget>>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onRateChange": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onReset": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onResize": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, UIEvent, JSX.EventHandler<T, UIEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onScroll": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onScrollEnd": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onScrollSnapChange": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onScrollSnapChanging": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onSecurityPolicyViolation": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, SecurityPolicyViolationEvent, JSX.EventHandler<T, SecurityPolicyViolationEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onSeeked": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onSeeking": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onSelect": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onSelectionChange": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onSelectStart": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onSlotChange": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onStalled": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onSubmit": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, SubmitEvent, JSX.EventHandler<T, SubmitEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onSuspend": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onTimeUpdate": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onToggle": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, ToggleEvent, JSX.EventHandler<T, ToggleEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onTouchCancel": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, TouchEvent, JSX.EventHandler<T, TouchEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onTouchEnd": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, TouchEvent, JSX.EventHandler<T, TouchEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onTouchMove": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, TouchEvent, JSX.EventHandler<T, TouchEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onTouchStart": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, TouchEvent, JSX.EventHandler<T, TouchEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onTransitionCancel": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, TransitionEvent, JSX.EventHandler<T, TransitionEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onTransitionEnd": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, TransitionEvent, JSX.EventHandler<T, TransitionEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onTransitionRun": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, TransitionEvent, JSX.EventHandler<T, TransitionEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onTransitionStart": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, TransitionEvent, JSX.EventHandler<T, TransitionEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onVolumeChange": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onWaiting": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onWheel": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, WheelEvent, JSX.EventHandler<T, WheelEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onabort": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, UIEvent, JSX.EventHandler<T, UIEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onanimationcancel": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, AnimationEvent, JSX.EventHandler<T, AnimationEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onanimationend": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, AnimationEvent, JSX.EventHandler<T, AnimationEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onanimationiteration": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, AnimationEvent, JSX.EventHandler<T, AnimationEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onanimationstart": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, AnimationEvent, JSX.EventHandler<T, AnimationEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onauxclick": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, PointerEvent, JSX.EventHandler<T, PointerEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onbeforecopy": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, ClipboardEvent, JSX.EventHandler<T, ClipboardEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onbeforecut": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, ClipboardEvent, JSX.EventHandler<T, ClipboardEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onbeforeinput": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.InputEventHandlerUnion<T, InputEvent> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onbeforematch": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onbeforepaste": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, ClipboardEvent, JSX.EventHandler<T, ClipboardEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onbeforetoggle": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, ToggleEvent, JSX.EventHandler<T, ToggleEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onbeforexrselect": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onblur": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.FocusEventHandlerUnion<T, FocusEvent> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "oncancel": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "oncanplay": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "oncanplaythrough": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onchange": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.ChangeEventHandlerUnion<T, Event> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onclick": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, MouseEvent, JSX.EventHandler<T, MouseEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onclose": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "oncommand": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "oncompositionend": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, CompositionEvent, JSX.EventHandler<T, CompositionEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "oncompositionstart": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, CompositionEvent, JSX.EventHandler<T, CompositionEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "oncompositionupdate": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, CompositionEvent, JSX.EventHandler<T, CompositionEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "oncontentvisibilityautostatechange": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, ContentVisibilityAutoStateChangeEvent, JSX.EventHandler<T, ContentVisibilityAutoStateChangeEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "oncontextlost": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "oncontextmenu": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, PointerEvent, JSX.EventHandler<T, PointerEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "oncontextrestored": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "oncopy": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, ClipboardEvent, JSX.EventHandler<T, ClipboardEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "oncuechange": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "oncut": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, ClipboardEvent, JSX.EventHandler<T, ClipboardEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "ondblclick": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, MouseEvent, JSX.EventHandler<T, MouseEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "ondrag": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, DragEvent, JSX.EventHandler<T, DragEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "ondragend": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, DragEvent, JSX.EventHandler<T, DragEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "ondragenter": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, DragEvent, JSX.EventHandler<T, DragEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "ondragexit": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, DragEvent, JSX.EventHandler<T, DragEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "ondragleave": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, DragEvent, JSX.EventHandler<T, DragEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "ondragover": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, DragEvent, JSX.EventHandler<T, DragEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "ondragstart": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, DragEvent, JSX.EventHandler<T, DragEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "ondrop": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, DragEvent, JSX.EventHandler<T, DragEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "ondurationchange": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onemptied": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onended": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onerror": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, ErrorEvent, JSX.EventHandler<T, ErrorEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onfocus": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.FocusEventHandlerUnion<T, FocusEvent> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onfocusin": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.FocusEventHandlerUnion<T, FocusEvent> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onfocusout": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.FocusEventHandlerUnion<T, FocusEvent> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onformdata": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, FormDataEvent, JSX.EventHandler<T, FormDataEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onfullscreenchange": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onfullscreenerror": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "ongotpointercapture": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, PointerEvent, JSX.EventHandler<T, PointerEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "oninput": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.InputEventHandlerUnion<T, InputEvent> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "oninvalid": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onkeydown": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, KeyboardEvent, JSX.EventHandler<T, KeyboardEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onkeypress": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, KeyboardEvent, JSX.EventHandler<T, KeyboardEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onkeyup": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, KeyboardEvent, JSX.EventHandler<T, KeyboardEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onload": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onloadeddata": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onloadedmetadata": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onloadstart": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onlostpointercapture": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, PointerEvent, JSX.EventHandler<T, PointerEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onmousedown": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, MouseEvent, JSX.EventHandler<T, MouseEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onmouseenter": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, MouseEvent, JSX.EventHandler<T, MouseEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onmouseleave": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, MouseEvent, JSX.EventHandler<T, MouseEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onmousemove": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, MouseEvent, JSX.EventHandler<T, MouseEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onmouseout": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, MouseEvent, JSX.EventHandler<T, MouseEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onmouseover": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, MouseEvent, JSX.EventHandler<T, MouseEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onmouseup": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, MouseEvent, JSX.EventHandler<T, MouseEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onpaste": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, ClipboardEvent, JSX.EventHandler<T, ClipboardEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onpause": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onplay": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onplaying": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onpointercancel": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, PointerEvent, JSX.EventHandler<T, PointerEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onpointerdown": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, PointerEvent, JSX.EventHandler<T, PointerEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onpointerenter": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, PointerEvent, JSX.EventHandler<T, PointerEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onpointerleave": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, PointerEvent, JSX.EventHandler<T, PointerEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onpointermove": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, PointerEvent, JSX.EventHandler<T, PointerEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onpointerout": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, PointerEvent, JSX.EventHandler<T, PointerEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onpointerover": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, PointerEvent, JSX.EventHandler<T, PointerEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onpointerrawupdate": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, PointerEvent, JSX.EventHandler<T, PointerEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onpointerup": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, PointerEvent, JSX.EventHandler<T, PointerEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onprogress": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, ProgressEvent<EventTarget>, JSX.EventHandler<T, ProgressEvent<EventTarget>>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onratechange": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onreset": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onresize": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, UIEvent, JSX.EventHandler<T, UIEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onscroll": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onscrollend": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onscrollsnapchange": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onscrollsnapchanging": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onsecuritypolicyviolation": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, SecurityPolicyViolationEvent, JSX.EventHandler<T, SecurityPolicyViolationEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onseeked": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onseeking": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onselect": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onselectionchange": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onselectstart": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onslotchange": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onstalled": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onsubmit": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, SubmitEvent, JSX.EventHandler<T, SubmitEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onsuspend": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "ontimeupdate": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "ontoggle": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, ToggleEvent, JSX.EventHandler<T, ToggleEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "ontouchcancel": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, TouchEvent, JSX.EventHandler<T, TouchEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "ontouchend": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, TouchEvent, JSX.EventHandler<T, TouchEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "ontouchmove": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, TouchEvent, JSX.EventHandler<T, TouchEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "ontouchstart": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, TouchEvent, JSX.EventHandler<T, TouchEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "ontransitioncancel": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, TransitionEvent, JSX.EventHandler<T, TransitionEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "ontransitionend": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, TransitionEvent, JSX.EventHandler<T, TransitionEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "ontransitionrun": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, TransitionEvent, JSX.EventHandler<T, TransitionEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "ontransitionstart": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, TransitionEvent, JSX.EventHandler<T, TransitionEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onvolumechange": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onwaiting": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "onwheel": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerUnion<T, WheelEvent, JSX.EventHandler<T, WheelEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:abort": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, UIEvent, JSX.EventHandler<T, UIEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:animationcancel": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, AnimationEvent, JSX.EventHandler<T, AnimationEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:animationend": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, AnimationEvent, JSX.EventHandler<T, AnimationEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:animationiteration": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, AnimationEvent, JSX.EventHandler<T, AnimationEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:animationstart": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, AnimationEvent, JSX.EventHandler<T, AnimationEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:auxclick": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, PointerEvent, JSX.EventHandler<T, PointerEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:beforecopy": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, ClipboardEvent, JSX.EventHandler<T, ClipboardEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:beforecut": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, ClipboardEvent, JSX.EventHandler<T, ClipboardEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:beforeinput": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, InputEvent, JSX.InputEventHandler<T, InputEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:beforematch": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:beforepaste": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, ClipboardEvent, JSX.EventHandler<T, ClipboardEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:beforetoggle": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, ToggleEvent, JSX.EventHandler<T, ToggleEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:beforexrselect": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:blur": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, FocusEvent, JSX.FocusEventHandler<T, FocusEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:cancel": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:canplay": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:canplaythrough": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:change": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, Event, JSX.ChangeEventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:click": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, MouseEvent, JSX.EventHandler<T, MouseEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:close": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:command": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:compositionend": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, CompositionEvent, JSX.EventHandler<T, CompositionEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:compositionstart": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, CompositionEvent, JSX.EventHandler<T, CompositionEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:compositionupdate": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, CompositionEvent, JSX.EventHandler<T, CompositionEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:contentvisibilityautostatechange": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, ContentVisibilityAutoStateChangeEvent, JSX.EventHandler<T, ContentVisibilityAutoStateChangeEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:contextlost": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:contextmenu": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, PointerEvent, JSX.EventHandler<T, PointerEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:contextrestored": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:copy": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, ClipboardEvent, JSX.EventHandler<T, ClipboardEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:cuechange": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:cut": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, ClipboardEvent, JSX.EventHandler<T, ClipboardEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:dblclick": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, MouseEvent, JSX.EventHandler<T, MouseEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:drag": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, DragEvent, JSX.EventHandler<T, DragEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:dragend": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, DragEvent, JSX.EventHandler<T, DragEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:dragenter": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, DragEvent, JSX.EventHandler<T, DragEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:dragexit": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, DragEvent, JSX.EventHandler<T, DragEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:dragleave": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, DragEvent, JSX.EventHandler<T, DragEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:dragover": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, DragEvent, JSX.EventHandler<T, DragEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:dragstart": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, DragEvent, JSX.EventHandler<T, DragEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:drop": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, DragEvent, JSX.EventHandler<T, DragEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:durationchange": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:emptied": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:ended": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:error": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, ErrorEvent, JSX.EventHandler<T, ErrorEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:focus": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, FocusEvent, JSX.FocusEventHandler<T, FocusEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:focusin": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, FocusEvent, JSX.FocusEventHandler<T, FocusEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:focusout": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, FocusEvent, JSX.FocusEventHandler<T, FocusEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:formdata": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, FormDataEvent, JSX.EventHandler<T, FormDataEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:fullscreenchange": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:fullscreenerror": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:gotpointercapture": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, PointerEvent, JSX.EventHandler<T, PointerEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:input": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, InputEvent, JSX.InputEventHandler<T, InputEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:invalid": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:keydown": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, KeyboardEvent, JSX.EventHandler<T, KeyboardEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:keypress": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, KeyboardEvent, JSX.EventHandler<T, KeyboardEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:keyup": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, KeyboardEvent, JSX.EventHandler<T, KeyboardEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:load": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:loadeddata": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:loadedmetadata": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:loadstart": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:lostpointercapture": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, PointerEvent, JSX.EventHandler<T, PointerEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:mousedown": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, MouseEvent, JSX.EventHandler<T, MouseEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:mouseenter": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, MouseEvent, JSX.EventHandler<T, MouseEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:mouseleave": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, MouseEvent, JSX.EventHandler<T, MouseEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:mousemove": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, MouseEvent, JSX.EventHandler<T, MouseEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:mouseout": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, MouseEvent, JSX.EventHandler<T, MouseEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:mouseover": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, MouseEvent, JSX.EventHandler<T, MouseEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:mouseup": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, MouseEvent, JSX.EventHandler<T, MouseEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:paste": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, ClipboardEvent, JSX.EventHandler<T, ClipboardEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:pause": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:play": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:playing": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:pointercancel": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, PointerEvent, JSX.EventHandler<T, PointerEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:pointerdown": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, PointerEvent, JSX.EventHandler<T, PointerEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:pointerenter": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, PointerEvent, JSX.EventHandler<T, PointerEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:pointerleave": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, PointerEvent, JSX.EventHandler<T, PointerEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:pointermove": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, PointerEvent, JSX.EventHandler<T, PointerEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:pointerout": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, PointerEvent, JSX.EventHandler<T, PointerEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:pointerover": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, PointerEvent, JSX.EventHandler<T, PointerEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:pointerrawupdate": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, PointerEvent, JSX.EventHandler<T, PointerEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:pointerup": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, PointerEvent, JSX.EventHandler<T, PointerEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:progress": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, ProgressEvent<EventTarget>, JSX.EventHandler<T, ProgressEvent<EventTarget>>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:ratechange": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:reset": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:resize": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, UIEvent, JSX.EventHandler<T, UIEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:scroll": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:scrollend": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:scrollsnapchange": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:scrollsnapchanging": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:securitypolicyviolation": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, SecurityPolicyViolationEvent, JSX.EventHandler<T, SecurityPolicyViolationEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:seeked": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:seeking": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:select": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:selectionchange": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:selectstart": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:slotchange": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:stalled": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:submit": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, SubmitEvent, JSX.EventHandler<T, SubmitEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:suspend": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:timeupdate": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:toggle": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, ToggleEvent, JSX.EventHandler<T, ToggleEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:touchcancel": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, TouchEvent, JSX.EventHandler<T, TouchEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:touchend": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, TouchEvent, JSX.EventHandler<T, TouchEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:touchmove": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, TouchEvent, JSX.EventHandler<T, TouchEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:touchstart": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, TouchEvent, JSX.EventHandler<T, TouchEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:transitioncancel": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, TransitionEvent, JSX.EventHandler<T, TransitionEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:transitionend": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, TransitionEvent, JSX.EventHandler<T, TransitionEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:transitionrun": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, TransitionEvent, JSX.EventHandler<T, TransitionEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:transitionstart": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, TransitionEvent, JSX.EventHandler<T, TransitionEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:volumechange": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:waiting": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, Event, JSX.EventHandler<T, Event>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "on:wheel": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "JSX.EventHandlerWithOptionsUnion<T, WheelEvent, JSX.EventHandler<T, WheelEvent>> | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "aria-activedescendant": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "aria-atomic": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "false | true | \"true\" | \"false\" | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "aria-braillelabel": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "aria-brailleroledescription": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "aria-autocomplete": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "\"none\" | \"inline\" | \"list\" | \"both\" | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "aria-busy": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "false | true | \"true\" | \"false\" | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "aria-checked": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "false | true | \"true\" | \"false\" | \"mixed\" | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "aria-colcount": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | number | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "aria-colindex": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | number | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "aria-colindextext": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | number | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "aria-colspan": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | number | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "aria-controls": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "aria-current": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "false | true | \"true\" | \"false\" | \"page\" | \"step\" | \"location\" | \"date\" | \"time\" | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "aria-describedby": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "aria-description": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "aria-details": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "aria-disabled": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "false | true | \"true\" | \"false\" | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "aria-dropeffect": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "\"none\" | \"copy\" | \"execute\" | \"link\" | \"move\" | \"popup\" | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "aria-errormessage": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "aria-expanded": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "false | true | \"true\" | \"false\" | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "aria-flowto": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "aria-grabbed": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "false | true | \"true\" | \"false\" | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "aria-haspopup": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "false | true | \"true\" | \"false\" | \"menu\" | \"listbox\" | \"tree\" | \"grid\" | \"dialog\" | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "aria-hidden": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "false | true | \"true\" | \"false\" | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "aria-invalid": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "false | true | \"true\" | \"false\" | \"grammar\" | \"spelling\" | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "aria-keyshortcuts": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "aria-label": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "aria-labelledby": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "aria-level": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | number | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "aria-live": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "\"off\" | \"assertive\" | \"polite\" | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "aria-modal": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "false | true | \"true\" | \"false\" | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "aria-multiline": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "false | true | \"true\" | \"false\" | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "aria-multiselectable": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "false | true | \"true\" | \"false\" | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "aria-orientation": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "\"horizontal\" | \"vertical\" | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "aria-owns": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "aria-placeholder": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "aria-posinset": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | number | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "aria-pressed": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "false | true | \"true\" | \"false\" | \"mixed\" | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "aria-readonly": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "false | true | \"true\" | \"false\" | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "aria-relevant": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "\"text\" | \"additions\" | \"additions removals\" | \"additions text\" | \"all\" | \"removals\" | \"removals additions\" | \"removals text\" | \"text additions\" | \"text removals\" | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "aria-required": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "false | true | \"true\" | \"false\" | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "aria-roledescription": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "aria-rowcount": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | number | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "aria-rowindex": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | number | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "aria-rowindextext": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | number | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "aria-rowspan": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | number | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "aria-selected": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "false | true | \"true\" | \"false\" | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "aria-setsize": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | number | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "aria-sort": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "\"none\" | \"ascending\" | \"descending\" | \"other\" | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "aria-valuemax": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | number | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "aria-valuemin": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | number | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "aria-valuenow": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | number | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "aria-valuetext": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "role": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "\"none\" | \"search\" | \"list\" | \"link\" | \"menu\" | \"listbox\" | \"tree\" | \"grid\" | \"dialog\" | \"alert\" | \"alertdialog\" | \"application\" | \"article\" | \"banner\" | \"button\" | \"cell\" | \"checkbox\" | \"columnheader\" | \"combobox\" | \"complementary\" | \"contentinfo\" | \"definition\" | \"directory\" | \"document\" | \"feed\" | \"figure\" | \"form\" | \"gridcell\" | \"group\" | \"heading\" | \"img\" | \"listitem\" | \"log\" | \"main\" | \"marquee\" | \"math\" | \"menubar\" | \"menuitem\" | \"menuitemcheckbox\" | \"menuitemradio\" | \"meter\" | \"navigation\" | \"note\" | \"option\" | \"presentation\" | \"progressbar\" | \"radio\" | \"radiogroup\" | \"region\" | \"row\" | \"rowgroup\" | \"rowheader\" | \"scrollbar\" | \"searchbox\" | \"separator\" | \"slider\" | \"spinbutton\" | \"status\" | \"switch\" | \"tab\" | \"table\" | \"tablist\" | \"tabpanel\" | \"term\" | \"textbox\" | \"timer\" | \"toolbar\" | \"tooltip\" | \"treegrid\" | \"treeitem\" | undefined",
+          "required": false,
+          "inherited": true
+        }
+      },
+      "tokens": [
+        "--sheen-color-fg-muted"
+      ],
+      "a11y": {
+        "role": "inline text",
+        "keyboard": []
+      },
+      "examples": [
+        {
+          "title": "Account balance",
+          "code": "<NumberText value={1250} format={{ style: \"currency\", currency: \"USD\", minimumFractionDigits: 2, maximumFractionDigits: 2 }} />"
+        }
+      ],
+      "guidance": {
+        "do": [
+          "Use the same format for the same metric throughout the application.",
+          "Name units and currency explicitly.",
+          "Use raw values for sorting and calculations."
+        ],
+        "dont": [
+          "Do not preformat or parse localized strings.",
+          "Do not pass non-finite values; render an explicit missing-value state instead."
+        ]
+      },
+      "source": "packages/ui/src/primitives/NumberText.tsx",
+      "demo": "packages/ui/src/primitives/NumberText.demo.tsx"
     },
     {
       "name": "Pagination",

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { renderToString } from "solid-js/web";
 import { ThemeProvider } from "@gemologic/sheen";
 import { AdminApp } from "./AdminApp.tsx";
+import { SettingsLayout } from "./SettingsLayout.tsx";
 import type { AdminAccountModel, AdminNavigationModel, AdminProductModel, AdminWorkspaceModel } from "./admin-config.ts";
 
 const product: AdminProductModel = { name: "Northstar", href: "/" };
@@ -18,6 +19,18 @@ function render(preset: "standard" | "workspace" | "horizontal" | "inspector", o
 }
 
 describe("AdminApp SSR", () => {
+  it("provides AppShell dirty-state ownership before evaluating settings children", () => {
+    const html = renderToString(() => <ThemeProvider><AdminApp label="Operations" pathname="/settings"><SettingsLayout label="Preferences" dirty={false} onSave={() => {}} sections={[{ id: "profile", label: "Profile", content: <input aria-label="Name" value="Ada" /> }]} /></AdminApp></ThemeProvider>);
+    expect(html).toContain('aria-label="Preferences"');
+    expect(html).toContain('aria-label="Name"');
+    expect(html).toContain("Save changes");
+  });
+  it("renders an accessible overflow trigger without exposing closed controls", () => {
+    const html = render("standard", { actionGroups: [{ id: "help", label: "More", role: "help", presentation: "overflow", items: [{ id: "docs", kind: "link", label: "Read documentation", href: "/docs" }] }] });
+    expect(html).toContain("More");
+    expect(html).toContain('aria-haspopup="dialog"');
+    expect(html).not.toContain("Read documentation");
+  });
   it("renders each preset from one deterministic semantic owner", () => {
     const standard = render("standard");
     expect(standard).toContain('data-sheen-density="comfortable"');

@@ -121,7 +121,7 @@ test("standard phone chrome compacts into a two-row app bar without hiding prima
   expect(box?.height ?? Infinity).toBeLessThanOrEqual(88);
   await expect(page.locator(".sheen-sidebar-toggle-mobile")).toBeVisible();
   await expect(page.getByRole("searchbox", { name: "Search application", exact: true })).toBeVisible();
-  await expect(page.getByRole("button", { name: "New account", exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Create policy", exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Refresh", exact: true })).toBeVisible();
   await page.locator(".sheen-sidebar-toggle-mobile").click();
   await expect(page.getByRole("dialog", { name: "Sidebar", exact: true }).getByRole("button", { name: "Open Ada Lovelace account menu", exact: true })).toBeVisible();
@@ -155,11 +155,11 @@ test("search, help, workspace, and sidebar row actions behave as application con
   await expect(sidebarToggle).toHaveCSS("display", "flex");
   await expect(sidebarToggle).toHaveCSS("align-items", "center");
   await expect(sidebarToggle).toHaveCSS("justify-content", "center");
-  const newAccount = page.getByRole("button", { name: "New account", exact: true });
+  const newAccount = page.getByRole("link", { name: "Create policy", exact: true });
   await expect(newAccount.locator(".sheen-admin-action-icon .sheen-icon")).toHaveCSS("color", await newAccount.evaluate(element => getComputedStyle(element).color));
   expect(await newAccount.locator(".sheen-icon").evaluate(element => [...element.querySelectorAll(":scope > svg")]
     .filter(svg => getComputedStyle(svg).display !== "none")
-    .map(svg => svg.getAttribute("data-sheen-icon-set-value")))).toEqual(["radix"]);
+    .map(svg => svg.getAttribute("data-sheen-icon-set-value")))).toEqual(["phosphor"]);
   await help.click();
   const shortcutDialog = page.getByRole("dialog", { name: "Keyboard shortcuts", exact: true });
   await expect(shortcutDialog).toBeVisible();
@@ -221,7 +221,11 @@ test("heavy AdminApp workload composes charts, operations, and a bounded 12,000-
   await expect(page.getByText("Heavy workload", { exact: true })).toBeVisible();
   await expect(page.getByRole("group", { name: "Operational summary", exact: true })).toBeVisible();
   await expect(page.getByRole("img", { name: "Workspace traffic", exact: true })).toBeVisible();
-  await expect(page.getByRole("img", { name: "Regional capacity", exact: true })).toBeVisible();
+  const capacity = page.getByRole("region", { name: "Regional capacity", exact: true });
+  await expect(capacity).toBeVisible();
+  await expect(capacity.getByRole("meter")).toHaveCount(6);
+  await expect(capacity.locator("li").first()).toContainText("74% used · 26% available");
+  await expect(capacity.getByRole("meter").first()).toHaveJSProperty("value", 74);
   await expect(page.locator(".loupe-admin-service-panel [data-service-id]")).toHaveCount(10);
   await expect(page.locator('.loupe-admin-activity-panel [data-activity-id]')).toHaveCount(12);
   await expect(page.locator(".sheen-time-series")).toHaveAttribute("data-enhanced", "true");
@@ -406,7 +410,7 @@ for (const path of ["/admin", "/admin?workload=heavy&table=continuous"]) {
       return samples;
     }, chromeCount);
     expect(frames.every(Boolean)).toBe(true);
-    await expect(page.getByText("Revision 2", { exact: false }).last()).toBeVisible();
+    await expect(page.locator(".sheen-toast-title")).toHaveText("Workspace refreshed");
     await expect(details).toHaveAttribute("data-refresh-identity", "details");
     await expect(row).toHaveAttribute("data-refresh-identity", "row");
     await expect(row).toContainText("just now");
@@ -440,7 +444,7 @@ test("scoped account, notification, command, confirm, and toast layers restore f
     if (message.type() === "warning" && message.text().includes("Blocked aria-hidden on an element because its descendant retained focus")) hiddenFocusWarnings.push(message.text());
   });
   await page.setViewportSize({ width: 1200, height: 800 });
-  await page.goto("/admin");
+  await page.goto("/admin?configure=1");
   await ready(page);
 
   const account = page.getByRole("button", { name: "Open Ada Lovelace account menu", exact: true });
@@ -462,12 +466,12 @@ test("scoped account, notification, command, confirm, and toast layers restore f
   await expectScopedOverlay(palette);
   await page.keyboard.press("Escape");
 
-  const confirmTrigger = page.getByRole("button", { name: "Reset view", exact: true });
+  const confirmTrigger = page.getByRole("button", { name: "Reset appearance", exact: true });
   await confirmTrigger.click();
-  const confirmation = page.getByRole("alertdialog", { name: "Reset demo view?", exact: true });
+  const confirmation = page.getByRole("alertdialog", { name: "Reset starter appearance?", exact: true });
   await expectScopedOverlay(confirmation);
   await confirmation.getByRole("button", { name: "Reset", exact: true }).click();
-  await expect(page.locator(".sheen-toast-title", { hasText: "Demo view reset" })).toBeVisible();
+  await expect(page.locator(".sheen-toast-title", { hasText: "Starter appearance reset" })).toBeVisible();
   await expect(confirmTrigger).toBeFocused();
   expect(hiddenFocusWarnings).toEqual([]);
 });
@@ -495,7 +499,7 @@ test("authorization loss synchronously clears protected chrome, table, and detai
 test("live brand controls update inherited axes without remounting the shell", async ({ page }) => {
   const errors: string[] = [];
   page.on("pageerror", error => errors.push(error.message));
-  await page.goto("/admin");
+  await page.goto("/admin?configure=1");
   await ready(page);
   const app = page.locator(".sheen-admin-app");
   const scope = page.locator(".sheen-admin-scope");
@@ -569,7 +573,7 @@ test("AdminApp presets and meaningful open states have no automated WCAG A or AA
     await ready(page);
     await expectNoAxeViolations(page, preset.name);
   }
-  await page.goto("/admin?table=continuous&chrome=tonal&navigation=accent&actions=accent");
+  await page.goto("/admin?configure=1&table=continuous&chrome=tonal&navigation=accent&actions=accent");
   await ready(page);
   await page.getByRole("button", { name: "Notifications 2", exact: true }).click();
   await expectNoAxeViolations(page, "continuous table and notification popover");
@@ -580,11 +584,11 @@ test("AdminApp presets and meaningful open states have no automated WCAG A or AA
   await page.keyboard.press("Control+K");
   await expectNoAxeViolations(page, "command palette");
   await page.keyboard.press("Escape");
-  await page.getByRole("button", { name: "Reset view", exact: true }).click();
-  const confirm = page.getByRole("alertdialog", { name: "Reset demo view?", exact: true });
+  await page.getByRole("button", { name: "Reset appearance", exact: true }).click();
+  const confirm = page.getByRole("alertdialog", { name: "Reset starter appearance?", exact: true });
   await expectNoAxeViolations(page, "confirmation dialog");
   await confirm.getByRole("button", { name: "Reset", exact: true }).click();
-  await expect(page.locator(".sheen-toast-title", { hasText: "Demo view reset" })).toBeVisible();
+  await expect(page.locator(".sheen-toast-title", { hasText: "Starter appearance reset" })).toBeVisible();
   await expectNoAxeViolations(page, "toast");
   const row = page.locator('tbody tr[data-row-id="account-0001"]');
   await row.focus();
@@ -619,12 +623,12 @@ test("keyboard traversal reaches shell, navigation, table, pagination, and detai
       if (active.matches(".sheen-data-table-sort")) return "table-sort";
       if (active.matches('tbody tr[data-row-id="account-0001"]')) return "table-row";
       if (active.textContent?.trim() === "Next page") return "pagination";
-      if (active.textContent?.trim() === "Reset view") return "page-action";
+      if (active.matches("a") && active.textContent?.trim() === "Create policy") return "create-policy";
       return "other";
     });
     reached.add(marker);
   }
-  expect([...reached]).toEqual(expect.arrayContaining(["sidebar-toggle", "navigation", "application-search", "table-search", "table-sort", "table-row", "pagination", "page-action"]));
+  expect([...reached]).toEqual(expect.arrayContaining(["sidebar-toggle", "navigation", "application-search", "table-search", "table-sort", "table-row", "pagination", "create-policy"]));
 
   const tableSearch = page.getByRole("searchbox", { name: "Search Northstar accounts", exact: true });
   await tableSearch.focus();

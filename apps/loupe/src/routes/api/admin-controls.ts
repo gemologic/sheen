@@ -23,6 +23,7 @@ export async function GET(event: { request: Request }): Promise<Response> {
   const delay = Number(parameters.get("delay") ?? "0");
   if (!Number.isSafeInteger(revision) || revision < 0 || !Number.isSafeInteger(delay) || delay < 0 || delay > 5_000) return new Response("Invalid admin controls request", { status: 400 });
   await new Promise<void>(resolve => setTimeout(resolve, delay));
+  if (parameters.get("fail") === "true") return new Response("Workspace service is temporarily unavailable.", { status: 503 });
   return Response.json({ revision }, { headers: { "cache-control": "no-store" } });
 }
 

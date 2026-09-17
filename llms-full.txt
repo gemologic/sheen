@@ -177,7 +177,7 @@ Category: data
 Props:
 - `values: Float64Array<ArrayBufferLike>` (required). Float64 values in display order; NaN creates a visible path break.
 - `label: string` (required). Required accessible description of the trend.
-- `color: ChartColorToken` (optional; default "chart-1"). Semantic chart, market, or accent token name.
+- `color: ChartColorToken` (optional; default "chart-1"). Semantic chart, market, accent, foreground, or muted token name.
 - `width: number` (optional; default 120). Positive finite intrinsic and view-box width.
 - `height: number` (optional; default 28). Positive finite intrinsic and view-box height.
 
@@ -206,23 +206,35 @@ Category: data
 Props:
 - `label: string` (required). Required visible metric label.
 - `value: string|number` (required). Nonempty display text or a finite number.
+- `format: Intl.NumberFormatOptions` (optional). Optional locale-aware Intl.NumberFormat options; requires a numeric value. Fractions and units use muted text.
 - `trend: StatTrend` (optional). Optional directional state; requires trendLabel.
 - `trendLabel: string` (optional). Required visible non-color description when trend is supplied.
+- `valence: StatValence` (optional). Meaning of the change, independent of direction; positive, negative, or neutral. Requires a trend and defaults to neutral.
+- `visual: JSX.Element` (optional). Optional supplementary JSX, such as a labeled Sparkline or Meter based on actual data. The text value remains complete. Preserve the visual node when refreshing its data.
 - `class: string` (optional). Optional class appended to the component root.
 
 Accessibility role: term and definition
 Keyboard: native behavior
-Tokens: `--sheen-color-fg`, `--sheen-color-fg-muted`, `--sheen-color-market-up`, `--sheen-color-market-down`, `--sheen-color-market-flat`, `--sheen-text-h2-size`
+Tokens: `--sheen-color-fg`, `--sheen-color-fg-muted`, `--sheen-color-success`, `--sheen-color-danger`, `--sheen-text-stat-size`, `--sheen-text-stat-leading`, `--sheen-text-stat-weight`, `--sheen-text-stat-tracking`
 
 Do:
 - State the direction and magnitude in trendLabel.
+- Set valence from the metric's meaning; lower errors are positive, higher latency is negative.
 
 Do not:
 - Do not rely on arrow shape or color to communicate a change.
+- Do not infer whether a change is good from its direction.
 
-Example, Directional metric:
+Example, Improving error rate:
 ```tsx
-<Stat label="Error rate" value="0.18%" trend="down" trendLabel="0.04 points lower" />
+<Stat label="Error rate" value="0.18%" trend="down" valence="positive" trendLabel="0.04 points lower" />
+```
+
+Example, Utilization with a track:
+```tsx
+import { Meter } from "@gemologic/sheen";
+const utilizationVisual = <Meter label="Used capacity" value={65} min={0} max={100} />;
+<Stat label="Utilization" value={0.65} format={{ style: "percent" }} visual={utilizationVisual} />
 ```
 
 ### StatGroup
@@ -2025,7 +2037,7 @@ Props:
 - `secondaryNavigation: AdminNavigationModel` (optional). Optional app-owned secondary navigation tree. Links may expose named sibling action menus without changing link semantics.
 - `currentView: JSX.Element` (optional). Optional breadcrumb or accepted current-view label.
 - `globalSearch: JSX.Element` (optional). Optional app-owned search control. Sheen does not perform the search.
-- `actionGroups: readonly AdminActionGroup[]` (optional). Semantic primary, utility, and help action groups with native Button or Link behavior.
+- `actionGroups: readonly AdminActionGroup[]` (optional). Semantic primary, utility, and help action groups with native Button or Link behavior. Optional group presentation='overflow' puts infrequent controls in a scoped, keyboard-operable popover; use icon factories for deferred rendering there.
 - `notifications: AdminNotificationModel` (optional). Optional app-owned notification model.
 - `account: AdminAccountModel` (optional). Optional app-owned account identity and menu. Sheen does not authenticate.
 - `commandPalette: AdminCommandPaletteModel` (optional). Optional scoped command sources, state, persistence, and error hooks.
@@ -2051,9 +2063,15 @@ Tokens: `--sheen-admin-color-canvas`, `--sheen-admin-color-topbar`, `--sheen-adm
 
 Do:
 - Treat placements and appearance as stable server input; use themes and accents for global brand axes and admin aliases for shell-specific surfaces.
+- Give each page one focal working region: a metric/chart overview, a collection toolbar and rows, a registry and create form, or settings with save/discard controls.
+- Use at most one filled accent action per active task surface; dialogs own a separate task and destructive confirmations use danger semantics.
+- Use semantic surface depth and explicit locale-aware numeric precision. Keep counts factual and consistent with the accepted workspace scope.
+- Compose structured fields from named controls with group counts and field-specific errors; preserve native form values and drafts through refresh.
 
 Do not:
 - Do not remount AdminApp during refresh or use it as a global arbitrary-content modal manager.
+- Do not invent historical trends, account-creation actions, or low-contrast text to fill a composition. Keep developer diagnostics in the explicit design lab.
+- Do not count accent actions across unrelated runtime surfaces with a global JSX rule or animate layout content on mount.
 
 Example, Standard admin baseline:
 ```tsx
@@ -2744,6 +2762,7 @@ Props:
 - `search: false|DataTableSearchOptions` (optional). Configures automatic search over explicitly searchable columns, or false disables it; options supply label, placeholder, debounce, shortcut, and an opt-in Exact mode that matches a literal phrase within one searchable column.
 - `filterBar: boolean|DataTableFilterBarOptions` (optional; default true). Shows typed filters declared by columns; options may inject an isolated date editor without adding it to the table bundle.
 - `columnControls: boolean` (optional; default true). Shows the keyboard-accessible visibility, ordering, pinning, auto-fit, and width-reset menu.
+- `summarizeColumns: readonly string[]` (optional). Opt-in filterable, noneditable, nonsensitive accessor IDs. Exact accepted constraints replace eligible visible columns with labeled full-query counts and a restore action. Never samples page rows or facets, never rewrites saved visibility, and retains at least one column. Explicit restoration lasts for this table owner.
 - `export: false|DataTableExportOptions` (optional). Client export is enabled by default; false hides it, while options constrain formats and set a filename base.
 - `onCellCommit: (request:DataTableCellCommitRequest<Row>,signal:AbortSignal)=>Promise<CellCommitResult<ColumnValue,string>>` (optional). Required by editable columns; receives row/column context, a per-cell commit ID, previous/value snapshot, and AbortSignal, then reports acceptance or an explicit conflict.
 - `editResetKey: string|number` (optional). Discards drafts, conflicts, failed attempts, and pending commits when an account or permission boundary changes.
@@ -2780,6 +2799,16 @@ const columns = defineColumns<{ readonly id: string; readonly name: string; read
 ]);
 const rows = [{ id: "one", name: "Alpha", amount: 12 }, { id: "two", name: "Beta", amount: 34 }];
 <DataTable data={rows} columns={columns} getRowId={row => row.id} caption="Accounts" pagination={false} mobileLayout={{ pageSize: 20, titleColumn: "name" }} initialViewportHeight={160} />
+```
+
+Example, Summarize an accepted constant field:
+```tsx
+const columns = defineColumns<{ readonly id: string; readonly name: string; readonly status: string }>([
+  { id: "name", header: "Name", accessor: row => row.name },
+  { id: "status", header: "Status", accessor: row => row.status, filter: { type: "enum", options: ["Active", "Paused"] } },
+]);
+const rows = [{ id: "one", name: "Alpha", status: "Active" }, { id: "two", name: "Beta", status: "Paused" }];
+<DataTable data={rows} columns={columns} getRowId={row => row.id} caption="Active accounts" summarizeColumns={["status"]} filter={{ kind: "enum", column: "status", operator: "in", values: ["Active"] }} initialViewportHeight={160} />
 ```
 
 ### FilterBar
@@ -4294,6 +4323,34 @@ Do not:
 Example, Localized amount:
 ```tsx
 <NumberField label="Budget" defaultValue={1250.5} min={0} step={0.5} formatOptions={{ style: "currency", currency: "USD" }} name="budget" />
+```
+
+### NumberText
+
+Typesets a finite number with locale-aware grouping, precision, and quieter fractional digits and units.
+
+Category: typography
+
+Props:
+- `value: number` (required). Finite numeric value. Percent formats accept a fraction: 0.65 means 65 percent.
+- `format: Intl.NumberFormatOptions` (optional). Intl.NumberFormat options for explicit precision, currency, units, or compact notation.
+
+Accessibility role: inline text
+Keyboard: native behavior
+Tokens: `--sheen-color-fg-muted`
+
+Do:
+- Use the same format for the same metric throughout the application.
+- Name units and currency explicitly.
+- Use raw values for sorting and calculations.
+
+Do not:
+- Do not preformat or parse localized strings.
+- Do not pass non-finite values; render an explicit missing-value state instead.
+
+Example, Account balance:
+```tsx
+<NumberText value={1250} format={{ style: "currency", currency: "USD", minimumFractionDigits: 2, maximumFractionDigits: 2 }} />
 ```
 
 ### Pagination

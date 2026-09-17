@@ -453,7 +453,7 @@ export const componentDocs = Object.freeze([
       },
       {
         "name": "actionGroups",
-        "description": "Semantic primary, utility, and help action groups with native Button or Link behavior.",
+        "description": "Semantic primary, utility, and help action groups with native Button or Link behavior. Optional group presentation='overflow' puts infrequent controls in a scoped, keyboard-operable popover; use icon factories for deferred rendering there.",
         "type": "readonly AdminActionGroup[] | undefined",
         "required": false
       },
@@ -598,10 +598,16 @@ export const componentDocs = Object.freeze([
     },
     "guidance": {
       "do": [
-        "Treat placements and appearance as stable server input; use themes and accents for global brand axes and admin aliases for shell-specific surfaces."
+        "Treat placements and appearance as stable server input; use themes and accents for global brand axes and admin aliases for shell-specific surfaces.",
+        "Give each page one focal working region: a metric/chart overview, a collection toolbar and rows, a registry and create form, or settings with save/discard controls.",
+        "Use at most one filled accent action per active task surface; dialogs own a separate task and destructive confirmations use danger semantics.",
+        "Use semantic surface depth and explicit locale-aware numeric precision. Keep counts factual and consistent with the accepted workspace scope.",
+        "Compose structured fields from named controls with group counts and field-specific errors; preserve native form values and drafts through refresh."
       ],
       "dont": [
-        "Do not remount AdminApp during refresh or use it as a global arbitrary-content modal manager."
+        "Do not remount AdminApp during refresh or use it as a global arbitrary-content modal manager.",
+        "Do not invent historical trends, account-creation actions, or low-contrast text to fill a composition. Keep developer diagnostics in the explicit design lab.",
+        "Do not count accent actions across unrelated runtime surfaces with a global JSX rule or animate layout content on mount."
       ]
     },
     "source": "packages/patterns/src/AdminApp.tsx"
@@ -4410,6 +4416,12 @@ export const componentDocs = Object.freeze([
         "type": "boolean",
         "required": false,
         "default": true
+      },
+      {
+        "name": "summarizeColumns",
+        "description": "Opt-in filterable, noneditable, nonsensitive accessor IDs. Exact accepted constraints replace eligible visible columns with labeled full-query counts and a restore action. Never samples page rows or facets, never rewrites saved visibility, and retains at least one column. Explicit restoration lasts for this table owner.",
+        "type": "readonly string[]",
+        "required": false
       },
       {
         "name": "export",
@@ -9489,6 +9501,45 @@ export const componentDocs = Object.freeze([
     "source": "packages/ui/src/primitives/NumberField.tsx"
   },
   {
+    "name": "NumberText",
+    "package": "@gemologic/sheen",
+    "category": "typography",
+    "summary": "Typesets a finite number with locale-aware grouping, precision, and quieter fractional digits and units.",
+    "props": [
+      {
+        "name": "value",
+        "description": "Finite numeric value. Percent formats accept a fraction: 0.65 means 65 percent.",
+        "type": "number",
+        "required": true
+      },
+      {
+        "name": "format",
+        "description": "Intl.NumberFormat options for explicit precision, currency, units, or compact notation.",
+        "type": "Intl.NumberFormatOptions",
+        "required": false
+      }
+    ],
+    "tokens": [
+      "--sheen-color-fg-muted"
+    ],
+    "a11y": {
+      "role": "inline text",
+      "keyboard": []
+    },
+    "guidance": {
+      "do": [
+        "Use the same format for the same metric throughout the application.",
+        "Name units and currency explicitly.",
+        "Use raw values for sorting and calculations."
+      ],
+      "dont": [
+        "Do not preformat or parse localized strings.",
+        "Do not pass non-finite values; render an explicit missing-value state instead."
+      ]
+    },
+    "source": "packages/ui/src/primitives/NumberText.tsx"
+  },
+  {
     "name": "PageHeader",
     "package": "@gemologic/sheen-patterns",
     "category": "application",
@@ -12164,7 +12215,7 @@ export const componentDocs = Object.freeze([
       },
       {
         "name": "color",
-        "description": "Semantic chart, market, or accent token name.",
+        "description": "Semantic chart, market, accent, foreground, or muted token name.",
         "type": "import(\"./chart-types.ts\").ChartColorToken",
         "required": false,
         "default": "chart-1"
@@ -12527,6 +12578,12 @@ export const componentDocs = Object.freeze([
         "required": true
       },
       {
+        "name": "format",
+        "description": "Optional locale-aware Intl.NumberFormat options; requires a numeric value. Fractions and units use muted text.",
+        "type": "Intl.NumberFormatOptions",
+        "required": false
+      },
+      {
         "name": "trend",
         "description": "Optional directional state; requires trendLabel.",
         "type": "StatTrend",
@@ -12539,6 +12596,18 @@ export const componentDocs = Object.freeze([
         "required": false
       },
       {
+        "name": "valence",
+        "description": "Meaning of the change, independent of direction; positive, negative, or neutral. Requires a trend and defaults to neutral.",
+        "type": "import(\"./chart-types.ts\").StatValence",
+        "required": false
+      },
+      {
+        "name": "visual",
+        "description": "Optional supplementary JSX, such as a labeled Sparkline or Meter based on actual data. The text value remains complete. Preserve the visual node when refreshing its data.",
+        "type": "JSX.Element",
+        "required": false
+      },
+      {
         "name": "class",
         "description": "Optional class appended to the component root.",
         "type": "string",
@@ -12548,10 +12617,12 @@ export const componentDocs = Object.freeze([
     "tokens": [
       "--sheen-color-fg",
       "--sheen-color-fg-muted",
-      "--sheen-color-market-up",
-      "--sheen-color-market-down",
-      "--sheen-color-market-flat",
-      "--sheen-text-h2-size"
+      "--sheen-color-success",
+      "--sheen-color-danger",
+      "--sheen-text-stat-size",
+      "--sheen-text-stat-leading",
+      "--sheen-text-stat-weight",
+      "--sheen-text-stat-tracking"
     ],
     "a11y": {
       "role": "term and definition",
@@ -12559,10 +12630,12 @@ export const componentDocs = Object.freeze([
     },
     "guidance": {
       "do": [
-        "State the direction and magnitude in trendLabel."
+        "State the direction and magnitude in trendLabel.",
+        "Set valence from the metric's meaning; lower errors are positive, higher latency is negative."
       ],
       "dont": [
-        "Do not rely on arrow shape or color to communicate a change."
+        "Do not rely on arrow shape or color to communicate a change.",
+        "Do not infer whether a change is good from its direction."
       ]
     },
     "source": "packages/charts/src/Stat.tsx"

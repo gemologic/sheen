@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { renderToString } from "solid-js/web";
-import { ThemeProvider } from "@gemologic/sheen";
+import { ThemeProvider, ThemeScope } from "@gemologic/sheen";
 import { DataTable } from "./DataTable.tsx";
 import type { DataTableAction } from "./DataTable.tsx";
 import { defineColumns } from "./columns.ts";
@@ -39,6 +39,28 @@ const chromeColumns = defineColumns<Row>([
 const rows = Array.from({ length: 40 }, (_, index): Row => ({ id: `row-${index}`, name: `Row ${index}`, amount: index }));
 
 describe("DataTable SSR", () => {
+  it("uses Studio density geometry in the server virtual range before measuring the DOM", () => {
+    for (const [density, height] of [["compact", 36], ["comfortable", 40], ["spacious", 48]] satisfies readonly (readonly ["compact" | "comfortable" | "spacious", number])[]) {
+      const html = renderToString(() => <ThemeProvider><ThemeScope theme="studio"><DataTable data={rows} columns={columns} getRowId={row => row.id} caption="Studio rows" density={density} pagination={false} /></ThemeScope></ThemeProvider>);
+      expect(html).toContain(`translateY(${height}px)`);
+    }
+  });
+  it("summarizes accepted constraints with full-query counts even without filter controls", () => {
+    const defined = defineColumns<{ id: string; status: string }>([
+      { id: "id", header: "ID", accessor: row => row.id },
+      { id: "status", header: "Status", accessor: row => row.status, filter: { type: "enum", options: ["Active", "Paused"] } },
+    ]);
+    const page = [{ id: "one", status: "Active" }, { id: "two", status: "Active" }];
+    const render = (constrained: boolean, total: number) => renderToString(() => <ThemeProvider><DataTable mode="server" columns={defined} getRowId={row => row.id} caption="Constrained accounts" pagination={{ pageIndex: 0, pageSize: 2 }}
+      summarizeColumns={["status"]} search={false} filterBar={false} initialResult={{ rows: total === 0 ? [] : page, total }} onStateChange={async () => ({ rows: page, total })}
+      initialState={{ filter: constrained ? { kind: "enum", column: "status", operator: "in", values: ["Active"] } : { kind: "and", children: [] } }} /></ThemeProvider>);
+    expect(render(true, 8)).toContain("Status: Active · 8 matching results");
+    expect(render(true, 8)).not.toMatch(/<th[^>]+data-column="status"/u);
+    expect(render(true, 0)).toContain("Status: Active · 0 matching results");
+    expect(render(false, 8)).toMatch(/<th[^>]+data-column="status"/u);
+    expect(render(false, 8)).not.toContain("sheen-data-table-constraint\"");
+    expect(() => renderToString(() => <ThemeProvider><DataTable columns={columns} data={rows} getRowId={row => row.id} caption="Invalid summary" summarizeColumns={["amount"]} /></ThemeProvider>)).toThrow("filterable");
+  });
   it("renders configured explicit-column search and keeps opt-out independent from accepted state", () => {
     const html = renderToString(() => <ThemeProvider><DataTable data={rows} columns={columns} getRowId={row => row.id} caption="Searchable rows" pagination={false}
       search={{ label: "Find rows", placeholder: "Name or identifier", debounce: 80, shortcut: "mod+f", exactMatch: true }} initialState={{ search: "Row 1" }} /></ThemeProvider>);

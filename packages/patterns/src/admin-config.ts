@@ -132,7 +132,7 @@ export type AdminActionRole = "primary" | "utility" | "help";
 interface AdminActionBase {
   readonly id: string;
   readonly label: string;
-  readonly icon?: JSX.Element;
+  readonly icon?: JSX.Element | (() => JSX.Element);
 }
 
 export interface AdminButtonAction extends AdminActionBase {
@@ -153,6 +153,7 @@ export interface AdminActionGroup {
   readonly label: string;
   readonly role: AdminActionRole;
   readonly items: readonly AdminAction[];
+  readonly presentation?: "inline" | "overflow";
 }
 
 interface AdminNotificationBase {

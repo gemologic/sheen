@@ -2,26 +2,34 @@
 import { Show } from "solid-js";
 import type { ComponentProps } from "solid-js";
 import { Sparkline, sparklinePath, Stat, StatGroup, AreaChart, BarChart, LineChart, ChartDataTable, createChartAxisFormatter, createChartTableFormatters, englishChartMessages, resolveChartMessages, TimeSeries, useThemeTokens, chartColorTokens, defineSeries, toCategorical, toColumnar, validateCategorical, validateColumnar, useStreamingSeries } from "@gemologic/sheen-charts";
-
+import { Meter } from "@gemologic/sheen";
 import type { ComponentExampleModule, PlaygroundValue } from "./index.ts";
 
 function Playground() {
-  return (<Stat label="Error rate" value="0.18%" trend="down" trendLabel="0.04 points lower" />);
+  return (<Stat label="Error rate" value="0.18%" trend="down" valence="positive" trendLabel="0.04 points lower" />);
 }
 
 export const exampleModule = {
   defaults: Object.freeze({}),
   controlsSupported: false,
-  playgroundTemplate: "<Stat label=\"Error rate\" value=\"0.18%\" trend=\"down\" trendLabel=\"0.04 points lower\" />",
-  codeInsertionOffset: 83,
+  playgroundTemplate: "<Stat label=\"Error rate\" value=\"0.18%\" trend=\"down\" valence=\"positive\" trendLabel=\"0.04 points lower\" />",
+  codeInsertionOffset: 102,
   playground: Playground,
   examples: Object.freeze([
     {
-      title: "Directional metric",
-      code: "<Stat label=\"Error rate\" value=\"0.18%\" trend=\"down\" trendLabel=\"0.04 points lower\" />",
+      title: "Improving error rate",
+      code: "<Stat label=\"Error rate\" value=\"0.18%\" trend=\"down\" valence=\"positive\" trendLabel=\"0.04 points lower\" />",
       render: function Example0() {
         
-        return (<Stat label="Error rate" value="0.18%" trend="down" trendLabel="0.04 points lower" />);
+        return (<Stat label="Error rate" value="0.18%" trend="down" valence="positive" trendLabel="0.04 points lower" />);
+      },
+    },
+    {
+      title: "Utilization with a track",
+      code: "<Stat label=\"Utilization\" value={0.65} format={{ style: \"percent\" }} visual={utilizationVisual} />",
+      render: function Example1() {
+        const utilizationVisual = <Meter label="Used capacity" value={65} min={0} max={100} />;
+        return (<Stat label="Utilization" value={0.65} format={{ style: "percent" }} visual={utilizationVisual} />);
       },
     }
   ]),

@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 import { captureAdminAppOwners, retainedAdminAppOwners } from "../../bench/admin-app-owners.ts";
 
 test.beforeEach(async ({ page }) => {
-  await page.goto("/admin?workload=heavy&table=continuous");
+  await page.goto("/admin?workload=heavy&table=continuous&configure=1");
   await expect(page.locator('[data-sheen-portal="root"]')).toHaveAttribute("data-sheen-ready", "true");
   await expect(page.locator("[data-admin-starter-content]")).toHaveAttribute("data-admin-row-count", "12000");
   await expect(page.locator(".sheen-time-series")).toHaveAttribute("data-enhanced", "true");
@@ -49,6 +49,15 @@ test("copied retention markers cannot hide a replaced native content owner", asy
 });
 
 test("sidebar URL settings retain navigation SVGs, badges, and the product mark", async ({ page }) => {
+  await page.evaluate(() => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => requestAnimationFrame(() => resolve())))));
+  await page.evaluate(() => {
+    const read = window.getComputedStyle;
+    document.documentElement.dataset.adminTokenReads = "0";
+    window.getComputedStyle = function (element, pseudo) {
+      if (element.hasAttribute("data-sheen-theme-token-probe")) document.documentElement.dataset.adminTokenReads = String(Number(document.documentElement.dataset.adminTokenReads) + 1);
+      return read.call(this, element, pseudo);
+    };
+  });
   const nodes = await page.evaluateHandle(() => {
     const navigation = document.querySelector(".sheen-sidebar-navigation");
     if (!navigation) throw new Error("Expected the sidebar navigation");
@@ -70,6 +79,8 @@ test("sidebar URL settings retain navigation SVGs, badges, and the product mark"
       if (!destination) throw new Error("Expected the accounts destination");
       expect(new URL(destination, page.url()).searchParams.get("sidebar")).toBe(collapsed ? "collapsed" : null);
       await expect(page.locator(".sheen-sidebar-navigation .sheen-badge").first()).toHaveText("12,000");
+      await page.evaluate(() => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => requestAnimationFrame(() => resolve())))));
+      await expect(page.locator("html")).toHaveAttribute("data-admin-token-reads", "0");
     }
     await page.getByText("Customize starter", { exact: true }).click();
     await page.locator(".loupe-admin-customize").getByRole("button", { name: /^Workload /u }).click();
@@ -78,6 +89,10 @@ test("sidebar URL settings retain navigation SVGs, badges, and the product mark"
     await expect(page.locator(".sheen-sidebar-navigation .sheen-badge").first()).toHaveText("240");
     expect(await nodes.evaluate(visuals => visuals.icons.every(icon => icon.isConnected)
       && visuals.badges.every(badge => badge.isConnected) && visuals.mark.isConnected)).toBe(true);
+    await page.locator(".loupe-admin-customize").getByRole("button", { name: "Theme Studio", exact: true }).click();
+    await page.locator(".sheen-select-content").getByRole("option", { name: "Graphite", exact: true }).click();
+    await expect(page.locator(".sheen-admin-scope")).toHaveAttribute("data-sheen-theme", "graphite");
+    await expect.poll(() => page.locator("html").getAttribute("data-admin-token-reads")).not.toBe("0");
   } finally {
     await nodes.dispose();
   }

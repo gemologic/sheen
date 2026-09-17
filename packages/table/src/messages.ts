@@ -14,6 +14,7 @@ export const englishTableMessages = Object.freeze({
   queryColumn: "Column", queryAddRule: "Add rule", queryAddGroup: "Add group", queryNegate: "Exclude", queryRemoveNegation: "Include", queryRemove: "Remove", queryMoveBefore: "Move before", queryMoveAfter: "Move after", queryChanged: "Query updated",
   groupMissing: "No value", loadingChildren: "Loading children",
   columns: "Columns", showColumn: "Show column", moveColumnStart: "Move toward start", moveColumnEnd: "Move toward end",
+  constrainedColumns: "Fields fixed by the accepted filter", constrainedColumn: "{column}: {value} · {count} matching results", restoreColumn: "Restore {column} column",
   pinColumn: "Pin column", pinNone: "Not pinned", pinStart: "Pin to start", pinEnd: "Pin to end",
   autoFitColumn: "Auto-fit width", resetColumnWidth: "Reset width", reorderColumn: "Drag to reorder {column}", resizeColumn: "Resize {column}", columnWidthPixels: "{width} pixels",
   editCell: "Edit {column} for row {id}", cellValueRequired: "A value is required", cellValueInvalid: "Enter a valid value", noValue: "No value",

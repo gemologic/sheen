@@ -1,5 +1,7 @@
 # Benchmark frame sampling
 
+AdminApp's retained-refresh assertion targets the existing revision label, waits for its exact updated text, and then checks visibility. A missing future-text locator caused Playwright 1.63 to build a full-body accessibility snapshot on each pending assertion attempt. Protocol and renderer tracing identified those diagnostic calls as the dominant refresh measurement overhead. The stable label avoids that unrelated traversal while retaining the same real refresh, exact revision/sample value, visibility, owner/focus/draft assertions, and CPU/frame boundaries. No refresh baseline or limit changes.
+
 AdminApp, date, and Composer use `bench/frame-sampling.ts`. The browser installs the frame loop and PerformanceObserver synchronously and acknowledges installation directly. The controller does not poll readiness with `waitForFunction`, whose default animation-frame polling added a variable frame of harness delay to these short operations.
 
 The frame measurement boundaries remain unchanged: sampler installation through the operation, its correctness/retention checks, three settling frames, and the legacy sampler's final animation-frame drain. Five fresh-context runs, deterministic calibration workloads, the 10% regression allowance, three-consecutive-increase drift detection, frame limits, Long Task limits, and layout/identity checks are unchanged. Chart and table work-time gates retain their own browser-local boundaries. Benchmarks are reference-workload regression checks, not isolated component latency or user-facing guarantees.

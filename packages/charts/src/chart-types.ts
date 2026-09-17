@@ -13,11 +13,13 @@ export type ChartColorToken =
   | "market-up"
   | "market-down"
   | "market-flat"
+  | "foreground"
+  | "muted"
   | "accent";
 
 export const chartColorTokens: readonly ChartColorToken[] = Object.freeze([
   "chart-1", "chart-2", "chart-3", "chart-4", "chart-5", "chart-6", "chart-7", "chart-8",
-  "market-up", "market-down", "market-flat", "accent",
+  "market-up", "market-down", "market-flat", "foreground", "muted", "accent",
 ]);
 
 export type ChartTone = "neutral" | "accent" | "success" | "warning" | "danger";
@@ -143,12 +145,17 @@ export interface SparklineProps {
 }
 
 export type StatTrend = "up" | "down" | "flat";
+export type StatValence = "positive" | "negative" | "neutral";
 
 export interface StatProps {
   readonly label: string;
   readonly value: string | number;
+  readonly format?: Intl.NumberFormatOptions;
   readonly trend?: StatTrend;
   readonly trendLabel?: string;
+  readonly valence?: StatValence;
+  /** Optional supplementary display, such as a labeled Sparkline or Meter. Keep the text value complete. */
+  readonly visual?: JSX.Element;
   readonly class?: string;
 }
 

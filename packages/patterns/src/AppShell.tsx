@@ -125,15 +125,15 @@ function ShellFrame(props: AppShellProps & { sidebarProjection: (element: HTMLEl
     return local.label;
   });
   return <><Show when={local.documentTitle}>{title => <Title>{title()}</Title>}</Show><div {...others} class={`sheen-app-shell ${local.class ?? ""}`} data-sidebar={Boolean(sidebar()) && sidebarVisible()} data-sidebar-collapsed={Boolean(sidebar()) && local.sidebarBehavior === "collapse" && !sidebarOpen() || undefined}>
-    <Show when={header() || local.shortcutHelp || sidebar()}><header class="sheen-shell-header" data-shortcut-help={local.shortcutHelp || undefined}>{header()}<div class="sheen-shell-shortcut-help">
+    <Show when={header() || local.shortcutHelp || sidebar()}><header role="banner" class="sheen-shell-header" data-shortcut-help={local.shortcutHelp || undefined}>{header()}<div class="sheen-shell-shortcut-help">
       <Show when={local.shortcutHelp}><ShellShortcutHelp /></Show>
       <Show when={sidebar()}><SidebarControls desktopId={sidebarId} mobileId={mobileSidebarId} desktopOpen={sidebarOpen()} mobileOpen={mobileOpen()} toggleDesktop={toggleDesktop} toggleMobile={() => changeMobile(!mobileOpen())} toggle={toggleSidebar} shortcuts={local.shortcutHelp ?? false} desktopRef={element => { sidebarTrigger = element; }} mobileRef={element => { mobileTrigger = element; }} /></Show>
     </div></header></Show>
-    <Show when={sidebar()}><Show when={local.phone} fallback={<aside ref={element => { sidebarElement = element; retainSidebarScroll(element); }} id={sidebarId} class="sheen-shell-sidebar" hidden={!sidebarVisible()} inert={!sidebarVisible()}>{sidebar()}</aside>}>
+    <Show when={sidebar()}><Show when={local.phone} fallback={<aside aria-label={label()} ref={element => { sidebarElement = element; retainSidebarScroll(element); }} id={sidebarId} class="sheen-shell-sidebar" hidden={!sidebarVisible()} inert={!sidebarVisible()}>{sidebar()}</aside>}>
       <MobileSidebar id={mobileSidebarId} open={mobileOpen()} onOpenChange={changeMobile} returnFocus={() => local.phone ? mobileTrigger : sidebarTrigger} contentRef={retainSidebarScroll}>{sidebar()}</MobileSidebar>
     </Show></Show>
     <main class="sheen-shell-main"><ScrollArea ref={element => { content = element; local.viewportRef(element); }} label={label()} class="sheen-shell-content">{local.children}</ScrollArea></main>
-    <Show when={status()}><footer class="sheen-shell-status">{status()}</footer></Show>
+    <Show when={status()}><footer role="contentinfo" class="sheen-shell-status">{status()}</footer></Show>
     <Show when={local.router}>{router => <ShellNavigationGuard router={router()} unsaved={local.unsaved} />}</Show>
   </div></>;
 }

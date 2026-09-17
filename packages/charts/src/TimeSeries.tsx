@@ -16,9 +16,31 @@ const tokenNames: readonly ThemeTokenName[] = Object.freeze([
   "--sheen-chart-1", "--sheen-chart-2", "--sheen-chart-3", "--sheen-chart-4",
   "--sheen-chart-5", "--sheen-chart-6", "--sheen-chart-7", "--sheen-chart-8",
   "--sheen-color-market-up", "--sheen-color-market-down", "--sheen-color-market-flat",
+  "--sheen-color-fg", "--sheen-color-fg-muted",
   "--sheen-color-accent", "--sheen-chart-grid", "--sheen-chart-axis", "--sheen-chart-crosshair",
   "--sheen-chart-line-width", "--sheen-font-sans", "--sheen-text-caption-size", "--sheen-text-caption-weight",
 ]);
+
+function updateAxisFont(axis: uPlot.Axis, font: string): boolean {
+  if (axis.show === false) return false;
+  const size = Number(/([\d.]+)px/u.exec(font)?.[1]);
+  if (!Number.isFinite(size) || size <= 0) throw new Error("Chart axis fonts require a positive pixel size");
+  const pixels = Math.round(size * uPlot.pxRatio);
+  const scaled = font.replace(/[\d.]+px/u, `${pixels}px`);
+  let changed = false;
+  // uPlot normalizes these public string options into mutable [font, pixels, CSS pixels] tuples.
+  // Preserve that runtime representation when redrawing an existing renderer.
+  const fonts: readonly unknown[] = [axis.font, axis.labelFont];
+  for (const value of fonts) {
+    if (!Array.isArray(value) || value.length !== 3 || typeof value[0] !== "string" || typeof value[1] !== "number" || typeof value[2] !== "number") throw new Error("Unexpected initialized uPlot axis font");
+    if (value[0] === scaled && value[1] === pixels && value[2] === size) continue;
+    value[0] = scaled;
+    value[1] = pixels;
+    value[2] = size;
+    changed = true;
+  }
+  return changed;
+}
 
 const tokenByColor: Readonly<Record<ChartColorToken, ThemeTokenName>> = Object.freeze({
   "chart-1": "--sheen-chart-1",
@@ -32,6 +54,8 @@ const tokenByColor: Readonly<Record<ChartColorToken, ThemeTokenName>> = Object.f
   "market-up": "--sheen-color-market-up",
   "market-down": "--sheen-color-market-down",
   "market-flat": "--sheen-color-market-flat",
+  foreground: "--sheen-color-fg",
+  muted: "--sheen-color-fg-muted",
   accent: "--sheen-color-accent",
 });
 const annotationTones = new Set(["neutral", "accent", "success", "warning", "danger"]);
@@ -602,9 +626,7 @@ export function TimeSeries(props: TimeSeriesProps): JSX.Element {
       const font = `${fontWeight} ${fontSize} ${fontFamily}`;
       let fontChanged = false;
       for (const axis of plot.axes) {
-        fontChanged = fontChanged || axis.font !== font || axis.labelFont !== font;
-        axis.font = font;
-        axis.labelFont = font;
+        if (updateAxisFont(axis, font)) fontChanged = true;
       }
       const width = lineWidth(values);
       let widthChanged = false;

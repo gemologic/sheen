@@ -1,4 +1,5 @@
 import { DataTable, defineColumns } from "@gemologic/sheen-table";
+import { Link } from "@gemologic/sheen";
 import type { DataTableAction, DataTableActionContext, DataTableResult, TableState } from "@gemologic/sheen-table";
 import { createSignal, onMount } from "solid-js";
 
@@ -17,7 +18,7 @@ const rows: readonly MobileRow[] = Array.from({ length: 45 }, (_, index) => ({
 }));
 
 const columns = defineColumns<MobileRow>([
-  { id: "name", header: "Name", accessor: row => row.name, sort: "text", footer: "Total" },
+  { id: "name", header: "Name", accessor: row => row.name, sort: "text", footer: "Total", cell: (_value, row) => <Link href={`/table-mobile?account=${row.id}`}>{row.name}</Link> },
   { id: "status", header: "Status", accessor: row => row.status },
   { id: "amount", header: "Amount", accessor: row => row.amount, numeric: true, footer: values => values.reduce((sum, row) => sum + row.amount, 0) },
 ]);

@@ -1,5 +1,5 @@
 import { defineSeries } from "@gemologic/sheen-charts/core";
-import type { ChartCategoricalData, ChartData, ChartSeries } from "@gemologic/sheen-charts/core";
+import type { ChartData, ChartSeries } from "@gemologic/sheen-charts/core";
 
 export type AdminWorkload = "representative" | "heavy";
 
@@ -45,23 +45,17 @@ const regions: readonly AdminAccountRow["region"][] = Object.freeze(["US East", 
 const plans: readonly AdminAccountRow["plan"][] = Object.freeze(["Enterprise", "Growth", "Core"]);
 
 export const trafficSeries: readonly ChartSeries[] = defineSeries([
-  { key: "requests", label: "Requests", color: "chart-1" },
-  { key: "events", label: "Events", color: "chart-3", encoding: "dashed" },
-  { key: "jobs", label: "Background jobs", color: "chart-5", encoding: "dotted" },
+  { key: "requests", label: "Requests", color: "accent" },
+  { key: "events", label: "Events", color: "foreground", encoding: "dashed" },
+  { key: "jobs", label: "Background jobs", color: "muted", encoding: "dotted" },
 ]);
 
-export const regionSeries: readonly ChartSeries[] = defineSeries([
-  { key: "used", label: "Used capacity", color: "chart-2" },
-  { key: "reserved", label: "Reserved headroom", color: "chart-6" },
-]);
+export const capacityTargetUsed = 86;
 
-export const regionCapacity: ChartCategoricalData = Object.freeze({
-  categories: Object.freeze(["US East", "US West", "EU Central", "Asia Pacific", "South America", "Canada"]),
-  values: Object.freeze({
-    used: new Float64Array([74, 61, 68, 55, 47, 51]),
-    reserved: new Float64Array([14, 21, 18, 24, 31, 27]),
-  }),
-});
+export const regionCapacity = Object.freeze([
+  { name: "US East", used: 74 }, { name: "US West", used: 61 }, { name: "EU Central", used: 68 },
+  { name: "Asia Pacific", used: 55 }, { name: "South America", used: 47 }, { name: "Canada", used: 51 },
+].map(region => Object.freeze(region)));
 
 function accountData(count: number, revision: number, refreshed: boolean): { readonly rows: readonly AdminAccountRow[]; readonly summary: AdminWorkloadSummary } {
   let active = 0;

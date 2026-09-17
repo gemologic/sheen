@@ -92,6 +92,9 @@ export interface ExtensionMessages {
   readonly filterIsEmpty?: string;
   readonly filterIsAnyOf?: string;
   readonly filterSummary?: string;
+  readonly constrainedColumns?: string;
+  readonly constrainedColumn?: string;
+  readonly restoreColumn?: string;
   readonly filterNot?: string;
   readonly filterInheritedNot?: string;
   readonly queryBuilder?: string;

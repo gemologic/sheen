@@ -14,6 +14,7 @@ export default function ChartSvgFixture() {
   const [pending, setPending] = createSignal(false);
   const [reject, setReject] = createSignal(false);
   const [error, setError] = createSignal(false);
+  const latencyVisual = <Sparkline values={values()} label="p99 latency history" color="foreground" width={120} height={24} />;
   async function refresh(): Promise<void> {
     if (pending()) return;
     setPending(true);
@@ -35,8 +36,8 @@ export default function ChartSvgFixture() {
     <ThemeScope theme="slate" locale="de-DE" messages={{ chartViewAsTable: "Daten als Tabelle", chartMissingValue: "Fehlender Wert", chartTablePagination: "Diagrammdatenseiten" }} class="loupe-chart-svg-surface">
       <Sparkline values={values()} label="Latency over eight samples, with missing values shown as gaps" color="chart-3" width={320} height={64} />
       <StatGroup label="Service health" stats={[
-        { label: "p99 latency", value: `${values()[values().length - 1] ?? 0} ms`, trend: "down", trendLabel: "5 milliseconds lower" },
-        { label: "Requests", value: "18.2k", trend: "up", trendLabel: "8 percent higher" },
+        { label: "p99 latency", value: `${values()[values().length - 1] ?? 0} ms`, trend: "down", valence: values() === initial ? "neutral" : "positive", trendLabel: "5 milliseconds lower", visual: latencyVisual },
+        { label: "Requests", value: values() === initial ? 18200 : 19500.5, format: { minimumFractionDigits: 2, maximumFractionDigits: 2 }, trend: "up", trendLabel: "8 percent higher" },
         { label: "Availability", value: "99.98%", trend: "flat", trendLabel: "unchanged" },
       ]} />
       <ChartDataTable label="API latency" summary="Latency declined over the accepted interval; one sample is missing." xLabel="Time"

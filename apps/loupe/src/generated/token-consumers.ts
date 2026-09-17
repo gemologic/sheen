@@ -299,7 +299,8 @@ export const tokenConsumers: Readonly<Record<string, readonly string[]>> = Objec
     "TimeZoneSelect"
   ],
   "--sheen-color-danger": [
-    "Meter"
+    "Meter",
+    "Stat"
   ],
   "--sheen-color-danger-border": [
     "EditableTextField"
@@ -403,6 +404,7 @@ export const tokenConsumers: Readonly<Record<string, readonly string[]>> = Objec
     "MoreVerticalIcon",
     "NotificationCenter",
     "NotificationsIcon",
+    "NumberText",
     "Pagination",
     "RefreshIcon",
     "RemoveIcon",
@@ -509,22 +511,20 @@ export const tokenConsumers: Readonly<Record<string, readonly string[]>> = Objec
     "Callout"
   ],
   "--sheen-color-market-down": [
-    "Sparkline",
-    "Stat"
+    "Sparkline"
   ],
   "--sheen-color-market-flat": [
-    "Sparkline",
-    "Stat"
+    "Sparkline"
   ],
   "--sheen-color-market-up": [
-    "Sparkline",
-    "Stat"
+    "Sparkline"
   ],
   "--sheen-color-neutral-subtle": [
     "TagInput"
   ],
   "--sheen-color-success": [
-    "Meter"
+    "Meter",
+    "Stat"
   ],
   "--sheen-color-success-fg": [
     "Badge",
@@ -869,11 +869,20 @@ export const tokenConsumers: Readonly<Record<string, readonly string[]>> = Objec
   "--sheen-text-code-size": [
     "CodeBlock"
   ],
-  "--sheen-text-h2-size": [
-    "Stat"
-  ],
   "--sheen-text-h4-size": [
     "EmptyState"
+  ],
+  "--sheen-text-stat-leading": [
+    "Stat"
+  ],
+  "--sheen-text-stat-size": [
+    "Stat"
+  ],
+  "--sheen-text-stat-tracking": [
+    "Stat"
+  ],
+  "--sheen-text-stat-weight": [
+    "Stat"
   ],
   "--sheen-text-ui-leading": [
     "Skeleton",

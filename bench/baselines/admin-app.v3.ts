@@ -42,6 +42,21 @@ const history: readonly AdminAppBaselineEntry[] = Object.freeze([
       retainedRefresh: 0.9588661931524965,
     }),
   }),
+  Object.freeze({
+    recordedAt: "2026-09-16",
+    environment: "Explicitly approved Studio Inter to Graphite Plex typography-transition baseline; five-run production capture on WSL2 6.6.87.2, AMD Ryzen Threadripper 9960X, Chromium 153.0.8010.12, Playwright 1.63.0. Only themeSwitch changes; see docs/studio-performance-review.md.",
+    normalized: Object.freeze({
+      sidebarCollapse: 0.19108360934142746,
+      presetLayout: 0.2607334766254706,
+      themeSwitch: 0.3495700854471915,
+      commandPalette: 0.15405943009410886,
+      tableSearch: 0.2436117010344593,
+      tableScroll: 3.6739702919263384,
+      detailsDock: 0.14002758517156266,
+      detailsSheet: 0.23711166299611117,
+      retainedRefresh: 0.9588661931524965,
+    }),
+  }),
 ]);
 
 export const adminAppBenchmarkBaseline = Object.freeze({

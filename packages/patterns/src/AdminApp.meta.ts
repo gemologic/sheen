@@ -18,7 +18,7 @@ export default defineMeta<AdminAppProps>({
     secondaryNavigation: { description: "Optional app-owned secondary navigation tree. Links may expose named sibling action menus without changing link semantics." },
     currentView: { description: "Optional breadcrumb or accepted current-view label." },
     globalSearch: { description: "Optional app-owned search control. Sheen does not perform the search." },
-    actionGroups: { description: "Semantic primary, utility, and help action groups with native Button or Link behavior." },
+    actionGroups: { description: "Semantic primary, utility, and help action groups with native Button or Link behavior. Optional group presentation='overflow' puts infrequent controls in a scoped, keyboard-operable popover; use icon factories for deferred rendering there." },
     notifications: { description: "Optional app-owned notification model." },
     account: { description: "Optional app-owned account identity and menu. Sheen does not authenticate." },
     commandPalette: { description: "Optional scoped command sources, state, persistence, and error hooks." },
@@ -46,5 +46,18 @@ export default defineMeta<AdminAppProps>({
     code: '<ThemeProvider><AdminApp label="Operations" pathname="/orders" product={{ name: "Northstar", href: "/" }} primaryNavigation={{ id: "primary", label: "Primary", items: [{ kind: "link", id: "orders", label: "Orders", href: "/orders" }] }}><p>Application content</p></AdminApp></ThemeProvider>',
   }],
   composer: { allowedParentRegions: ["root"], acceptedChildRegions: ["topbar", "sidebar", "page-header", "toolbar", "main-grid", "details-panel", "status-bar", "overlays"], editableSafeProps: ["preset", "appearance", "placements"], fixtureFactory: "application", codeGenerationAdapter: "admin-document" },
-  guidance: { do: ["Treat placements and appearance as stable server input; use themes and accents for global brand axes and admin aliases for shell-specific surfaces."], dont: ["Do not remount AdminApp during refresh or use it as a global arbitrary-content modal manager."] },
+  guidance: {
+    do: [
+      "Treat placements and appearance as stable server input; use themes and accents for global brand axes and admin aliases for shell-specific surfaces.",
+      "Give each page one focal working region: a metric/chart overview, a collection toolbar and rows, a registry and create form, or settings with save/discard controls.",
+      "Use at most one filled accent action per active task surface; dialogs own a separate task and destructive confirmations use danger semantics.",
+      "Use semantic surface depth and explicit locale-aware numeric precision. Keep counts factual and consistent with the accepted workspace scope.",
+      "Compose structured fields from named controls with group counts and field-specific errors; preserve native form values and drafts through refresh.",
+    ],
+    dont: [
+      "Do not remount AdminApp during refresh or use it as a global arbitrary-content modal manager.",
+      "Do not invent historical trends, account-creation actions, or low-contrast text to fill a composition. Keep developer diagnostics in the explicit design lab.",
+      "Do not count accent actions across unrelated runtime surfaces with a global JSX rule or animate layout content on mount.",
+    ],
+  },
 });

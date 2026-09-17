@@ -1,4 +1,4 @@
-import { Button, CommandPalette, Kbd, Link, ShortcutProvider, ThemeScope, Toaster, createConfirm, createToaster } from "@gemologic/sheen";
+import { Button, CommandPalette, Kbd, Link, Popover, ShortcutProvider, ThemeScope, Toaster, createConfirm, createToaster } from "@gemologic/sheen";
 import { For, Show, children, createContext, createMemo, createSignal, onCleanup, onMount, useContext } from "solid-js";
 import type { Accessor, JSX } from "solid-js";
 import type { CommandPaletteRecents, CommandPaletteSource, ConfirmController, ThemeOverrides, ToastController } from "@gemologic/sheen";
@@ -134,7 +134,6 @@ function AdminRuntime(props: AdminAppProps & { readonly services: AdminServices 
   const ConfirmDialog = props.services.confirm.Dialog;
   const placements = createMemo(() => resolveAdminPlacements(props.preset ?? "standard", props.placements));
   const appearance = createMemo(() => resolveAdminAppearance(props.appearance));
-  const page = children(() => props.children);
   const currentView = children(() => props.currentView);
   const search = children(() => props.globalSearch);
   const status = children(() => props.statusBar);
@@ -155,7 +154,7 @@ function AdminRuntime(props: AdminAppProps & { readonly services: AdminServices 
   const [commandDraft, setCommandDraft] = createSignal(commandPalette()?.defaultOpen ?? false);
   const commandOpen = () => commandPalette()?.open ?? commandDraft();
   const narrowDetails = useNarrowDetails();
-  const groups = createMemo(() => validateActionGroups(props.actionGroups ?? []));
+  const groups = createMemo(() => validateActionGroups(props.actionGroups ?? []).filter(group => group.items.length > 0));
   const sidebarSections = createMemo<readonly SidebarNavSection[]>(() => {
     const result: SidebarNavSection[] = [];
     const primary = primaryNavigation();
@@ -221,13 +220,13 @@ function AdminRuntime(props: AdminAppProps & { readonly services: AdminServices 
       case "current-view": return currentView();
       case "command-trigger": return commandPalette() ? <Button class="sheen-admin-command-trigger" onClick={() => setCommandOpen(true)}><span>{commandPalette()?.label ?? "Command"}</span><Kbd>⌘K</Kbd></Button> : null;
       case "global-search": return search();
-      case "primary-actions": return <AdminActions groups={groups().filter(group => group.role === "primary")} appearance={appearance().actions} />;
-      case "utility-actions": return <AdminActions groups={groups().filter(group => group.role === "utility")} appearance={appearance().actions} />;
+      case "primary-actions": return <AdminActions groups={groups().filter(group => group.role === "primary")} appearance={appearance().actions} target={target} />;
+      case "utility-actions": return <AdminActions groups={groups().filter(group => group.role === "utility")} appearance={appearance().actions} target={target} />;
       case "notifications": {
         const model = notifications();
         return model ? <NotificationCenter notifications={model} target={target === "sidebar-footer" ? "sidebar-footer" : "topbar-end"} /> : null;
       }
-      case "help": return <AdminActions groups={groups().filter(group => group.role === "help")} appearance={appearance().actions} />;
+      case "help": return <AdminActions groups={groups().filter(group => group.role === "help")} appearance={appearance().actions} target={target} />;
       case "account": {
         const model = account();
         return model ? <AccountMenu account={model} target={accountTarget(target)} collapsed={collapsed() && target.startsWith("sidebar-")} /> : null;
@@ -253,7 +252,7 @@ function AdminRuntime(props: AdminAppProps & { readonly services: AdminServices 
     statusBar={status()} shortcutHelp={props.shortcutHelp ?? true}>
     <div class="sheen-admin-body" data-details={detailsOpen() || undefined} data-details-presentation={narrowDetails() ? "sheet" : "docked"}>
       <div class="sheen-admin-page" aria-busy={props.refreshing || undefined} data-pending={props.refreshing || undefined}
-        inert={detailsOpen() && narrowDetails()}>{page()}</div>
+        inert={detailsOpen() && narrowDetails()}>{props.children}</div>
       <Show when={details()}>{model => <DetailsPanel panelId={model().id} title={model().title} open={detailsOpen()} presentation={narrowDetails() ? "sheet" : "docked"}
         onOpenChange={model().onOpenChange} {...(model().returnFocus === undefined ? {} : { returnFocus: model().returnFocus })}
         {...(model().resizable === undefined ? {} : { resizable: model().resizable })} {...(model().width === undefined ? {} : { width: model().width })}
@@ -280,31 +279,41 @@ function AdminProduct(props: { readonly product: AdminProductModel; readonly col
   </Show>;
 }
 
-function AdminActions(props: { readonly groups: readonly AdminActionGroup[]; readonly appearance: AdminActionAppearance }): JSX.Element {
+function AdminActions(props: { readonly groups: readonly AdminActionGroup[]; readonly appearance: AdminActionAppearance; readonly target: AdminChromeTarget }): JSX.Element {
   const groups = createMemo(() => new Map(props.groups.map(group => [group.id, group])));
   return <For each={[...groups().keys()]}>{id => <Show when={groups().get(id)}>{group =>
-    <AdminActionGroupControl group={group()} appearance={props.appearance} />
+    <AdminActionGroupControl group={group()} appearance={props.appearance} target={props.target} />
   }</Show>}</For>;
 }
 
-function AdminActionGroupControl(props: { readonly group: AdminActionGroup; readonly appearance: AdminActionAppearance }): JSX.Element {
+function AdminActionGroupControl(props: { readonly group: AdminActionGroup; readonly appearance: AdminActionAppearance; readonly target: AdminChromeTarget }): JSX.Element {
+  const [open, setOpen] = createSignal(false);
+  return <Show when={props.group.presentation === "overflow"} fallback={<AdminActionItems group={props.group} appearance={props.appearance} onSelect={() => setOpen(false)} />}>
+    <Popover trigger={props.group.label} title={props.group.label} open={open()} onOpenChange={setOpen} placement={props.target === "sidebar-footer" ? "top-start" : "bottom-end"} class="sheen-admin-action-popover"><AdminActionItems group={props.group} appearance="quiet" onSelect={() => setOpen(false)} /></Popover>
+  </Show>;
+}
+
+function AdminActionItems(props: { readonly group: AdminActionGroup; readonly appearance: AdminActionAppearance; readonly onSelect: () => void }): JSX.Element {
   const items = createMemo(() => new Map(props.group.items.map(item => [item.id, item])));
-  return <div class="sheen-admin-actions" role="group" aria-label={props.group.label} data-action-role={props.group.role} data-action-appearance={props.appearance}>
+  return <div class="sheen-admin-actions" role="group" aria-label={props.group.label} data-action-role={props.group.role} data-action-appearance={props.appearance} data-action-presentation={props.group.presentation ?? "inline"}>
     <For each={[...items().keys()]}>{id => <Show when={items().get(id)}>{item =>
-      <AdminActionControl action={item()} role={props.group.role} appearance={props.appearance} />
+      <AdminActionControl action={item()} role={props.group.role} appearance={props.appearance} onSelect={props.onSelect} />
     }</Show>}</For>
   </div>;
 }
 
-function AdminActionControl(props: { readonly action: AdminAction; readonly role: AdminActionGroup["role"]; readonly appearance: AdminActionAppearance }): JSX.Element {
-  const icon = children(() => props.action.icon);
+function AdminActionControl(props: { readonly action: AdminAction; readonly role: AdminActionGroup["role"]; readonly appearance: AdminActionAppearance; readonly onSelect: () => void }): JSX.Element {
+  const icon = children(() => {
+    const value = props.action.icon;
+    return typeof value === "function" ? value() : value;
+  });
   const content = <><Show when={icon()}>{resolved => <span class="sheen-admin-action-icon" aria-hidden="true">{resolved()}</span>}</Show><span class="sheen-admin-action-label">{props.action.label}</span></>;
   const link = createMemo(() => { const action = props.action; return action.kind === "link" ? action : undefined; });
   const button = createMemo(() => { const action = props.action; return action.kind === "action" ? action : undefined; });
   return <>
-    <Show when={link()}>{action => <Link variant="button" href={action().href}>{content}</Link>}</Show>
+    <Show when={link()}>{action => <Link variant="button" href={action().href} onClick={() => props.onSelect()}>{content}</Link>}</Show>
     <Show when={button()}>{action => <Button variant={props.appearance === "accent" && props.role === "primary" ? "solid" : props.appearance === "outlined" ? "outline" : props.appearance === "accent" ? "soft" : "ghost"}
-      tone={props.appearance !== "quiet" && props.role === "primary" ? "accent" : "neutral"} disabled={action().disabled} onClick={() => action().onSelect()}>{content}</Button>}</Show>
+      tone={props.appearance !== "quiet" && props.role === "primary" ? "accent" : "neutral"} disabled={action().disabled} onClick={() => { action().onSelect(); props.onSelect(); }}>{content}</Button>}</Show>
   </>;
 }
 
@@ -315,6 +324,7 @@ function validateActionGroups(groups: readonly AdminActionGroup[]): readonly Adm
     if (!group.id.trim() || !group.label.trim()) throw new Error("AdminApp action groups require nonempty IDs and labels");
     if (groupIds.has(group.id)) throw new Error(`AdminApp has duplicate action-group ID ${JSON.stringify(group.id)}`);
     groupIds.add(group.id);
+    if (group.presentation !== undefined && group.presentation !== "inline" && group.presentation !== "overflow") throw new Error("AdminApp action presentation must be inline or overflow");
     for (const item of group.items) {
       if (!item.id.trim() || !item.label.trim()) throw new Error("AdminApp actions require nonempty IDs and labels");
       if (itemIds.has(item.id)) throw new Error(`AdminApp has duplicate action ID ${JSON.stringify(item.id)}`);

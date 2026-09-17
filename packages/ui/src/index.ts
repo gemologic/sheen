@@ -59,6 +59,8 @@ export { useNumberFormatter, useDateFormatter } from "./theme/intl.ts";
 export { Stack, Row, Row as Cluster, Grid, Container, Center, Spacer } from "./layout/Layout.tsx";
 export type { StackProps, RowProps, GridProps, ContainerProps, CenterProps, SpacerProps, Spacing, Alignment, Justification } from "./layout/Layout.tsx";
 export { Text, Heading, Code, Kbd } from "./primitives/Typography.tsx";
+export { NumberText } from "./primitives/NumberText.tsx";
+export type { NumberTextProps } from "./primitives/NumberText.tsx";
 export type { TextProps, HeadingProps, CodeProps, KbdProps } from "./primitives/Typography.tsx";
 export { Badge, Tag } from "./primitives/Status.tsx";
 export type { BadgeProps, TagProps, StatusTone } from "./primitives/Status.tsx";

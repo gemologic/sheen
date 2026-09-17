@@ -181,7 +181,7 @@ async function inspectPackage(directoryName: string, rootLicense: string): Promi
   for (const target of binTargets(parsedManifest.bin)) assertTargetIncluded(target, included, parsedManifest.name);
 
   if (parsedManifest.name === "@gemologic/sheen-tokens") {
-    for (const required of ["dist/fonts/LICENSE.txt", "dist/fonts/SOURCE.md", "dist/fonts/IBMPlexSans-Regular.woff2", "dist/fonts/IBMPlexSans-SemiBold.woff2", "dist/fonts/IBMPlexMono-Regular.woff2"]) {
+    for (const required of ["dist/fonts/LICENSE.txt", "dist/fonts/Inter-LICENSE.txt", "dist/fonts/SOURCE.md", "dist/fonts/InterVariable.woff2", "dist/fonts/IBMPlexSans-Regular.woff2", "dist/fonts/IBMPlexSans-SemiBold.woff2", "dist/fonts/IBMPlexMono-Regular.woff2"]) {
       assert.ok(included.has(required), `${parsedManifest.name} package is missing font artifact ${required}`);
     }
   }

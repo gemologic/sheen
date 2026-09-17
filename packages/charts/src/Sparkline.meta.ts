@@ -6,7 +6,7 @@ export default defineMeta<SparklineProps>({
   props: {
     values: { description: "Float64 values in display order; NaN creates a visible path break." },
     label: { description: "Required accessible description of the trend." },
-    color: { description: "Semantic chart, market, or accent token name.", default: "chart-1" },
+    color: { description: "Semantic chart, market, accent, foreground, or muted token name.", default: "chart-1" },
     width: { description: "Positive finite intrinsic and view-box width.", default: 120 },
     height: { description: "Positive finite intrinsic and view-box height.", default: 28 },
   },

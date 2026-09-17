@@ -1,5 +1,7 @@
 @layer theme, base, components, utilities;
 @layer components {
+  .sheen-number-text { font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; }
+  .sheen-number-text > :is([data-number-part="decimal"], [data-number-part="fraction"], [data-number-part="unit"], [data-number-part="percentSign"], [data-number-part="currency"], [data-number-part="compact"]) { color: var(--sheen-color-fg-muted); }
 .sheen-editable-text { display: grid; gap: var(--sheen-space-block-xs); min-inline-size: 0; }
 .sheen-editable-text > [role="button"], .sheen-editable-text > input { box-sizing: border-box; min-block-size: var(--sheen-control-h-md); inline-size: 100%; padding-block: var(--sheen-space-block-xs); padding-inline: var(--sheen-control-px-md); border: var(--sheen-control-border-width) solid transparent; border-radius: var(--sheen-control-radius); color: var(--sheen-color-fg); background: transparent; font: inherit; overflow-wrap: anywhere; }
 .sheen-editable-text > [role="button"]:hover { background: var(--sheen-color-bg-hover); }
@@ -634,11 +636,12 @@
   accent-color: var(--sheen-color-accent);
 }
 .sheen-progress::-webkit-progress-bar, .sheen-meter::-webkit-meter-bar { border: 0; border-radius: var(--sheen-radius-pill); background: var(--sheen-color-bg-inset); box-shadow: inset 0 0 0 1px var(--sheen-color-border-subtle); }
-.sheen-progress::-webkit-progress-value, .sheen-progress::-moz-progress-bar { border-radius: var(--sheen-radius-pill); background: var(--sheen-color-accent); }
+.sheen-progress::-webkit-progress-value { border-radius: var(--sheen-radius-pill); background: var(--sheen-color-accent); }
+.sheen-progress::-moz-progress-bar { border-radius: var(--sheen-radius-pill); background: var(--sheen-color-accent); }
 .sheen-meter { --sheen-meter-fill: var(--sheen-color-success); }
 .sheen-meter[data-meter-state="suboptimum"] { --sheen-meter-fill: var(--sheen-color-warning); }
 .sheen-meter[data-meter-state="critical"] { --sheen-meter-fill: var(--sheen-color-danger); }
-.sheen-meter::-webkit-meter-optimum-value, .sheen-meter::-webkit-meter-suboptimum-value, .sheen-meter::-webkit-meter-even-less-good-value,
+.sheen-meter::-webkit-meter-optimum-value, .sheen-meter::-webkit-meter-suboptimum-value, .sheen-meter::-webkit-meter-even-less-good-value { border: 0; border-radius: var(--sheen-radius-pill); background: var(--sheen-meter-fill); box-shadow: none; }
 .sheen-meter::-moz-meter-bar { border: 0; border-radius: var(--sheen-radius-pill); background: var(--sheen-meter-fill); box-shadow: none; }
 @media (forced-colors: active) { .sheen-progress, .sheen-meter { appearance: auto; -webkit-appearance: auto; box-shadow: none; } }
 .sheen-spinner-label { position: absolute; inline-size: 1px; block-size: 1px; padding: 0; margin: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }

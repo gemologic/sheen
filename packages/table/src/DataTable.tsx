@@ -6,6 +6,7 @@ import { For, Index, Show, createEffect, createMemo, createSignal, createUniqueI
 import type { Accessor, JSX } from "solid-js";
 import { changeTableState } from "./table-state-changes.ts";
 import { canMoveColumn, moveColumn, orderColumnStates, placeColumn } from "./column-layout.ts";
+import { constrainedColumnValues, summarizedColumns } from "./constrained-columns.ts";
 import type { ColumnDropPlacement, ColumnMoveDirection } from "./column-layout.ts";
 import { columnStateSchema, readColumnDefinitions } from "./columns.ts";
 import type { ColumnEditor, ColumnValue, SheenColumns } from "./columns.ts";
@@ -177,6 +178,8 @@ interface DataTableBaseProps<Row extends object> {
   readonly filterBar?: boolean | DataTableFilterBarOptions;
   /** Show the keyboard-accessible visibility, order, pin, and sizing menu. */
   readonly columnControls?: boolean;
+  /** Opt-in fields summarized only when the accepted filter fixes their value. Does not rewrite saved visibility. */
+  readonly summarizeColumns?: readonly string[];
   /** Client exports are enabled by default. False hides them; options customize format and filename. */
   readonly export?: false | DataTableExportOptions;
   /** Commits values from columns that declare an editor. Required when any editor is present. */
@@ -1129,12 +1132,46 @@ export function DataTable<Row extends object>(props: DataTableProps<Row>): JSX.E
   });
   const columnRecordById = new Map(columnRecords.map(column => [column.definition.id, column]));
   const orderedColumnStates = createMemo(() => orderColumnStates(acceptedState().columns));
+  const summaryEligible = createMemo(() => {
+    const ids = props.summarizeColumns ?? [];
+    const unique = new Set<string>();
+    for (const id of ids) {
+      const definition = columnRecordById.get(id)?.definition;
+      if (!definition?.accessor || !definition.filter || definition.editor || definition.sensitive || unique.has(id)) throw new Error("DataTable summarizeColumns requires unique, filterable, noneditable, nonsensitive accessor IDs");
+      unique.add(id);
+    }
+    return unique;
+  });
+  const [restoredSummaries, setRestoredSummaries] = createSignal<ReadonlySet<string>>(new Set());
+  const columnSummaries = createMemo(() => summaryEligible().size === 0 ? [] : summarizedColumns(orderedColumnStates(), constrainedColumnValues(acceptedState().filter), summaryEligible(), restoredSummaries()));
+  const summarizedIds = createMemo(() => new Set(columnSummaries().map(item => item.column)));
+  const summaryLabel = (id: string): string => {
+    const summary = columnSummaries().find(item => item.column === id);
+    const definition = columnRecordById.get(id)?.definition;
+    if (!summary || !definition) return "";
+    const locale = theme.state().locale;
+    const value = typeof summary.value === "number"
+      ? summary.kind === "date" ? new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeZone: "UTC" }).format(summary.value) : new Intl.NumberFormat(locale).format(summary.value)
+      : summary.value;
+    return messages().constrainedColumn.replace(/\{(column|value|count)\}/gu, (_match: string, key: string) => key === "column" ? definition.header : key === "value" ? value : new Intl.NumberFormat(locale).format(result().total));
+  };
+  const restoreSummary = (id: string): void => {
+    setRestoredSummaries(previous => new Set([...previous, id]));
+    queueMicrotask(() => {
+      const header = tableElement?.querySelector<HTMLElement>(`th[data-column="${CSS.escape(id)}"]`);
+      if (header && header.getClientRects().length > 0) {
+        const sort = header.querySelector<HTMLButtonElement>(".sheen-data-table-sort");
+        if (sort) sort.focus({ preventScroll: true });
+        else { header.tabIndex = -1; header.focus({ preventScroll: true }); }
+      } else if (root) { root.tabIndex = -1; root.focus({ preventScroll: true }); }
+    });
+  };
   const visibleDefinitions = createMemo(() => {
     const ordered = orderedColumnStates();
     for (const state of ordered) columnRecordById.get(state.id)?.updateState(state);
     return ordered.flatMap(state => {
       const record = columnRecordById.get(state.id);
-      return record && state.visible ? [record] : [];
+      return record && state.visible && !summarizedIds().has(state.id) ? [record] : [];
     });
   });
   type CellEditController = ReturnType<typeof createCellEdit<ColumnValue, string>>;
@@ -1356,7 +1393,10 @@ export function DataTable<Row extends object>(props: DataTableProps<Row>): JSX.E
       const column = columnRecordById.get(columnState.id);
       if (!column) throw new Error(`Missing table column: ${columnState.id}`);
       const items: readonly MenuItem[] = [
-        { kind: "checkbox", id: "visible", label: labels.showColumn, checked: columnState.visible, disabled: columnState.visible && visibleCount === 1, onCheckedChange: visible => changeLayout({ kind: "columnVisibility", column: columnState.id, visible }) },
+        { kind: "checkbox", id: "visible", label: labels.showColumn, checked: columnState.visible && !summarizedIds().has(columnState.id), disabled: columnState.visible && visibleCount === 1, onCheckedChange: visible => {
+          if (visible) setRestoredSummaries(previous => new Set([...previous, columnState.id]));
+          changeLayout({ kind: "columnVisibility", column: columnState.id, visible });
+        } },
         { kind: "action", id: "move-start", label: labels.moveColumnStart, disabled: !canMoveColumn(state, columnState.id, "toward-start"), onSelect: () => moveLayoutColumn(columnState.id, "toward-start") },
         { kind: "action", id: "move-end", label: labels.moveColumnEnd, disabled: !canMoveColumn(state, columnState.id, "toward-end"), onSelect: () => moveLayoutColumn(columnState.id, "toward-end") },
         { kind: "radio", id: "pin", label: labels.pinColumn, value: columnState.pin === false ? "none" : columnState.pin, onValueChange: value => {
@@ -1569,7 +1609,9 @@ export function DataTable<Row extends object>(props: DataTableProps<Row>): JSX.E
   const rowHeight = props.rowHeight ?? "var(--sheen-table-row-h)";
   if (typeof rowHeight !== "string" || rowHeight.trim() === "") throw new Error("rowHeight must be a nonempty CSS length");
   const effectiveDensity = (): DataTableDensity => density() ?? theme.state().density;
-  const estimatedRowHeight = (): number => props.estimatedRowHeight ?? (effectiveDensity() === "compact" ? 28 : effectiveDensity() === "spacious" ? 42 : 34);
+  const estimatedRowHeight = (): number => props.estimatedRowHeight ?? (theme.state().theme === "studio"
+    ? effectiveDensity() === "compact" ? 36 : effectiveDensity() === "spacious" ? 48 : 40
+    : effectiveDensity() === "compact" ? 28 : effectiveDensity() === "spacious" ? 42 : 34);
   let measuredDensity = effectiveDensity();
   let measuredRowHeight = estimatedRowHeight();
   if (!Number.isFinite(measuredRowHeight) || measuredRowHeight <= 0) throw new Error("estimatedRowHeight must be a positive finite number");
@@ -2119,7 +2161,7 @@ export function DataTable<Row extends object>(props: DataTableProps<Row>): JSX.E
     <Show when={acceptedAvailable() ? error() : null}>{value => <div class="sheen-data-table-error" role="alert"><span>{errorMessage(value())}</span><Button onClick={retry}>{messages().retry}</Button></div>}</Show>
     <Show when={exportError()}><div class="sheen-data-table-error" role="alert"><span>{messages().exportFailed}</span><Show when={serverExports}><Button onClick={retryExport}>{messages().retryExport}</Button></Show></div></Show>
     <DataTableToolbar label={messages().tableControls.replace("{caption}", props.caption)} result={resultCount()} resultPrevious={previous() ? messages().previousResults : undefined} actions={toolbarActions()}
-      query={searchOptions || (props.filterBar !== false && schema.filterColumns.length > 0) ? <>
+      query={searchOptions || (props.filterBar !== false && schema.filterColumns.length > 0) || columnSummaries().length > 0 ? <>
         <Show when={searchOptions}><div class="sheen-data-table-search-field" data-search-mode={searchMode()}><SearchInput class="sheen-data-table-search" label={searchLabel()} placeholder={searchPlaceholder()} value={searchDraft()} shortcut={searchShortcut()} aria-busy={busy() || undefined}
           onValueChange={updateSearchDraft} onCompositionStart={startSearchComposition} onCompositionEnd={event => finishSearchComposition(event.currentTarget.value)} />
           <Show when={searchOptions?.exactMatch}><DropdownMenu class="sheen-data-table-search-mode-menu" trigger={<span>{searchMode() === "exact" ? messages().searchExact : messages().searchRanked}</span>}
@@ -2127,6 +2169,9 @@ export function DataTable<Row extends object>(props: DataTableProps<Row>): JSX.E
         </div></Show>
         <Show when={props.filterBar !== false && schema.filterColumns.length > 0}><FilterBar columns={props.columns} value={acceptedState().filter} facets={result().facets} disabled={pending()} onChange={requestFilter}
           {...(typeof props.filterBar === "object" && props.filterBar.dateEditor ? { dateEditor: props.filterBar.dateEditor } : {})} /></Show>
+        <Show when={columnSummaries().length > 0}><div class="sheen-data-table-constraints" role="group" aria-label={messages().constrainedColumns}>
+          <For each={columnSummaries().map(item => item.column)}>{id => <span class="sheen-data-table-constraint"><span>{summaryLabel(id)}</span><Button size="sm" variant="ghost" aria-label={messages().restoreColumn.replaceAll("{column}", columnRecordById.get(id)?.definition.header ?? id)} onClick={() => restoreSummary(id)}>{messages().showColumn}</Button></span>}</For>
+        </div></Show>
       </> : undefined}
       status={<Show when={exportPending()}><span class="sheen-data-table-export-status" role="status">{messages().preparingExport}</span></Show>} />
     <div class="sheen-data-table-frame">

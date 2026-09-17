@@ -137,7 +137,10 @@ export function buildTheme(input: ThemeDefinition): string {
   function emit(modern: boolean): string {
     return (["dark", "light"] satisfies Mode[]).map(mode => {
       const selector = `:where([data-sheen-theme="${theme.id}"][data-sheen-mode="${mode}"])`;
-      return `${selector} {\n  color-scheme: ${mode};\n${emitTokenDeclarations(theme[mode], modern)}\n}`;
+      const comfortableSpacing = Object.fromEntries(Object.entries(theme[mode])
+        .filter(([name]) => name.startsWith("space-") || name.startsWith("control-px-"))
+        .map(([name, value]) => [`density-comfortable-${name}`, value]));
+      return `${selector} {\n  color-scheme: ${mode};\n${emitTokenDeclarations(theme[mode], modern)}\n${emitTokenDeclarations(comfortableSpacing)}\n}`;
     }).join("\n");
   }
   return `${emit(false)}\n@supports (color: oklch(50% 0 0)) {\n${emit(true)}\n}\n`;

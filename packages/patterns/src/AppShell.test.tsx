@@ -46,6 +46,9 @@ describe("AppShell SSR", () => {
     expect(html).toContain("<aside");
     expect(html).toContain("<main");
     expect(html).toContain("<footer");
+    expect(html).toContain('role="banner"');
+    expect(html).toMatch(/<aside[^>]*aria-label="Workspace content"/);
+    expect(html).toContain('role="contentinfo"');
     expect(html).toContain('aria-label="Workspace content"');
     expect(html).toContain('value="Draft"');
   });

@@ -78,6 +78,8 @@ export function buildCore(): string {
 }
 [data-sheen-theme] {
   --sheen-button-radius: var(--sheen-control-radius);
+  --sheen-density-row-compact: 28px; --sheen-density-row-comfortable: 34px; --sheen-density-row-spacious: 42px;
+  --sheen-density-compact-inline-xs: 2px; --sheen-density-compact-inline-md: 6px; --sheen-density-compact-block-xs: 2px;
   --sheen-table-row-h: 34px;
   --sheen-sidebar-w: 220px;
   --sheen-sidebar-w-collapsed: 48px;
@@ -87,19 +89,20 @@ export function buildCore(): string {
 [data-sheen-density="compact"] {
   --sheen-control-h-xs: 18px; --sheen-control-h-sm: 24px; --sheen-control-h-md: 26px; --sheen-control-h-lg: 32px;
   --sheen-control-px-xs: 4px; --sheen-control-px-sm: 6px; --sheen-control-px-md: 8px; --sheen-control-px-lg: 10px;
-  --sheen-table-row-h: 28px; --sheen-text-ui-size: 12px;
-  --sheen-space-inline-xs: 2px; --sheen-space-inline-sm: 4px; --sheen-space-inline-md: 6px; --sheen-space-inline-lg: 8px; --sheen-space-inline-xl: 12px;
-  --sheen-space-block-xs: 2px; --sheen-space-block-sm: 4px; --sheen-space-block-md: 8px; --sheen-space-block-lg: 12px; --sheen-space-block-xl: 16px;
+  --sheen-table-row-h: var(--sheen-density-row-compact, 28px);
+  --sheen-space-inline-xs: var(--sheen-density-compact-inline-xs, 2px); --sheen-space-inline-sm: 4px; --sheen-space-inline-md: var(--sheen-density-compact-inline-md, 6px); --sheen-space-inline-lg: 8px; --sheen-space-inline-xl: 12px;
+  --sheen-space-block-xs: var(--sheen-density-compact-block-xs, 2px); --sheen-space-block-sm: 4px; --sheen-space-block-md: 8px; --sheen-space-block-lg: 12px; --sheen-space-block-xl: 16px;
   --sheen-space-gutter: 12px; --sheen-space-section: 16px;
 }
 [data-sheen-density="comfortable"] {
+${Object.entries(semanticDefaults).filter(([name]) => name.startsWith("space-") || name.startsWith("control-px-")).map(([name, value]) => `  --sheen-${name}: var(--sheen-density-comfortable-${name}, ${value});`).join("\n")}
   --sheen-control-h-xs: 22px; --sheen-control-h-sm: 26px; --sheen-control-h-md: 30px; --sheen-control-h-lg: 36px;
-  --sheen-table-row-h: 34px; --sheen-text-ui-size: 13px;
+  --sheen-table-row-h: var(--sheen-density-row-comfortable, 34px);
 }
 [data-sheen-density="spacious"] {
   --sheen-control-h-xs: 26px; --sheen-control-h-sm: 30px; --sheen-control-h-md: 34px; --sheen-control-h-lg: 40px;
   --sheen-control-px-xs: 8px; --sheen-control-px-sm: 10px; --sheen-control-px-md: 12px; --sheen-control-px-lg: 16px;
-  --sheen-table-row-h: 42px; --sheen-text-ui-size: 14px;
+  --sheen-table-row-h: var(--sheen-density-row-spacious, 42px);
   --sheen-space-inline-xs: 6px; --sheen-space-inline-sm: 8px; --sheen-space-inline-md: 12px; --sheen-space-inline-lg: 16px; --sheen-space-inline-xl: 20px;
   --sheen-space-block-xs: 6px; --sheen-space-block-sm: 12px; --sheen-space-block-md: 16px; --sheen-space-block-lg: 20px; --sheen-space-block-xl: 32px;
   --sheen-space-gutter: 20px; --sheen-space-section: 32px;
@@ -107,6 +110,22 @@ export function buildCore(): string {
 [data-sheen-radius="sharp"] { --sheen-control-radius: 0px; --sheen-surface-radius: 0px; }
 [data-sheen-radius="soft"] { --sheen-control-radius: 5px; --sheen-surface-radius: 8px; }
 [data-sheen-radius="round"] { --sheen-control-radius: 999px; --sheen-surface-radius: 12px; }
+[data-sheen-theme="studio"] {
+  font-feature-settings: "cv01" 1, "ss03" 1;
+  --sheen-text-ui-size: 14px;
+  --sheen-density-row-compact: 36px; --sheen-density-row-comfortable: 40px; --sheen-density-row-spacious: 48px;
+  --sheen-density-compact-inline-xs: 4px; --sheen-density-compact-inline-md: 8px; --sheen-density-compact-block-xs: 4px;
+  --sheen-density-comfortable-space-inline-sm: 8px;
+  --sheen-sidebar-w: 244px;
+  --sheen-space-inline-sm: 8px;
+  --sheen-space-block-md: 12px;
+}
+[data-sheen-theme="studio"][data-sheen-density="compact"] {
+  --sheen-space-inline-xs: 4px; --sheen-space-inline-sm: 4px; --sheen-space-inline-md: 8px;
+  --sheen-space-block-xs: 4px; --sheen-space-block-sm: 4px; --sheen-space-block-md: 8px;
+}
+[data-sheen-theme="studio"]:not([data-sheen-density]) { --sheen-table-row-h: 40px; }
+[data-sheen-theme="studio"][data-sheen-radius="soft"] { --sheen-control-radius: 6px; --sheen-surface-radius: 12px; }
 [data-sheen-motion="reduced"] { --sheen-duration-fast: 0ms; --sheen-duration-normal: 0ms; --sheen-duration-slow: 0ms; }
 @media (prefers-reduced-motion: reduce) {
   [data-sheen-theme] { --sheen-duration-fast: 0ms; --sheen-duration-normal: 0ms; --sheen-duration-slow: 0ms; }

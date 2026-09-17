@@ -32,6 +32,18 @@ export const exampleModule = {
 const rows = [{ id: "one", name: "Alpha", amount: 12 }, { id: "two", name: "Beta", amount: 34 }];
         return (<DataTable data={rows} columns={columns} getRowId={row => row.id} caption="Accounts" pagination={false} mobileLayout={{ pageSize: 20, titleColumn: "name" }} initialViewportHeight={160} />);
       },
+    },
+    {
+      title: "Summarize an accepted constant field",
+      code: "<DataTable data={rows} columns={columns} getRowId={row => row.id} caption=\"Active accounts\" summarizeColumns={[\"status\"]} filter={{ kind: \"enum\", column: \"status\", operator: \"in\", values: [\"Active\"] }} initialViewportHeight={160} />",
+      render: function Example1() {
+        const columns = defineColumns<{ readonly id: string; readonly name: string; readonly status: string }>([
+  { id: "name", header: "Name", accessor: row => row.name },
+  { id: "status", header: "Status", accessor: row => row.status, filter: { type: "enum", options: ["Active", "Paused"] } },
+]);
+const rows = [{ id: "one", name: "Alpha", status: "Active" }, { id: "two", name: "Beta", status: "Paused" }];
+        return (<DataTable data={rows} columns={columns} getRowId={row => row.id} caption="Active accounts" summarizeColumns={["status"]} filter={{ kind: "enum", column: "status", operator: "in", values: ["Active"] }} initialViewportHeight={160} />);
+      },
     }
   ]),
   variants: Object.freeze([

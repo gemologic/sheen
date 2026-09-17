@@ -1,5 +1,5 @@
 import { createEffect, createSignal, onCleanup, onMount } from "solid-js";
-import { NumberField, ScrollArea, Select, Stack, Switch, Text, useTheme } from "@gemologic/sheen";
+import { Link, NumberField, ScrollArea, Select, Stack, Switch, Text, useTheme } from "@gemologic/sheen";
 import type { SelectOption, ThemeState } from "@gemologic/sheen";
 import { accentNames } from "@gemologic/sheen-tokens";
 import { useSolidRouterAdapter } from "@gemologic/sheen-patterns/solid-router";
@@ -72,6 +72,7 @@ export default function Laboratory() {
 
   return <main class="loupe-lab-page">
     <h1>Cross-system laboratory</h1>
+    <Link href="/admin?configure=1">Configure the admin starter</Link>
     <Text tone="muted">Every axis is URL-backed. Theme preferences persist at the root; iframe updates stay scoped and retain their component owners.</Text>
     <section class="loupe-lab-controls" aria-label="Preview axes">
       <Select label="Theme" value={state().theme} options={theme.themes().map(item => ({ value: item.id, label: item.label }))} onValueChange={value => {

@@ -48,6 +48,14 @@ describe("theme compiler", () => {
     expect(() => resolveTokens(definition({ dark: { ...semanticDefaults, "color-bg": "{missing}" } }), "dark")).toThrow("unresolved reference missing");
     expect(() => resolveTokens(definition({ dark: { ...semanticDefaults, "font-sans": "sans; color:red" } }), "dark")).toThrow("unsafe CSS value");
   });
+  it("migrates metric roles using the private theme's own weight", () => {
+    const legacy: Partial<typeof semanticDefaults> = { ...semanticDefaults, "text-h2-weight": "400" };
+    for (const key of ["text-stat-size", "text-stat-leading", "text-stat-weight", "text-stat-tracking", "text-title-tracking"] satisfies TokenName[]) delete legacy[key];
+    const migrated = resolveTokens(definition({ schemaVersion: 3, dark: legacy }), "dark");
+    expect(migrated["text-stat-size"]).toBe("30px");
+    expect(migrated["text-stat-weight"]).toBe("400");
+    expect(() => resolveTokens(definition({ dark: legacy }), "dark")).toThrow("missing token text-stat-size");
+  });
   it("validates colors even when their role has no contrast gate", () => {
     try {
       defineTheme(definition({ dark: { ...semanticDefaults, "chart-8": "invalid-chart", "color-fg-subtle": "invalid-disabled" } }));
@@ -78,6 +86,12 @@ describe("theme compiler", () => {
     expect(css).not.toContain("{gray.");
     expect(css.indexOf("#141419")).toBeLessThan(css.indexOf("@supports"));
     expect(css).toContain("oklch(");
+  });
+  it("preserves private theme spacing for nested comfortable density", () => {
+    const css = buildTheme(definition({ dark: { ...semanticDefaults, "space-block-sm": "11px", "control-px-md": "14px" } }));
+    expect(css).toContain("--sheen-density-comfortable-space-block-sm: 11px;");
+    expect(css).toContain("--sheen-density-comfortable-control-px-md: 14px;");
+    expect(buildCore()).toContain("--sheen-space-block-sm: var(--sheen-density-comfortable-space-block-sm, 8px);");
   });
   it("reports multiple contrast failures and permits subtle structural borders", () => {
     const failures = validateContrast({ ...obsidian.dark, "color-fg": "#141419", "color-fg-muted": "#141419" });

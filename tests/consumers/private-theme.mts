@@ -30,7 +30,10 @@ const fontCssUrl = import.meta.resolve("@gemologic/sheen-tokens/fonts.css");
 const fontCss = await readFile(new URL(fontCssUrl), "utf8");
 assert.doesNotMatch(fontCss, /(?:https?:)?\/\//, "font CSS must not load cross-origin assets");
 const fontUrls = [...fontCss.matchAll(/url\("(?<path>\.\/fonts\/[^\"]+\.woff2)"\)/g)].flatMap(match => match.groups?.path ? [match.groups.path] : []);
-assert.equal(fontUrls.length, 3);
+assert.deepEqual([...fontUrls].sort(), [
+  "./fonts/IBMPlexMono-Regular.woff2", "./fonts/IBMPlexSans-Regular.woff2",
+  "./fonts/IBMPlexSans-SemiBold.woff2", "./fonts/InterVariable.woff2",
+]);
 for (const path of fontUrls) {
   const value = await readFile(new URL(path, fontCssUrl));
   assert.equal(value.subarray(0, 4).toString("ascii"), "wOF2");

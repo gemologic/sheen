@@ -6,6 +6,8 @@ The [executable consumer fixture](../tests/consumers/private-theme.mts) demonstr
 
 ## Validation and migration
 
+Schema 4 adds metric size, leading, weight, tracking, and title tracking roles. Older definitions receive 30px/34px metric sizing, their own `text-h2-weight`, and the documented tracking defaults. Current definitions must supply all five roles. Private themes can keep different metric typography by overriding these semantic roles without component CSS.
+
 Definitions declare `schemaVersion`. For a new theme derived from the current exported theme, use `currentSchemaVersion`. Existing private themes retain their declared version until intentionally migrated. The compiler supplies only defaults explicitly introduced after that version, resolving those defaults through the private theme's own tokens. It does not fill arbitrary missing keys from the latest bundled theme. Unknown/future versions, missing required tokens, unknown token keys, malformed references, cycles, and unsafe CSS values fail with `ThemeValidationError.diagnostics`.
 
 Color tokens accept hex, OKLCH, `transparent`, and the supported two-color `color-mix(in oklab, first percentage, second)` form. References use `{token-name}` or primitive paths such as `{gray.980}`. Colors must resolve concretely at build time; runtime `var()` and `currentColor` are not theme color values. Even contrast-exempt roles must contain valid colors. Declared contrast checks run for both modes, reporting theme, mode, token pairing, and measured ratios. Chart perceptual-distance qualification remains an open implementation item.

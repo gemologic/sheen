@@ -10,7 +10,7 @@ Aliases: s=string, b=boolean, n=number, v=void, ro=readonly, node=JSX.Element, P
 - ChartDataTable(label:s,summary:s,xLabel:s,series:ro ChartSeries[],data:ChartData,x:ChartTimeAxis|ChartNumberAxis,y?:ChartValueAxis,pageSize?:n,viewLabel?:s,loading?:b,class?:s): Provides a bounded, localized native-table alternative and narrative summary for a chart; See full example.
 - LineChart(label:s,summary:s,xLabel:s,series:ro ChartSeries[],data:ChartData,x:ChartTimeAxis|ChartNumberAxis,height:n,+9 optional): Renders a responsive token-themed SVG line chart for bounded time or numeric data with explicit gaps; See full example.
 - Sparkline(values:Float64Array<ArrayBufferLike>,label:s,color?:ChartColorToken,width?:n,height?:n): Renders a dependency-free inline trend path while preserving NaN gaps; <Sparkline values={latency} label="Latency over five samples" color="chart-3"/>
-- Stat(label:s,value:s|n,trend?:StatTrend,trendLabel?:s,class?:s): Presents one tabular metric with an optional text-labeled directional trend; See full example.
+- Stat(label:s,value:s|n,format?:Intl.NumberFormatOptions,trend?:StatTrend,trendLabel?:s,valence?:StatValence,visual?:node,class?:s): Presents one tabular metric with an optional text-labeled directional trend; See full example.
 - StatGroup(label:s,stats:ro StatProps[],class?:s): Groups related tabular metrics under one accessible label; <StatGroup label="Service health" stats={health}/>
 - TimeSeries(x:ChartTimeAxis,label:s,summary:s,xLabel:s,series:ro ChartSeries[],data:ChartData,height:n,+11 optional): Progressively enhances a deterministic time-series fallback with a responsive themed uPlot canvas and native data alternative; See full example.
 
@@ -100,7 +100,7 @@ Aliases: s=string, b=boolean, n=number, v=void, ro=readonly, node=JSX.Element, P
 - WorkspaceSwitcher(workspace:AdminWorkspaceModel,target?:"topbar-start"|"topbar-end"|"sidebar-header"|"sidebar-footer",collapsed?:b): An app-owned workspace selector with consistent topbar, sidebar-header, and sidebar-footer presentations; See full example.
 
 ## @gemologic/sheen-table
-- DataTable(columns:SheenColumns<Row>,getRowId:(row:Row)=>s,caption:s,+28 optional): Virtualized continuous or paginated data with phone cards, selection, layouts, groups, and trees; See full example.
+- DataTable(columns:SheenColumns<Row>,getRowId:(row:Row)=>s,caption:s,+29 optional): Virtualized continuous or paginated data with phone cards, selection, layouts, groups, and trees; See full example.
 - FilterBar(columns:SheenColumns<Row>,value:FilterNode,onChange:(filter:FilterNode)=>v,facets?:Readonly<Record<s,Readonly<Record<s,n>>>>,disabled?:b,class?:s,dateEditor?:FilterDateEditor): Edits the accepted serializable filter AST through removable condition chips and typed draft popovers; See full example.
 - QueryBuilder(columns:ro QueryBuilderColumn[],value:FilterNode,onChange:(filter:FilterNode)=>v,label?:s,disabled?:b): Builds nested, typed, serializable table filters with complete keyboard alternatives to structural editing; See full example.
 
@@ -152,6 +152,7 @@ Aliases: s=string, b=boolean, n=number, v=void, ro=readonly, node=JSX.Element, P
 - NavItem(href:s,label:s,current?:b,icon?:node,badge?:node,tooltip?:s,tooltipDisabled?:b,actions?:node): A native destination link with explicit current-page presentation inside NavList; See full example.
 - NavList(label:s): A named navigation landmark containing a native list of destination links; See full example.
 - NumberField(label:s,+16 optional): A locale-aware spinbutton with numeric app state, step controls, and native form submission; See full example.
+- NumberText(value:n,format?:Intl.NumberFormatOptions): Typesets a finite number with locale-aware grouping, precision, and quieter fractional digits and units; See full example.
 - Pagination(pageIndex:n,pageCount:n,onPageChange:(pageIndex:n)=>v,pending?:b,disabled?:b,label?:s): Requests pages while announcing only controlled, accepted results; See full example.
 - Popover(trigger:node,title:s,+6 optional): A labeled nonmodal contextual layer for interactive content; See full example.
 - Progress(label:s,max?:n,value?:n): Uses the native progress element for determinate or indeterminate task completion; <Progress label="Upload progress" value={42} max={100}/>

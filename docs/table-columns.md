@@ -13,3 +13,11 @@ Widths are positive fixed CSS pixels, `fill`, or `content`, with optional positi
 `createRowIdentity(getRowId)` resolves a complete row array into frozen `{ id, row, index }` records while preserving row objects. It rejects empty/whitespace IDs, duplicates, sparse/non-object rows, and an ID change for the same object across resolutions. A replacement object may reuse an existing ID after refresh. `clear()` resets object-history checks for an intentional dataset/account identity boundary; it does not authorize reuse of cached rows.
 
 Three column tests and two row-identity tests cover normalization, opacity, schema projection, search projections and exclusions, copied escape-hatch/options, inferred defaults, invalid fields/dimensions/aggregates/accessor values, stable object IDs, replacement objects, duplicates, sparse inputs, and explicit reset. The isolated built-package consumer verifies the public brand and row resolver without importing TanStack.
+
+## Fields fixed by an accepted filter
+
+`DataTable.summarizeColumns` opts eligible accessor IDs into summaries above the table. A column must be filterable, noneditable, and nonsensitive. An accepted singleton enum, exact number/date equality, or case-sensitive text equality can establish a constant. AND combines compatible constraints; OR requires the same constraint in every branch. Ranges, case-insensitive text, and visible-page coincidence never establish a constant.
+
+The summary count is the accepted query's full matching total, including zero, rather than the current page length or a facet count. Pending and failed requests retain the accepted summary with the accepted rows. Server facets remain available independently.
+
+Summarization changes only the rendered projection. Saved visibility, order, width, pinning, sorting, filters, and export columns remain intact. At least one visible column remains. Each summary has a keyboard-accessible Restore control that returns focus to the column header; restoring persists for the lifetime of the table owner. The column menu can also restore a summarized column. Do not use summaries to conceal editable or sensitive data, or infer facts about unreceived server pages.

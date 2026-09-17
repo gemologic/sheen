@@ -105,6 +105,7 @@ import { exampleModule as NavListExamples } from "./NavList.tsx";
 import { exampleModule as NotificationCenterExamples } from "./NotificationCenter.tsx";
 import { exampleModule as NotificationsIconExamples } from "./NotificationsIcon.tsx";
 import { exampleModule as NumberFieldExamples } from "./NumberField.tsx";
+import { exampleModule as NumberTextExamples } from "./NumberText.tsx";
 import { exampleModule as PageHeaderExamples } from "./PageHeader.tsx";
 import { exampleModule as PaginationExamples } from "./Pagination.tsx";
 import { exampleModule as PopoverExamples } from "./Popover.tsx";
@@ -309,6 +310,7 @@ export const componentExamples: Readonly<Record<string, ComponentExampleModule>>
   "NotificationCenter": NotificationCenterExamples,
   "NotificationsIcon": NotificationsIconExamples,
   "NumberField": NumberFieldExamples,
+  "NumberText": NumberTextExamples,
   "PageHeader": PageHeaderExamples,
   "Pagination": PaginationExamples,
   "Popover": PopoverExamples,

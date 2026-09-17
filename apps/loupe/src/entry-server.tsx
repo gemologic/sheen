@@ -4,6 +4,7 @@ import { createKeyboardHydrationScript } from "@gemologic/sheen";
 import plexMonoRegular from "@gemologic/sheen-tokens/fonts/IBMPlexMono-Regular.woff2?url";
 import plexSansRegular from "@gemologic/sheen-tokens/fonts/IBMPlexSans-Regular.woff2?url";
 import plexSansSemibold from "@gemologic/sheen-tokens/fonts/IBMPlexSans-SemiBold.woff2?url";
+import interVariable from "@gemologic/sheen-tokens/fonts/InterVariable.woff2?url";
 import { documentThemeAttributes, getThemeBootstrap } from "./theme-bootstrap";
 
 export default createHandler(() => <StartServer document={props => {
@@ -12,6 +13,7 @@ export default createHandler(() => <StartServer document={props => {
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="preload" href={interVariable} as="font" type="font/woff2" crossorigin="anonymous" />
     <link rel="preload" href={plexSansRegular} as="font" type="font/woff2" crossorigin="anonymous" />
     <link rel="preload" href={plexSansSemibold} as="font" type="font/woff2" crossorigin="anonymous" />
     <link rel="preload" href={plexMonoRegular} as="font" type="font/woff2" crossorigin="anonymous" />

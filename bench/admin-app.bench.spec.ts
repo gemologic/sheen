@@ -122,7 +122,7 @@ async function runOnce(browser: Browser): Promise<AdminAppBenchmarkRun> {
   try {
     clock = await createBrowserCpuClock(page);
     const startedAt = Date.now();
-    await page.goto("/admin?workload=heavy&table=continuous");
+    await page.goto("/admin?workload=heavy&table=continuous&configure=1");
     await expect(page.locator('[data-sheen-portal="root"]')).toHaveAttribute("data-sheen-ready", "true");
     const content = page.locator("[data-admin-starter-content]");
     await expect(content).toHaveAttribute("data-admin-row-count", String(adminAppBenchmarkBaseline.expected.rows));
@@ -173,7 +173,7 @@ async function runOnce(browser: Browser): Promise<AdminAppBenchmarkRun> {
     }));
 
     operations.push(await measure(page, clock, "theme-switch", async () => {
-      await page.locator(".loupe-admin-customize").getByRole("button", { name: "Theme Inherit root theme", exact: true }).click();
+      await page.locator(".loupe-admin-customize").getByRole("button", { name: "Theme Studio", exact: true }).click();
       await page.locator(".sheen-select-content").getByRole("option", { name: "Graphite", exact: true }).click();
       await expect(page.locator(".sheen-admin-scope")).toHaveAttribute("data-sheen-theme", "graphite");
       return retained("chart");
@@ -188,7 +188,7 @@ async function runOnce(browser: Browser): Promise<AdminAppBenchmarkRun> {
     }));
     await page.keyboard.press("Escape");
 
-    const tableSearch = page.getByRole("searchbox", { name: "Search Northstar accounts", exact: true });
+    const tableSearch = page.locator(".loupe-admin-accounts").getByRole("searchbox", { name: "Search Northstar accounts", exact: true });
     operations.push(await measure(page, clock, "table-search", async () => {
       await tableSearch.fill("'Aperture 001");
       await expect(page.locator(".sheen-data-table-result-count")).toContainText("1 result");
@@ -252,7 +252,9 @@ async function runOnce(browser: Browser): Promise<AdminAppBenchmarkRun> {
         if (!(element instanceof HTMLButtonElement)) throw new Error("Refresh trigger must be a button");
         element.click();
       });
-      await expect(page.locator(".sheen-status-bar").getByText("Revision 2", { exact: true })).toBeVisible();
+      const revision = page.locator(".sheen-status-bar").getByText(/^Revision \d+ · \d+ chart samples$/u);
+      await expect(revision).toHaveText("Revision 2 · 20000 chart samples");
+      await expect(revision).toBeVisible();
       return retained("refresh");
     }));
     return Object.freeze({ hostLoadAverageStart, hostLoadAverageEnd: Object.freeze(loadavg()), initialReadyMs, calibrationMs, calibrationTaskMs, footprint: Object.freeze(footprint), operations: Object.freeze(operations) });

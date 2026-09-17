@@ -16,6 +16,14 @@ export interface PopoverProps extends ParentProps {
   class?: string;
 }
 
+function PopoverTrigger(props: ParentProps): JSX.Element {
+  const context = Primitive.usePopoverContext();
+  return <Button ref={context.setTriggerRef} variant="outline" data-sheen-popover-trigger=""
+    aria-haspopup="dialog" aria-expanded={context.isOpen()} aria-controls={context.isOpen() ? context.contentId() : undefined}
+    onPointerDown={event => { if (event.pointerType === "mouse") event.preventDefault(); }}
+    onClick={() => context.toggle()} {...context.dataset()}>{props.children}</Button>;
+}
+
 export function Popover(props: PopoverProps): JSX.Element {
   const theme = useTheme();
   const id = createUniqueId();
@@ -29,7 +37,7 @@ export function Popover(props: PopoverProps): JSX.Element {
   createEffect(() => { if (open()) onCleanup(theme.layers.register(id)); });
   const layer = createMemo<number>(previous => open() ? theme.layers.zIndex(id) : previous ?? 100);
   return <Primitive.Root open={open()} onOpenChange={change} placement={props.placement ?? "bottom"} gutter={6}>
-    <Primitive.Trigger as={Button} variant="outline" data-sheen-popover-trigger="">{props.trigger}</Primitive.Trigger>
+    <PopoverTrigger>{props.trigger}</PopoverTrigger>
     <Show when={theme.portal()}>{target => <Primitive.Portal mount={target()}>
       <Primitive.Content data-kb-top-layer="true" class={cn("sheen-popover", props.class)} aria-hidden={!open() || undefined} inert={!open()} style={{ "z-index": layer() }}
         onEscapeKeyDown={event => { if (!theme.layers.isTop(id)) event.preventDefault(); }}>

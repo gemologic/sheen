@@ -1,4 +1,4 @@
-import { Button, Input, Popover, Select, Stack, ThemeScope, useNumberFormatter, useTheme } from "@gemologic/sheen";
+import { Button, Input, NumberText, Popover, Select, Stack, ThemeScope, useNumberFormatter, useTheme } from "@gemologic/sheen";
 import { createSignal } from "solid-js";
 
 const options = Object.freeze([{ value: "first", label: "First option" }, { value: "second", label: "Second option" }]);
@@ -12,6 +12,7 @@ function ThemeForm(props: { readonly label: string }) {
       <Input label={`${props.label} draft`} value={draft()} onInput={event => setDraft(event.currentTarget.value)} />
       <Select label={`${props.label} selection`} options={options} defaultValue="first" />
       <output aria-label={`${props.label} number`}>{number().format(12_345.5)}</output>
+      <NumberText aria-label={`${props.label} formatted number`} value={12_345.5} format={{ minimumFractionDigits: 2 }} />
       <Button onClick={() => void theme.setTheme(theme.theme() === "obsidian" ? "graphite" : "obsidian")}>{props.label} theme</Button>
       <Button onClick={() => void theme.setAccent(theme.accent() === "jade" ? "violet" : "jade")}>{props.label} accent</Button>
       <Button onClick={() => void theme.setMode(theme.mode() === "dark" ? "light" : "dark")}>{props.label} mode</Button>

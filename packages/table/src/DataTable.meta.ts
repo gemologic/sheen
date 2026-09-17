@@ -29,6 +29,7 @@ export default defineMeta<DataTableProps<ExampleRow>>({
     search: { description: "Configures automatic search over explicitly searchable columns, or false disables it; options supply label, placeholder, debounce, shortcut, and an opt-in Exact mode that matches a literal phrase within one searchable column." },
     filterBar: { description: "Shows typed filters declared by columns; options may inject an isolated date editor without adding it to the table bundle.", default: true },
     columnControls: { description: "Shows the keyboard-accessible visibility, ordering, pinning, auto-fit, and width-reset menu.", default: true },
+    summarizeColumns: { description: "Opt-in filterable, noneditable, nonsensitive accessor IDs. Exact accepted constraints replace eligible visible columns with labeled full-query counts and a restore action. Never samples page rows or facets, never rewrites saved visibility, and retains at least one column. Explicit restoration lasts for this table owner." },
     export: { description: "Client export is enabled by default; false hides it, while options constrain formats and set a filename base." },
     onCellCommit: { description: "Required by editable columns; receives row/column context, a per-cell commit ID, previous/value snapshot, and AbortSignal, then reports acceptance or an explicit conflict." },
     editResetKey: { description: "Discards drafts, conflicts, failed attempts, and pending commits when an account or permission boundary changes." },
@@ -48,6 +49,14 @@ export default defineMeta<DataTableProps<ExampleRow>>({
 ]);
 const rows = [{ id: "one", name: "Alpha", amount: 12 }, { id: "two", name: "Beta", amount: 34 }];`,
     code: '<DataTable data={rows} columns={columns} getRowId={row => row.id} caption="Accounts" pagination={false} mobileLayout={{ pageSize: 20, titleColumn: "name" }} initialViewportHeight={160} />',
+  }, {
+    title: "Summarize an accepted constant field",
+    setup: `const columns = defineColumns<{ readonly id: string; readonly name: string; readonly status: string }>([
+  { id: "name", header: "Name", accessor: row => row.name },
+  { id: "status", header: "Status", accessor: row => row.status, filter: { type: "enum", options: ["Active", "Paused"] } },
+]);
+const rows = [{ id: "one", name: "Alpha", status: "Active" }, { id: "two", name: "Beta", status: "Paused" }];`,
+    code: '<DataTable data={rows} columns={columns} getRowId={row => row.id} caption="Active accounts" summarizeColumns={["status"]} filter={{ kind: "enum", column: "status", operator: "in", values: ["Active"] }} initialViewportHeight={160} />',
   }],
   composer: { allowedParentRegions: ["main-grid"], acceptedChildRegions: [], editableSafeProps: ["caption", "pagination", "density"], fixtureFactory: "records", codeGenerationAdapter: "records-table" },
   guidance: {

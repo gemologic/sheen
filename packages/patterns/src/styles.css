@@ -142,6 +142,10 @@
   .sheen-list-detail-content, .sheen-list-detail-empty { min-inline-size: 0; padding: var(--sheen-space-inline-md); }
   .sheen-list-detail-back { display: none; margin: var(--sheen-space-block-sm) var(--sheen-space-inline-sm) 0; }
   .sheen-data-table-page { display: grid; grid-template-rows: auto auto minmax(0, 1fr) auto; block-size: 100%; min-inline-size: 0; min-block-size: 0; background: var(--sheen-color-bg); }
+  .sheen-data-table-page > .sheen-page-header { grid-row: 1; }
+  .sheen-data-table-page > .sheen-toolbar { grid-row: 2; }
+  .sheen-data-table-page-content { grid-row: 3; }
+  .sheen-data-table-page-status { grid-row: 4; }
   .sheen-data-table-page-controls { display: flex; flex-wrap: wrap; align-items: end; gap: var(--sheen-space-block-sm) var(--sheen-space-inline-sm); min-inline-size: 0; }
   .sheen-data-table-page-controls:empty { display: none; }
   .sheen-data-table-page-views { display: inline-flex; align-items: center; min-inline-size: 0; }

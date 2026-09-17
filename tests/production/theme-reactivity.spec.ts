@@ -25,6 +25,9 @@ for (const label of ["Root", "Scoped"]) {
     await page.getByRole("button", { name: `Open ${label} theme form`, exact: true }).click();
     const dialog = page.getByRole("dialog", { name: `${label} theme form`, exact: true });
     const draft = dialog.getByRole("textbox", { name: `${label} draft`, exact: true });
+    const formatted = dialog.getByLabel(`${label} formatted number`, { exact: true });
+    await expect(formatted).toHaveText("12,345.50");
+    await formatted.evaluate(element => element.setAttribute("data-number-retained", "true"));
     await draft.fill("Retained themed draft");
     await draft.focus();
     await dialog.evaluate(element => element.setAttribute("data-theme-retained", "true"));
@@ -45,6 +48,8 @@ for (const label of ["Root", "Scoped"]) {
       await expect(draft).toHaveAttribute("data-theme-retained", "true");
       await expect(draft).toHaveValue("Retained themed draft");
       await expect(draft).toBeFocused();
+      await expect(formatted).toHaveText("12,345.50");
+      await expect(formatted).toHaveAttribute("data-number-retained", "true");
     }
   });
 
@@ -58,6 +63,7 @@ for (const label of ["Root", "Scoped"]) {
     await observeNativeScrollSubscriptions(page);
     await dialog.getByRole("button", { name: `${label} locale`, exact: true }).click();
     await expect(dialog.getByLabel(`${label} number`, { exact: true })).toHaveText("12.345,5");
+    await expect(dialog.getByLabel(`${label} formatted number`, { exact: true })).toHaveText("12.345,50");
     await settle(page);
     await expect(page.locator("html")).toHaveAttribute("data-scroll-listener-registrations", "0");
     await dialog.getByRole("button", { name: `${label} direction`, exact: true }).click();

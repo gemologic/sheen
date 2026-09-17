@@ -2,6 +2,8 @@
 
 `AdminApp` is the full application baseline from `@gemologic/sheen-patterns/admin`. Import `@gemologic/sheen-patterns/admin/styles.css`; that stylesheet includes the base patterns styles. Product identity, routes, permissions, account data, workspaces, notifications, persistence, and transport stay app-owned.
 
+See [Studio application styling](studio-style.md) for focal hierarchy, semantic surface depth, numeric formatting, structured fields, factual copy, and the per-task accent budget.
+
 The `standard`, `workspace`, `horizontal`, and `inspector` presets place semantic chrome zones. A validated `placements` override can move one zone among its supported targets. Placement is deterministic server input. Changing it after hydration is supported for Loupe and settings previews, but it must not be used as a refresh key and does not justify remounting the shell.
 
 `adminChromeZones`, `adminChromeTargets`, and `adminPlacementTargets` expose the complete validated grammar for settings tools and the Loupe Composer. They are data, not a second renderer. Production code passes only the selected overrides:
@@ -21,7 +23,7 @@ The `standard`, `workspace`, `horizontal`, and `inspector` presets place semanti
 </AdminApp>
 ```
 
-Every available zone appears exactly once. Unsupported zone/target pairs and duplicate overrides throw descriptive errors before rendering. The Admin starter's collapsed Customize panel exposes all twelve zone placements, four presets, the three appearance axes, theme, mode, accent, direction, and paged/continuous table behavior through URL-backed controls.
+Every available zone appears exactly once. Unsupported zone/target pairs and duplicate overrides throw descriptive errors before rendering. The lab links to `/admin?configure=1`, where a collapsed Customize panel exposes all twelve zone placements, four presets, the three appearance axes, theme, mode, accent, direction, and paged/continuous table behavior through URL-backed controls. Normal product routes omit the panel. Preview changes retain the existing shell and accepted content.
 
 The placement grammar covers the common product families without allowing each app to invent incompatible shell markup:
 
@@ -41,11 +43,19 @@ Start with a preset, then override only what defines the product. A content-heav
 
 ## Main-content layouts
 
+Action groups default to inline controls. Set `presentation: "overflow"` for infrequent help or utility groups; the labeled trigger opens a scoped popover containing native links and buttons. For overflow icons, pass a factory such as `icon: () => <ExternalLinkIcon decorative />` so hidden controls do not evaluate DOM-bearing JSX during hydration. Sidebar-footer groups open upward. Selection closes the panel, Escape returns focus, and stable action IDs retain current callbacks as models refresh. Prefer at most one filled primary action per task surface. An overlay that starts a new task may have its own primary action; a destructive confirmation uses danger semantics.
+
 AdminApp deliberately owns the application frame, not a single page geometry. Compose its retained child with the focused pattern that matches the task: `PageHeader` plus `Grid` for dashboards, `DataTablePage` for data workspaces, `ListDetailLayout` for inboxes and browsers, `SettingsLayout` for persistent settings navigation and save state, or `SplitLayout` for two resizable work panes. Forms and reading surfaces can use `Container` with `Stack`; generic application dashboards should remain edge-to-edge rather than being forced into a centered document column. These layouts can coexist on different routes without remounting AdminApp or changing its chrome placements.
+
+The starter's `/admin/policies` route pairs a registry with a create form. It composes native named `CheckboxGroup` controls with group counts, a total selection count, unavailable permissions, validation, and form reset. The fixture endpoint independently validates names and allowed permissions; successful submissions add records to the current page session. Deletion names the policy and requires a danger confirmation. These are demo records, not production authorization policies. Register unsaved drafts with `useUnsavedChanges` so navigation is guarded, and abort pending submissions when access is revoked or the page is disposed.
+
+`/admin/settings` uses `SettingsLayout` with app-owned saved values, dirty state, validation, and discard. AdminApp evaluates page children inside AppShell so this dirty-state context is available during SSR and hydration. The fixture's router exempts only appearance-only query changes and in-page fragments from its leave guard; route and data-query changes remain guarded. `/admin/audit` groups recorded events under sticky day labels and exports exactly those events as JSON. Inbox summaries use native disclosure controls.
+
+The normal starter hides its design controls. The Design lab links to `/admin?configure=1`, which exposes the URL-backed preview controls. Appearance changes replace the current history entry; the shell's content location excludes those preview parameters so changing presentation does not start scroll restoration. Actual content navigation retains its history-entry identity. Reset appearance restores Studio, dark mode, indigo, and the standard layout without replacing the current editor. A failed refresh keeps the accepted page and drafts, shows an explicit retry, and emits no success toast. Use `refresh=fail-first` to exercise a real delayed 503 followed by a successful retry in the demo; workspace changes and authorization loss cancel obsolete requests.
 
 ## Brand axes
 
-Global theme and accent remain independent. Fresh `ThemeProvider` state is dark Obsidian with jade; the bundled surface themes are Obsidian, Paper, Vellum, Contrast, Slate, Graphite, and Studio. Studio uses calm near-black or cool-white product surfaces, slightly airier content type, and Phosphor artwork. Jade, teal, cyan, sky, blue, indigo, violet, purple, rose, red, orange, and amber are independently selectable accents. Private applications can compile another complete theme with `defineTheme` and `buildTheme` instead of forking AdminApp.
+Global theme and accent remain independent. Fresh `ThemeProvider` state is dark Obsidian with jade; the admin starter explicitly scopes dark Studio with indigo. Studio uses a neutral surface ladder, local Inter Variable, Plex Mono identifiers, 30px metrics, and 20px page titles. The bundled surface themes remain Obsidian, Paper, Vellum, Contrast, Slate, Graphite, and Studio. Jade, teal, cyan, sky, blue, indigo, violet, purple, rose, red, orange, and amber are independently selectable accents. Explicit `theme=inherit`, `mode=inherit`, or `accent=inherit` in the starter lab inherits the root axis. Private applications can compile another complete theme with `defineTheme` and `buildTheme` instead of forking AdminApp.
 
 Pass stable server-resolved axes through `AdminApp.theme` when one application needs a scoped brand. Omitted axes inherit the root provider, explicit `null` resets to the provider default, and density alone defaults to `comfortable`. Opt individual data tables into `density="compact"` when the workflow benefits from native-app information density without shrinking navigation, dialogs, and general content. The scoped portal receives the same effective values, so account, notification, command, confirmation, and details overlays do not escape the application brand.
 

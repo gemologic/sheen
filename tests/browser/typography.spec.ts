@@ -13,7 +13,12 @@ test("typography semantics, token roles, and native tag removal survive theme-aw
     semibold: document.fonts.check('600 16px "IBM Plex Sans"'),
     mono: document.fonts.check('400 12px "IBM Plex Mono"'),
   }))).toEqual({ sans: true, semibold: true, mono: true });
-  expect(fontRequests).toHaveLength(3);
+  expect(fontRequests.map(url => new URL(url).pathname.split("/").at(-1)).sort()).toEqual([
+    "IBMPlexMono-Regular.woff2",
+    "IBMPlexSans-Regular.woff2",
+    "IBMPlexSans-SemiBold.woff2",
+    "InterVariable.woff2",
+  ]);
   expect(fontRequests.every(url => new URL(url).origin === new URL(page.url()).origin)).toBe(true);
   await expect(page.locator("[data-class-override]")).toHaveCSS("font-size", "20px");
   const mutedColor = await page.locator('.typography-sample[data-sheen-theme="obsidian"][data-sheen-mode="dark"] [data-muted]').evaluate(element => getComputedStyle(element).color);

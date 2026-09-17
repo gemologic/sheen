@@ -4,6 +4,8 @@
 
 Supply a required primary-content `label`, normal content children, and optional `header`, `sidebar`, and `statusBar` slots. Slots resolve once and preserve their owners. The shell creates native header/aside/main/footer landmarks and a named ScrollArea for primary content. Sidebar content can supply its own named ScrollArea. `--sheen-shell-sidebar-width` controls the desktop column, defaulting to 16rem.
 
+Header and footer have explicit banner and contentinfo roles. The desktop aside uses the shell's content label as its accessible name, retaining its native complementary landmark inside a theme section, as specified by [HTML accessibility mappings](https://www.w3.org/TR/html-aam/#el-aside). AppShell is an application frame, not a layout to nest inside another application's main landmark.
+
 At 768px and above the shell fills 100dvh, constrains every grid track, and uses CSS document locking when the shell is present. Header and status chrome stay outside the scrolling content. The styles apply before JavaScript, and native pane refs/DOM survive hydration. Use one full shell per document; compare shells inside separate iframes.
 
 Below 768px the primary pane becomes document content and scroll chaining is permitted. CSS hides the desktop sidebar before JavaScript; after hydration its retained content is projected into a scoped modal drawer. Sidebar-bearing shells require ThemeProvider. The visible responsive toggle does not require ShortcutProvider; enabling shortcutHelp additionally registers the keyboard binding.
