@@ -194,6 +194,7 @@ export interface ClientDataTableProps<Row extends object> extends DataTableBaseP
   readonly initialResult?: never;
   readonly onStateChange?: never;
   readonly onExport?: never;
+  readonly refreshKey?: never;
 }
 
 export interface ServerDataTableProps<Row extends object> extends DataTableBaseProps<Row> {
@@ -202,6 +203,8 @@ export interface ServerDataTableProps<Row extends object> extends DataTableBaseP
   readonly data?: never;
   readonly initialResult?: DataTableResult<Row>;
   readonly onStateChange: (state: TableState, signal: AbortSignal) => Promise<DataTableResult<Row>>;
+  /** Change to revalidate the latest requested/accepted query without resetting layout or scroll. Initial value does not fetch. */
+  readonly refreshKey?: string | number;
   /** Creates a complete server-side export for the captured accepted query and selection. Without this adapter, export UI is hidden. */
   readonly onExport?: (request: TableExportRequest, signal: AbortSignal) => Promise<Blob>;
 }
@@ -735,6 +738,12 @@ export function DataTable<Row extends object>(props: DataTableProps<Row>): JSX.E
     void transition(next).then(outcome => {
       if (outcome === "accepted" || outcome === "client") viewport?.scrollTo({ top: 0 });
     });
+  }, { defer: true }));
+
+  createEffect(on(() => props.refreshKey, () => {
+    if (!requests) return;
+    const snapshot = requests.getSnapshot();
+    void transition(snapshot.requested ?? snapshot.accepted?.state ?? initialState);
   }, { defer: true }));
 
   const searchLabel = () => (searchOptions?.label ?? messages().searchTable).replaceAll("{caption}", props.caption);

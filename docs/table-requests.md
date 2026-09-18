@@ -1,5 +1,21 @@
 # Server table request ownership
 
+## DataTable revalidation
+
+Server DataTable accepts an optional `refreshKey: string | number`. Change it after a mutation or on an application-owned polling interval to request the latest requested query (or the accepted query when idle). Keep the component mounted and retain stable row IDs. The initial key does not fetch, including when `initialResult` supplies SSR content. Client tables instead receive updated `data`.
+
+```tsx
+const [refreshKey, setRefreshKey] = createSignal(0);
+<DataTable mode="server" columns={columns} getRowId={row => row.id}
+  caption="Accounts" pagination={{ pageIndex: 0, pageSize: 25 }}
+  initialResult={initialResult} onStateChange={loadAccounts}
+  refreshKey={refreshKey()} />;
+// After a successful mutation, or from an app-owned timer:
+setRefreshKey(value => value + 1);
+```
+
+Revalidation does not reset search drafts, filters, sorting, pagination, column layout, selection, expansion, or scroll. Existing request validation may clamp a page after deletions. Pending and failed revalidation retains the accepted result and uses the usual progress/error/retry UI. A new key supersedes pending transport, including a query change, using that latest requested query. Late responses cannot overwrite newer results. Choose polling intervals longer than the application's request timeout to avoid repeatedly aborting slow work, and stop polling on disposal and authorization changes. Key changes are invalidation, not an authorization boundary: remove unauthorized content immediately when permissions change.
+
 createTableRequests accepts an app callback taking state and AbortSignal and returning rows/total plus any app-typed response metadata. State includes explicit pagination and must be structured-cloneable. This framework-neutral controller exposes request, retry, getSnapshot, clear, and dispose. It does not fetch automatically or supply a reactive UI subscription; the DataTable adapter must publish snapshots around awaited requests.
 
 An optional second argument, { state, result }, supplies initial accepted results for SSR/hydration. Construction clones the query, validates pagination/completeness, and adopts the result without calling transport. Empty totals normalize to page zero. A nonempty dataset whose initial requested page needs clamping throws rather than publishing an invalid page or performing hidden I/O. The app must supply equivalent initial state/data on server and client and retain responsibility for safe serialization and authorization. Result row identity is preserved.

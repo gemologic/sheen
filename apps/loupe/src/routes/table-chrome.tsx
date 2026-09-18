@@ -16,6 +16,12 @@ const columns = defineColumns<ChromeRow>([
   { id: "amount", header: "Amount", accessor: row => row.amount, numeric: true, footer: values => values.reduce((sum, row) => sum + row.amount, 0) },
 ]);
 
+const refreshColumns = defineColumns<ChromeRow>([
+  { id: "name", header: "Name", accessor: row => row.name, sort: "text" },
+  { id: "amount", header: "Amount", accessor: row => row.amount, numeric: true },
+  { id: "draft", header: "Local draft", cellDependencies: [], cell: (_, row) => <details><summary>Notes for {row.id}</summary><input aria-label={`Draft for ${row.id}`} /></details> },
+]);
+
 function describeAction(action: string, context: DataTableActionContext<ChromeRow>): string {
   const selection = context.selection.kind === "ids" ? context.selection.ids.join(",") : `query excluding ${context.selection.excluded.join(",")}`;
   return `${action}|anchor:${context.anchor?.id ?? "none"}|selection:${selection}|loaded:${context.loadedRows.map(row => row.id).join(",")}`;
@@ -42,6 +48,8 @@ export default function TableChromeFixture() {
   const [actionResult, setActionResult] = createSignal("None");
   const [selectionResult, setSelectionResult] = createSignal("None");
   const [failNext, setFailNext] = createSignal(false);
+  const [refreshKey, setRefreshKey] = createSignal(0);
+  const [refreshSelection, setRefreshSelection] = createSignal("");
   const [ready, setReady] = createSignal(false);
   const actions: readonly DataTableAction<ChromeRow>[] = [
     { id: "archive", label: "Archive", tone: "danger", shortcut: "A", onSelect: context => setActionResult(describeAction("archive", context)) },
@@ -77,8 +85,11 @@ export default function TableChromeFixture() {
     </section>
     <section aria-label="Refresh table">
       <Button onClick={() => setFailNext(true)}>Fail next refresh</Button>
-      <DataTable mode="server" columns={columns} getRowId={row => row.id} caption="Refresh accounts" pagination={false} initialViewportHeight={150}
-        initialResult={{ rows, total: rows.length }} onStateChange={refresh} />
+      <Button onClick={() => setRefreshKey(value => value + 1)}>Revalidate accounts</Button>
+      <output aria-label="Refresh selection">{refreshSelection()}</output>
+      <DataTable mode="server" columns={refreshColumns} getRowId={row => row.id} caption="Refresh accounts" pagination={false} initialViewportHeight={150}
+        selection={{ mode: "multiple", onChange: selection => setRefreshSelection(JSON.stringify(selection)) }}
+        initialResult={{ rows, total: rows.length }} onStateChange={refresh} refreshKey={refreshKey()} />
     </section>
     <output aria-label="Hydration state">{ready() ? "Ready" : "Server"}</output>
   </main>;

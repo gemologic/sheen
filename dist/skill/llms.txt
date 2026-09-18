@@ -100,7 +100,7 @@ Aliases: s=string, b=boolean, n=number, v=void, ro=readonly, node=JSX.Element, P
 - WorkspaceSwitcher(workspace:AdminWorkspaceModel,target?:"topbar-start"|"topbar-end"|"sidebar-header"|"sidebar-footer",collapsed?:b): An app-owned workspace selector with consistent topbar, sidebar-header, and sidebar-footer presentations; See full example.
 
 ## @gemologic/sheen-table
-- DataTable(columns:SheenColumns<Row>,getRowId:(row:Row)=>s,caption:s,+29 optional): Virtualized continuous or paginated data with phone cards, selection, layouts, groups, and trees; See full example.
+- DataTable(columns:SheenColumns<Row>,getRowId:(row:Row)=>s,caption:s,+30 optional): Virtualized continuous or paginated data with phone cards, selection, layouts, groups, and trees; See full example.
 - FilterBar(columns:SheenColumns<Row>,value:FilterNode,onChange:(filter:FilterNode)=>v,facets?:Readonly<Record<s,Readonly<Record<s,n>>>>,disabled?:b,class?:s,dateEditor?:FilterDateEditor): Edits the accepted serializable filter AST through removable condition chips and typed draft popovers; See full example.
 - QueryBuilder(columns:ro QueryBuilderColumn[],value:FilterNode,onChange:(filter:FilterNode)=>v,label?:s,disabled?:b): Builds nested, typed, serializable table filters with complete keyboard alternatives to structural editing; See full example.
 

@@ -2739,6 +2739,7 @@ Props:
 - `initialResult: DataTableResult<Row>` (optional). Optional authoritative server result used for SSR without a duplicate hydration request. Delegated grouping includes groups for the accepted page.
 - `onStateChange: (state:TableState,signal:AbortSignal)=>Promise<DataTableResult<Row>>` (optional). Server request adapter receiving complete state and an AbortSignal. Available only in server mode.
 - `onExport: (request:TableExportRequest,signal:AbortSignal)=>Promise<Blob>` (optional). Optional server adapter returning a Blob for the captured accepted state and immutable selection. Server export UI is hidden without it.
+- `refreshKey: string|number` (optional). Server-only invalidation key. Changes revalidate the latest requested or accepted query, retaining rows, layout, drafts, selection, and scroll. The initial value does not fetch; changing it supersedes pending transport.
 - `columns: SheenColumns<Row>` (required). Opaque column definitions returned by defineColumns. Noneditable custom cells may declare cellDependencies for extra row fields; accessor values always invalidate, and omitted dependencies retain whole-row invalidation. Include fields captured by event handlers and replace row data immutably.
 - `getRowId: (row:Row)=>string` (required). Returns a stable, unique, nonempty row ID.
 - `caption: string` (required). Required accessible table caption, visually hidden by default.

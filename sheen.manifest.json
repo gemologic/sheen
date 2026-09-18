@@ -95478,6 +95478,12 @@
           "required": false,
           "inherited": false
         },
+        "refreshKey": {
+          "description": "Server-only invalidation key. Changes revalidate the latest requested or accepted query, retaining rows, layout, drafts, selection, and scroll. The initial value does not fetch; changing it supersedes pending transport.",
+          "type": "string | number",
+          "required": false,
+          "inherited": false
+        },
         "columns": {
           "description": "Opaque column definitions returned by defineColumns. Noneditable custom cells may declare cellDependencies for extra row fields; accessor values always invalidate, and omitted dependencies retain whole-row invalidation. Include fields captured by event handlers and replace row data immutably.",
           "type": "SheenColumns<Row>",
