@@ -81,6 +81,7 @@ export default defineConfig({
       "**/table-mobile.spec.ts",
       "**/table-requests.spec.ts",
       "**/table-search.spec.ts",
+      "**/table-scroll-anchor.spec.ts",
       "**/table-selection.spec.ts",
       "**/table-url.spec.ts",
       "**/table-views.spec.ts",

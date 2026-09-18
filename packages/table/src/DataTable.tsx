@@ -1802,6 +1802,16 @@ export function DataTable<Row extends object>(props: DataTableProps<Row>): JSX.E
   let anchorFrame: number | undefined;
   function captureScrollAnchor(): void {
     if (!viewport) return;
+    if (!props.variableRowHeight && props.estimatedRowHeight === undefined) {
+      // Fixed rows use the virtualizer's coordinates. The sticky header and
+      // body's normal-flow header offset cancel at the visible row boundary.
+      // Avoid querying and measuring every overscan row on each scroll frame.
+      const top = viewport.scrollTop;
+      const item = virtualizer.getVirtualItems().find(candidate => candidate.end > top);
+      const row = item ? rowAt(item.index) : undefined;
+      if (item && row) scrollAnchor = { id: row.key, offset: top - item.start };
+      return;
+    }
     const bounds = viewport.getBoundingClientRect();
     const visibleTop = viewport.querySelector("thead")?.getBoundingClientRect().bottom ?? bounds.top;
     const row = [...viewport.querySelectorAll<HTMLTableRowElement>("tbody tr[data-row-key]")].find(candidate => candidate.getBoundingClientRect().bottom > visibleTop);
