@@ -1,6 +1,6 @@
 {
   "name": "@gemologic/sheen-cli",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Scaffolding, diagnostics, and vendorable agent guidance for Sheen applications.",
   "type": "module",
   "license": "MIT",

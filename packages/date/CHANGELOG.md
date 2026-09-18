@@ -1,5 +1,12 @@
 # @gemologic/sheen-date
 
+## 0.2.0
+
+### Patch Changes
+
+- Updated dependencies [529f3de]
+  - @gemologic/sheen@0.2.0
+
 ## 0.1.0
 
 ### Minor Changes
