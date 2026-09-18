@@ -1,5 +1,12 @@
 # @gemologic/sheen-table
 
+## 0.2.1
+
+### Patch Changes
+
+- 117d296: Add the server DataTable `refreshKey` prop for background revalidation and post-mutation invalidation. Key changes request the latest query through the existing abortable request controller, retaining accepted content, pagination, column layout, drafts, selection, and scroll. Initial keys do not trigger duplicate hydration requests.
+- @gemologic/sheen@0.2.1
+
 ## 0.2.0
 
 ### Minor Changes
