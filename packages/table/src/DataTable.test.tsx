@@ -39,6 +39,15 @@ const chromeColumns = defineColumns<Row>([
 const rows = Array.from({ length: 40 }, (_, index): Row => ({ id: `row-${index}`, name: `Row ${index}`, amount: index }));
 
 describe("DataTable SSR", () => {
+  it("adopts a refresh key without transport or incomplete server content", () => {
+    let calls = 0;
+    const initialResult = { rows: rows.slice(0, 10), total: rows.length };
+    const html = renderToString(() => <ThemeProvider><DataTable mode="server" columns={columns}
+      getRowId={row => row.id} caption="Revalidated rows" pagination={{ pageIndex: 0, pageSize: 10 }}
+      initialResult={initialResult} refreshKey={7} onStateChange={async () => { calls++; return initialResult; }} /></ThemeProvider>);
+    expect(calls).toBe(0);
+    expect(html.match(/data-row-id="row-/gu)).toHaveLength(10);
+  });
   it("uses Studio density geometry in the server virtual range before measuring the DOM", () => {
     for (const [density, height] of [["compact", 36], ["comfortable", 40], ["spacious", 48]] satisfies readonly (readonly ["compact" | "comfortable" | "spacious", number])[]) {
       const html = renderToString(() => <ThemeProvider><ThemeScope theme="studio"><DataTable data={rows} columns={columns} getRowId={row => row.id} caption="Studio rows" density={density} pagination={false} /></ThemeScope></ThemeProvider>);

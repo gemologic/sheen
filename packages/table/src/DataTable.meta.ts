@@ -37,6 +37,7 @@ export default defineMeta<DataTableProps<ExampleRow>>({
     data: { description: "Complete bounded client dataset. Available only in client mode." },
     initialResult: { description: "Optional authoritative server result used for SSR without a duplicate hydration request. Delegated grouping includes groups for the accepted page." },
     onStateChange: { description: "Server request adapter receiving complete state and an AbortSignal. Available only in server mode." },
+    refreshKey: { description: "Server-only invalidation key. Changes revalidate the latest requested or accepted query, retaining rows, layout, drafts, selection, and scroll. The initial value does not fetch; changing it supersedes pending transport." },
     onExport: { description: "Optional server adapter returning a Blob for the captured accepted state and immutable selection. Server export UI is hidden without it." },
   },
   tokens: ["--sheen-table-row-h", "--sheen-color-border", "--sheen-color-bg", "--sheen-color-bg-raised"],
