@@ -1,5 +1,8 @@
 import { expect, test } from "@playwright/test";
 
+// The first AdminApp visit on a cold dev server loads hundreds of modules before the chart can enhance.
+const enhancementTimeout = 15_000;
+
 for (const scale of [1, 2]) test.describe(`canvas pixel ratio ${scale}`, () => {
   test.use({ deviceScaleFactor: scale });
   test("traffic canvas updates its actual axis font without replacing the renderer", async ({ page }) => {
@@ -13,7 +16,7 @@ for (const scale of [1, 2]) test.describe(`canvas pixel ratio ${scale}`, () => {
   });
   await page.goto("/admin?configure=1");
   const chart = page.locator(".sheen-time-series");
-  await expect(chart).toHaveAttribute("data-enhanced", "true");
+  await expect(chart).toHaveAttribute("data-enhanced", "true", { timeout: enhancementTimeout });
   const canvas = chart.locator("canvas").first();
   await expect(canvas).toHaveAttribute("data-last-drawn-font", new RegExp(`${12 * scale}px.*Inter Variable`, "u"));
   const retained = await canvas.elementHandle();
@@ -30,7 +33,7 @@ for (const mode of ["dark", "light"]) {
     await page.goto(`/admin?mode=${mode}`);
     await expect(page.locator('[data-sheen-portal="root"]')).toHaveAttribute("data-sheen-ready", "true");
     const chart = page.locator(".sheen-time-series");
-    await expect(chart).toHaveAttribute("data-enhanced", "true");
+    await expect(chart).toHaveAttribute("data-enhanced", "true", { timeout: enhancementTimeout });
     const ratios = await chart.evaluate(element => {
       const context = document.createElement("canvas").getContext("2d");
       if (!context) throw new Error("Missing color resolver");
@@ -91,7 +94,7 @@ test("traffic legends distinguish series and tooltip precision matches native da
   await page.goto("/admin");
   await expect(page.locator('[data-sheen-portal="root"]')).toHaveAttribute("data-sheen-ready", "true");
   const chart = page.locator(".sheen-time-series");
-  await expect(chart).toHaveAttribute("data-enhanced", "true");
+  await expect(chart).toHaveAttribute("data-enhanced", "true", { timeout: enhancementTimeout });
   const markers = chart.locator(".sheen-chart-legend .sheen-chart-legend-marker");
   expect(await markers.evaluateAll(elements => elements.map(element => [element.getAttribute("data-color"), element.getAttribute("data-encoding")]))).toEqual([["accent", "solid"], ["foreground", "dashed"], ["muted", "dotted"]]);
   await chart.locator(".sheen-chart-data > summary").click();

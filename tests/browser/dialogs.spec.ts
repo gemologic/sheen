@@ -134,6 +134,8 @@ test("Dialog transient motion honors reduced motion without animating the layout
   await page.keyboard.press("Escape");
   await expect(dialog).toHaveCount(0);
   await expect(trigger).toBeFocused();
+  // Changing motion while the exit animation runs can drop its animationend, so let the exit finish first.
+  await expect(page.locator(".sheen-dialog-overlay")).toHaveCount(0);
   await page.emulateMedia({ reducedMotion: "reduce" });
   await trigger.click();
   await expect(dialog).toHaveCSS("animation-duration", "0s");

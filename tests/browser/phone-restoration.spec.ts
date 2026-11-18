@@ -109,7 +109,7 @@ test("responsive changes keep phone and desktop restoration coordinates separate
   await page.getByRole("button", { name: "Toggle restored sidebar", exact: true }).click();
   await main.evaluate(element => { element.scrollTop = 700; });
   await expect.poll(() => main.evaluate(element => element.scrollTop)).toBe(700);
-  // Restoration records positions from scroll events, which dispatch on the next frame; resizing earlier loses the position.
+  // Scroll and breakpoint change events dispatch on the next frame; resizing again before then loses the recorded position.
   await scrollEventsDispatched(page);
   await page.setViewportSize({ width: 375, height: 750 });
   await expect.poll(() => page.evaluate(() => scrollY)).toBe(0);
@@ -119,6 +119,7 @@ test("responsive changes keep phone and desktop restoration coordinates separate
   await scrollEventsDispatched(page);
   await page.setViewportSize({ width: 1100, height: 750 });
   await expect.poll(() => main.evaluate(element => element.scrollTop)).toBe(700);
+  await scrollEventsDispatched(page);
   await page.setViewportSize({ width: 375, height: 750 });
   await expect.poll(() => page.evaluate(() => scrollY)).toBe(200);
   await expect(main).toHaveAttribute("data-accepted-main", "retained");
