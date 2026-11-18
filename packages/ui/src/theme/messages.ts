@@ -1,5 +1,5 @@
 export const englishMessages = Object.freeze({
-  close: "Close", cancel: "Cancel", confirm: "Confirm", retry: "Retry", remove: "Remove", breadcrumb: "Breadcrumb",
+  close: "Close", dismiss: "Dismiss", announcement: "Announcement", cancel: "Cancel", confirm: "Confirm", retry: "Retry", remove: "Remove", breadcrumb: "Breadcrumb",
   loading: "Loading", notifications: "Notifications", noNotifications: "No notifications", unread: "Unread", markAllNotificationsRead: "Mark all read", noResults: "No results", empty: "Nothing here yet", selectOption: "Select an option",
   avatarOverflow: "{count} more",
   nextPage: "Next page", previousPage: "Previous page", firstPage: "First page", lastPage: "Last page",
@@ -18,6 +18,7 @@ export const englishMessages = Object.freeze({
   increaseValue: "Increase {label}", decreaseValue: "Decrease {label}", minimumValue: "Minimum {label}", maximumValue: "Maximum {label}",
   expandTreeItem: "Expand {label}", collapseTreeItem: "Collapse {label}",
   shortcutInventory: "All registered shortcuts. Availability depends on the active scope.", shortcutShadowed: "Replaced by a newer binding", shortcutDisabled: "Character shortcut disabled",
+  promptInput: "Message", sendMessage: "Send message", stopResponse: "Stop response", conversation: "Conversation", jumpToLatest: "Jump to latest message", responseComplete: "Response complete",
   unsavedTitle: "Discard unsaved changes?", unsavedDescription: "Your unsaved changes will be lost if you leave this page.", discardChanges: "Discard changes", navigationFailed: "Navigation failed. Your changes have been retained.",
 });
 
@@ -149,6 +150,24 @@ export interface ExtensionMessages {
   readonly chartZoomOut?: string;
   readonly chartResetZoom?: string;
   readonly chartKeyboardInstructions?: string;
+  readonly chartGridKeyboardInstructions?: string;
+  readonly chartSeriesColumn?: string;
+  readonly chartShareColumn?: string;
+  readonly sortableInstructions?: string;
+  readonly sortableHandle?: string;
+  readonly sortableLifted?: string;
+  readonly sortableMoved?: string;
+  readonly sortableDropped?: string;
+  readonly sortableCancelled?: string;
+  readonly boardInstructions?: string;
+  readonly boardCardHandle?: string;
+  readonly boardColumnHandle?: string;
+  readonly boardLifted?: string;
+  readonly boardMoved?: string;
+  readonly boardDropped?: string;
+  readonly boardCancelled?: string;
+  readonly boardEmptyColumn?: string;
+  readonly boardCardCount?: string;
 }
 
 type CoreMessages = Readonly<Record<keyof typeof englishMessages, string>>;

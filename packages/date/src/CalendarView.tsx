@@ -1,3 +1,4 @@
+import { Glyph } from "@gemologic/sheen";
 import { DatePicker as ArkDatePicker } from "@ark-ui/solid/date-picker";
 import { Index } from "solid-js";
 import type { JSX } from "solid-js";
@@ -8,9 +9,9 @@ export function CalendarViews(): JSX.Element {
     <ArkDatePicker.View view="day" class="sheen-calendar-view">
       <ArkDatePicker.Context>{calendar => <>
         <ArkDatePicker.ViewControl class="sheen-calendar-heading">
-          <ArkDatePicker.PrevTrigger class="sheen-calendar-nav"><span aria-hidden="true">‹</span></ArkDatePicker.PrevTrigger>
+          <ArkDatePicker.PrevTrigger class="sheen-calendar-nav"><Glyph name="chevron-left" /></ArkDatePicker.PrevTrigger>
           <ArkDatePicker.ViewTrigger class="sheen-calendar-view-trigger"><ArkDatePicker.RangeText /></ArkDatePicker.ViewTrigger>
-          <ArkDatePicker.NextTrigger class="sheen-calendar-nav"><span aria-hidden="true">›</span></ArkDatePicker.NextTrigger>
+          <ArkDatePicker.NextTrigger class="sheen-calendar-nav"><Glyph name="chevron-right" /></ArkDatePicker.NextTrigger>
         </ArkDatePicker.ViewControl>
         <ArkDatePicker.Table class="sheen-calendar-table">
           <ArkDatePicker.TableHead><ArkDatePicker.TableRow>
@@ -29,9 +30,9 @@ export function CalendarViews(): JSX.Element {
     <ArkDatePicker.View view="month" class="sheen-calendar-view">
       <ArkDatePicker.Context>{calendar => <>
         <ArkDatePicker.ViewControl class="sheen-calendar-heading">
-          <ArkDatePicker.PrevTrigger class="sheen-calendar-nav"><span aria-hidden="true">‹</span></ArkDatePicker.PrevTrigger>
+          <ArkDatePicker.PrevTrigger class="sheen-calendar-nav"><Glyph name="chevron-left" /></ArkDatePicker.PrevTrigger>
           <ArkDatePicker.ViewTrigger class="sheen-calendar-view-trigger"><ArkDatePicker.RangeText /></ArkDatePicker.ViewTrigger>
-          <ArkDatePicker.NextTrigger class="sheen-calendar-nav"><span aria-hidden="true">›</span></ArkDatePicker.NextTrigger>
+          <ArkDatePicker.NextTrigger class="sheen-calendar-nav"><Glyph name="chevron-right" /></ArkDatePicker.NextTrigger>
         </ArkDatePicker.ViewControl>
         <ArkDatePicker.Table class="sheen-calendar-table sheen-calendar-table-grid"><ArkDatePicker.TableBody>
           <Index each={calendar().getMonthsGrid({ columns: 4, format: "short" })}>{months => <ArkDatePicker.TableRow>
@@ -45,9 +46,9 @@ export function CalendarViews(): JSX.Element {
     <ArkDatePicker.View view="year" class="sheen-calendar-view">
       <ArkDatePicker.Context>{calendar => <>
         <ArkDatePicker.ViewControl class="sheen-calendar-heading">
-          <ArkDatePicker.PrevTrigger class="sheen-calendar-nav"><span aria-hidden="true">‹</span></ArkDatePicker.PrevTrigger>
+          <ArkDatePicker.PrevTrigger class="sheen-calendar-nav"><Glyph name="chevron-left" /></ArkDatePicker.PrevTrigger>
           <ArkDatePicker.ViewTrigger class="sheen-calendar-view-trigger"><ArkDatePicker.RangeText /></ArkDatePicker.ViewTrigger>
-          <ArkDatePicker.NextTrigger class="sheen-calendar-nav"><span aria-hidden="true">›</span></ArkDatePicker.NextTrigger>
+          <ArkDatePicker.NextTrigger class="sheen-calendar-nav"><Glyph name="chevron-right" /></ArkDatePicker.NextTrigger>
         </ArkDatePicker.ViewControl>
         <ArkDatePicker.Table class="sheen-calendar-table sheen-calendar-table-grid"><ArkDatePicker.TableBody>
           <Index each={calendar().getYearsGrid({ columns: 4 })}>{years => <ArkDatePicker.TableRow>

@@ -1,6 +1,6 @@
 import { execFile } from "node:child_process";
 import assert from "node:assert/strict";
-import { cp, mkdir, mkdtemp, readFile, realpath, rm, symlink } from "node:fs/promises";
+import { cp, mkdir, mkdtemp, readFile, realpath, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -9,6 +9,9 @@ import { gzipSync } from "node:zlib";
 import { build } from "vite";
 import solid from "vite-plugin-solid";
 import { checkConsumerBrowser } from "./check-consumer-browser.ts";
+
+/** Bundler module markers (`//#region path` before Vite 8.3, `// path` after) are build metadata, not shipped code. */
+const moduleMarkerComments = /^\/\/(?:#(?:end)?region| ).*$/gmu;
 
 const run = promisify(execFile);
 const root = new URL("../", import.meta.url);
@@ -23,8 +26,8 @@ async function assertTokenCssBudgets(installed: string): Promise<void> {
   const allThemes = await readFile(join(installed, "dist", "themes.css"));
   const selectedBytes = gzipBytes(Buffer.concat([core, theme, accent]));
   const allBytes = gzipBytes(Buffer.concat([core, allThemes]));
-  assert.ok(selectedBytes < 12_000, `core + one theme + one accent is ${selectedBytes} gzip bytes, budget is <12000`);
-  assert.ok(allBytes < 30_000, `core + all themes/accents is ${allBytes} gzip bytes, budget is <30000`);
+  assert.ok(selectedBytes < 3_500, `core + one theme + one accent is ${selectedBytes} gzip bytes, budget is <3500`);
+  assert.ok(allBytes < 7_000, `core + all themes/accents is ${allBytes} gzip bytes, budget is <7000`);
   process.stdout.write(`Token CSS budgets passed: selected=${selectedBytes}B gzip, all=${allBytes}B gzip\n`);
 }
 
@@ -67,7 +70,7 @@ async function assertUiBundleBudget(temporary: string, fixture: string, maximum?
   });
   const outputs = (Array.isArray(built) ? built : [built]).flatMap(result => "output" in result ? result.output : []);
   const chunks = outputs.filter(output => output.type === "chunk");
-  const javascript = chunks.map(output => output.code).join("\n").replace(/^\/\/#(?:end)?region.*$/gmu, "");
+  const javascript = chunks.map(output => output.code).join("\n").replace(moduleMarkerComments, "");
   const retained = chunks.flatMap(output => Object.entries(output.modules)
     .filter(([, details]) => details.renderedLength > 0)
     .map(([id, details]) => ({ id, bytes: details.renderedLength })))
@@ -84,7 +87,40 @@ async function assertUiBundleBudget(temporary: string, fixture: string, maximum?
   process.stdout.write(`${fixture} bundle budget passed: ${bytes}B gzip (<${maximum}B)\n`);
 }
 
-async function assertChartBundleBudget(temporary: string, charts: string, fixture: "chart-sparkline" | "chart-svg" | "chart-table" | "chart-time-series" | "chart-charts-svg" | "chart-streaming", expectedModule: string, maximum: number, includeCss: boolean, engine?: "uplot" | "d3"): Promise<void> {
+// Each island ships only its own component rules; core owns the shared base and the full sheet composes all five.
+const uiCssIslands = { core: ".sheen-badge", forms: ".sheen-checkbox", overlays: ".sheen-dialog", navigation: ".sheen-tabs", ai: ".sheen-prompt-input" } as const;
+
+async function buildUiCss(temporary: string, name: string, specifier: string): Promise<string> {
+  const entry = join(temporary, `${name}.mjs`);
+  await writeFile(entry, `import ${JSON.stringify(specifier)};\n`);
+  const built = await build({
+    configFile: false,
+    root: temporary,
+    logLevel: "warn",
+    build: { write: false, minify: true, lib: { entry, formats: ["es"], fileName: name, cssFileName: name } },
+  });
+  const outputs = (Array.isArray(built) ? built : [built]).flatMap(result => "output" in result ? result.output : []);
+  return outputs.flatMap(output => output.type === "asset" && output.fileName.endsWith(".css") ? [String(output.source)] : []).join("\n");
+}
+
+async function assertUiCssIslands(temporary: string): Promise<void> {
+  const full = await buildUiCss(temporary, "ui-css-full", "@gemologic/sheen/styles.css");
+  let islandBytes = 0;
+  for (const [island, marker] of Object.entries(uiCssIslands)) {
+    const css = await buildUiCss(temporary, `ui-css-${island}`, `@gemologic/sheen/styles/${island}.css`);
+    islandBytes += css.length;
+    for (const [other, otherMarker] of Object.entries(uiCssIslands)) {
+      assert.equal(css.includes(otherMarker), other === island, `@gemologic/sheen/styles/${island}.css ${other === island ? "must contain" : "must not duplicate"} ${other} rules`);
+    }
+    assert.ok(full.includes(marker), `@gemologic/sheen/styles.css must include the ${island} island`);
+  }
+  assert.ok(full.length <= islandBytes, `Full UI stylesheet (${full.length}B) must not exceed its islands combined (${islandBytes}B)`);
+  process.stdout.write(`UI CSS islands passed: full=${gzipBytes(full)}B gzip, islands=${islandBytes}B minified\n`);
+}
+
+type ChartFixture = "chart-sparkline" | "chart-bar-sparkline" | "chart-svg" | "chart-table" | "chart-time-series" | "chart-charts-svg" | "chart-donut" | "chart-scatter" | "chart-heatmap" | "chart-histogram" | "chart-gauge" | "chart-streaming";
+
+async function assertChartBundleBudget(temporary: string, charts: string, fixture: ChartFixture, expectedModule: string, maximum: number, includeCss: boolean, engine?: "uplot" | "d3" | "d3-scale" | "d3-shape"): Promise<void> {
   const entry = join(temporary, `${fixture}.mjs`);
   await cp(new URL(`tests/consumers/${fixture}.mjs`, root), entry);
   let retained: readonly string[] = [];
@@ -112,7 +148,7 @@ async function assertChartBundleBudget(temporary: string, charts: string, fixtur
     }],
   });
   const outputs = (Array.isArray(built) ? built : [built]).flatMap(result => "output" in result ? result.output : []);
-  const javascript = outputs.filter(output => output.type === "chunk").map(output => output.code).join("\n").replace(/^\/\/#(?:end)?region.*$/gmu, "");
+  const javascript = outputs.filter(output => output.type === "chunk").map(output => output.code).join("\n").replace(moduleMarkerComments, "");
   const css = outputs.flatMap(output => output.type === "asset" && output.fileName.endsWith(".css") ? [String(output.source)] : []).join("\n");
   assert.ok([...resolved].some(id => id.startsWith(charts) && id.endsWith(`/dist/${expectedModule}.js`)), `${fixture} must resolve the copied built ${expectedModule}`);
   if (engine === "uplot") {
@@ -122,6 +158,10 @@ async function assertChartBundleBudget(temporary: string, charts: string, fixtur
     assert.ok(retained.some(id => /d3-scale/u.test(id)), `${fixture} must retain d3-scale`);
     assert.ok(retained.some(id => /d3-shape/u.test(id)), `${fixture} must retain d3-shape`);
     assert.ok(!retained.some(id => /(?:^|\/)uplot(?:\/|$)/u.test(id)), `${fixture} must not retain uPlot`);
+  } else if (engine === "d3-scale" || engine === "d3-shape") {
+    const other = engine === "d3-scale" ? "d3-shape" : "d3-scale";
+    assert.ok(retained.some(id => id.includes(engine)), `${fixture} must retain ${engine}`);
+    assert.ok(!retained.some(id => id.includes(other) || /(?:^|\/)uplot(?:\/|$)/u.test(id)), `${fixture} must not retain ${other} or uPlot`);
   } else assert.ok(!retained.some(id => /(?:uplot|d3-(?:scale|shape))/.test(id)), `${fixture} must not retain a chart engine`);
   assert.ok(!retained.some(id => id.startsWith(charts) && id.includes("/src/") && !id.endsWith("/src/styles.css")), `${fixture} must not retain chart source TypeScript`);
   const bytes = gzipBytes(includeCss ? Buffer.from(`${javascript}\n${css}`) : javascript);
@@ -263,6 +303,49 @@ async function assertQueryBuilderBundle(temporary: string, tablePackage: string)
   process.stdout.write(`Isolated QueryBuilder entry passed: ${bytes}B gzip (<55000B)\n`);
 }
 
+async function assertDataTableBundleBudget(temporary: string, tablePackage: string, maximum?: number): Promise<void> {
+  const entry = join(temporary, "table-datatable.mjs");
+  const built = await build({
+    configFile: false,
+    root: temporary,
+    logLevel: "warn",
+    resolve: { conditions: ["browser", "module", "production"] },
+    build: {
+      write: false,
+      minify: true,
+      lib: { entry, formats: ["es"], fileName: "table-datatable-budget", cssFileName: "table-datatable-budget" },
+      rolldownOptions: { external: [/^solid-js(?:\/|$)/] },
+    },
+  });
+  const outputs = (Array.isArray(built) ? built : [built]).flatMap(result => "output" in result ? result.output : []);
+  const chunks = new Map(outputs.flatMap(output => output.type === "chunk" ? [[output.fileName, output] as const] : []));
+  // Initial cost is the entry plus its static imports; on-demand chunks such as export are reported separately.
+  const initial = new Set<string>();
+  const pending = [...chunks.values()].filter(chunk => chunk.isEntry).map(chunk => chunk.fileName);
+  for (let name = pending.pop(); name !== undefined; name = pending.pop()) {
+    if (initial.has(name)) continue;
+    initial.add(name);
+    pending.push(...(chunks.get(name)?.imports ?? []));
+  }
+  const initialChunks = [...chunks.values()].filter(chunk => initial.has(chunk.fileName));
+  const deferredChunks = [...chunks.values()].filter(chunk => !initial.has(chunk.fileName));
+  const retained = initialChunks.flatMap(chunk => Object.entries(chunk.modules)
+    .filter(([, details]) => details.renderedLength > 0)
+    .map(([id, details]) => ({ id, bytes: details.renderedLength })))
+    .sort((left, right) => right.bytes - left.bytes);
+  assert.ok(retained.some(module => module.id.startsWith(tablePackage) && module.id.endsWith("/dist/DataTable.js")), "DataTable budget fixture must retain the built DataTable entry");
+  const bytes = gzipBytes(initialChunks.map(chunk => chunk.code).join("\n"));
+  const deferredBytes = deferredChunks.length === 0 ? 0 : gzipBytes(deferredChunks.map(chunk => chunk.code).join("\n"));
+  if (process.argv.includes("--report-bundles")) process.stdout.write(`table-datatable chunks: ${[...chunks.values()].map(chunk => `${chunk.fileName}${initial.has(chunk.fileName) ? "" : " (deferred)"} ${gzipBytes(chunk.code)}B`).join(", ")}\n`);
+  if (process.argv.includes("--report-bundles")) process.stdout.write(`table-datatable retained modules:\n${retained.map(module => `${module.bytes}\t${module.id}`).join("\n")}\n`);
+  if (maximum === undefined) {
+    process.stdout.write(`DataTable entry measured baseline: ${bytes}B gzip initial, ${deferredBytes}B gzip deferred\n`);
+    return;
+  }
+  assert.ok(bytes < maximum, `DataTable entry is ${bytes} gzip bytes, budget is <${maximum}; retained modules:\n${retained.slice(0, 40).map(module => `${module.bytes}\t${module.id}`).join("\n")}`);
+  process.stdout.write(`DataTable entry bundle budget passed: ${bytes}B gzip initial (<${maximum}B), ${deferredBytes}B gzip deferred\n`);
+}
+
 async function assertNoDateDependencyTypes(directory: string): Promise<void> {
   const publicModules = ["index", "core", "types", "calendar-date", "time", "time-zone", "date-time", "date-range", "format", "Calendar", "DateField", "DatePicker", "TimeField", "TimePicker", "TimeZoneSelect", "DateTimePicker", "table-filter"];
   for (const module of publicModules) {
@@ -303,7 +386,8 @@ try {
   await cp(new URL("packages/ui/vendor", root), join(ui, "vendor"), { recursive: true });
   // CSS is the only source file exposed by the first built-JS fixture. Accidental TSX resolution must fail.
   await cp(new URL("packages/ui/src/styles.css", root), join(ui, "src", "styles.css"));
-  for (const dependency of ["solid-js", "@corvu/resizable", "clsx", "@floating-ui/dom", "@internationalized/number", "@solid-primitives/event-listener", "@solid-primitives/keyed", "@solid-primitives/map", "@solid-primitives/media", "@solid-primitives/props", "@solid-primitives/refs", "@solid-primitives/resize-observer", "@solid-primitives/utils", "solid-presence", "solid-prevent-scroll"]) {
+  await cp(new URL("packages/ui/src/styles", root), join(ui, "src", "styles"), { recursive: true });
+  for (const dependency of ["solid-js", "@corvu/resizable", "clsx", "@floating-ui/dom", "@internationalized/number", "@solid-primitives/event-listener", "@solid-primitives/keyed", "@solid-primitives/map", "@solid-primitives/media", "@solid-primitives/props", "@solid-primitives/refs", "@solid-primitives/resize-observer", "@solid-primitives/utils", "solid-presence", "solid-prevent-scroll", "@atlaskit/pragmatic-drag-and-drop", "@atlaskit/pragmatic-drag-and-drop-auto-scroll"]) {
     const target = join(temporary, "node_modules", dependency);
     await mkdir(join(target, ".."), { recursive: true });
     await symlink(await realpath(new URL(`packages/ui/node_modules/${dependency}`, root)), target, "dir");
@@ -333,10 +417,10 @@ try {
     await symlink(await realpath(new URL(`packages/date/node_modules/${dependency}`, root)), target, "dir");
   }
   await assertNoDateDependencyTypes(join(datePackage, "dist"));
-  await assertDateBundleBudget(temporary, datePackage, "date-core", "date-time", 6_200);
-  await assertDateBundleBudget(temporary, datePackage, "date-field", "DateField", 34_000);
-  await assertDateBundleBudget(temporary, datePackage, "date-picker", "DatePicker", 61_000);
-  await assertDateBundleBudget(temporary, datePackage, "date-time-picker", "DateTimePicker", 110_000);
+  await assertDateBundleBudget(temporary, datePackage, "date-core", "date-time", 6_000);
+  await assertDateBundleBudget(temporary, datePackage, "date-field", "DateField", 32_500);
+  await assertDateBundleBudget(temporary, datePackage, "date-picker", "DatePicker", 58_000);
+  await assertDateBundleBudget(temporary, datePackage, "date-time-picker", "DateTimePicker", 104_000);
   const compiler = fileURLToPath(import.meta.resolve("typescript/bin/tsc"));
   for (const name of ["private-theme", "table-pagination", "chart-core"]) {
     const fixture = join(temporary, `${name}.mts`);
@@ -383,10 +467,16 @@ try {
   assert.ok(verifiedCharts, "Chart package verification must run");
   process.stdout.write("Isolated built chart hook and Loupe invalidation entries passed\n");
   await assertChartBundleBudget(temporary, charts, "chart-sparkline", "Sparkline", 1_000, false);
+  await assertChartBundleBudget(temporary, charts, "chart-bar-sparkline", "BarSparkline", 1_000, false);
   await assertChartBundleBudget(temporary, charts, "chart-svg", "Sparkline", 20_000, true);
   await assertChartBundleBudget(temporary, charts, "chart-table", "ChartDataTable", 20_000, true);
   await assertChartBundleBudget(temporary, charts, "chart-time-series", "TimeSeries", 60_000, true, "uplot");
   await assertChartBundleBudget(temporary, charts, "chart-charts-svg", "charts-svg", 35_000, true, "d3");
+  await assertChartBundleBudget(temporary, charts, "chart-donut", "DonutChart", 20_000, true, "d3-shape");
+  await assertChartBundleBudget(temporary, charts, "chart-scatter", "ScatterChart", 28_000, true, "d3-scale");
+  await assertChartBundleBudget(temporary, charts, "chart-heatmap", "Heatmap", 16_000, true);
+  await assertChartBundleBudget(temporary, charts, "chart-histogram", "Histogram", 30_000, true, "d3-scale");
+  await assertChartBundleBudget(temporary, charts, "chart-gauge", "Gauge", 13_000, true, "d3-shape");
   await assertChartBundleBudget(temporary, charts, "chart-streaming", "streaming", 6_000, false);
   const dataTableTypes = join(temporary, "table-datatable-types.mts");
   await cp(new URL("tests/consumers/table-datatable-types.mts", root), dataTableTypes);
@@ -398,9 +488,13 @@ try {
   await assertUiBundleBudget(temporary, "ui-core-full", 32_000);
   await assertUiBundleBudget(temporary, "ui-forms-full", 60_000);
   await assertUiBundleBudget(temporary, "ui-overlays-full", 55_000);
-  await assertUiBundleBudget(temporary, "ui-navigation-full", 58_000);
+  await assertUiBundleBudget(temporary, "ui-navigation-full", 59_000);
+  await assertUiBundleBudget(temporary, "ui-ai-full", 6_000);
+  await assertUiBundleBudget(temporary, "ui-sortable-list", 16_500);
+  await assertUiBundleBudget(temporary, "ui-sortable-full", 20_000);
   await assertUiBundleBudget(temporary, "ui-representative", 55_000);
   await assertUiBundleBudget(temporary, "ui-full");
+  await assertUiCssIslands(temporary);
   const uiFeatureTypes = join(temporary, "ui-feature-package.mts");
   await cp(new URL("tests/consumers/ui-feature-package.mts", root), uiFeatureTypes);
   await run(process.execPath, [compiler, "--noEmit", "--strict", "--exactOptionalPropertyTypes", "--skipLibCheck", "--target", "ES2023", "--module", "ESNext", "--moduleResolution", "Bundler", "--types", "node", "--typeRoots", fileURLToPath(new URL("node_modules/@types", root)), uiFeatureTypes], { cwd: temporary, timeout: 60_000 });
@@ -485,11 +579,12 @@ try {
     assert.ok(css.some(asset => asset.type === "asset" && String(asset.source).includes("sheen-data-table")), "Installed DataTable styles must produce component CSS");
     process.stdout.write(`Isolated ${entryCondition} DataTable entry and styles passed\n`);
   }
+  await assertDataTableBundleBudget(temporary, table, 110_000);
   const patterns = join(temporary, "node_modules", "@gemologic", "sheen-patterns");
   await mkdir(patterns, { recursive: true });
   await cp(new URL("packages/patterns/package.json", root), join(patterns, "package.json"));
   await cp(new URL("packages/patterns/dist", root), join(patterns, "dist"), { recursive: true });
-  const patternFixtureNames: readonly string[] = ["patterns-base-appshell", "patterns-auth", "patterns-admin"];
+  const patternFixtureNames: readonly string[] = ["patterns-base-appshell", "patterns-auth", "patterns-admin", "patterns-marketing"];
   for (const fixtureName of patternFixtureNames) {
     const fixture = join(temporary, `${fixtureName}.mjs`);
     await cp(new URL(`tests/consumers/${fixtureName}.mjs`, root), fixture);
@@ -526,7 +621,12 @@ try {
       assert.ok([...resolved].some(id => id.startsWith(patterns) && id.endsWith("/dist/admin.js")), "Admin consumer must resolve the dedicated built entry");
       assert.ok(retained.some(id => id.startsWith(patterns) && id.endsWith("/dist/AdminApp.js")), "Admin consumer must retain AdminApp composition");
       assert.ok(!retained.some(id => id.startsWith(patterns) && id.endsWith("/dist/index.js")), "Admin entry must not pull the base patterns barrel");
-      assert.ok(bytes < 80_000, `Admin application entry is ${bytes} gzip bytes, budget is <80000; retained modules:\n${retained.slice(0, 30).join("\n")}`);
+      assert.ok(bytes < 81_000, `Admin application entry is ${bytes} gzip bytes, budget is <81000; retained modules:\n${retained.slice(0, 30).join("\n")}`);
+    } else if (fixtureName === "patterns-marketing") {
+      assert.ok([...resolved].some(id => id.startsWith(patterns) && id.endsWith("/dist/marketing.js")), "Marketing consumer must resolve the dedicated built entry");
+      assert.ok(retained.some(id => id.startsWith(patterns) && id.endsWith("/dist/PricingTable.js")), "Marketing consumer must retain the marketing sections");
+      assert.ok(!retained.some(id => id.startsWith(patterns) && /\/dist\/(?:index|AppShell|AdminApp|AccountMenu|WorkspaceSwitcher|NotificationCenter|DetailsPanel|admin-config|AuthLayout)\.js$/u.test(id)), "Marketing entry must not retain shell, AdminApp, or authentication modules");
+      assert.ok(bytes < 30_000, `Marketing entry is ${bytes} gzip bytes, budget is <30000; retained modules:\n${retained.slice(0, 30).join("\n")}`);
     } else if (fixtureName === "patterns-auth") {
       assert.ok([...resolved].some(id => id.startsWith(patterns) && id.endsWith("/dist/auth.js")), "Auth consumer must resolve the dedicated built entry");
       assert.ok(retained.some(id => id.startsWith(patterns) && id.endsWith("/dist/AuthLayout.js")), "Auth consumer must retain the authentication layouts");

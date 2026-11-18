@@ -67,6 +67,16 @@
       "solid": "./src/navigation.ts",
       "import": "./dist/navigation.js"
     },
+    "./ai": {
+      "types": "./dist/ai.d.ts",
+      "solid": "./src/ai.ts",
+      "import": "./dist/ai.js"
+    },
+    "./sortable": {
+      "types": "./dist/sortable.d.ts",
+      "solid": "./src/sortable.ts",
+      "import": "./dist/sortable.js"
+    },
     "./formisch": {
       "types": "./dist/formisch.d.ts",
       "solid": "./src/formisch.ts",
@@ -82,14 +92,20 @@
       "solid": "./src/metadata.ts",
       "import": "./dist/metadata.js"
     },
-    "./styles.css": "./src/styles.css"
+    "./styles.css": "./src/styles.css",
+    "./styles/core.css": "./src/styles/core.css",
+    "./styles/forms.css": "./src/styles/forms.css",
+    "./styles/overlays.css": "./src/styles/overlays.css",
+    "./styles/navigation.css": "./src/styles/navigation.css",
+    "./styles/ai.css": "./src/styles/ai.css",
+    "./styles/sortable.css": "./src/styles/sortable.css"
   },
   "scripts": {
     "build": "vite build && tsc -p tsconfig.build.json"
   },
   "peerDependencies": {
     "@formisch/solid": ">=1 <2",
-    "solid-js": "1.9.15",
+    "solid-js": "1.9.19",
     "vite": ">=8 <9"
   },
   "peerDependenciesMeta": {
@@ -101,6 +117,8 @@
     }
   },
   "dependencies": {
+    "@atlaskit/pragmatic-drag-and-drop": "3.1.0",
+    "@atlaskit/pragmatic-drag-and-drop-auto-scroll": "3.1.0",
     "@corvu/resizable": "0.2.5",
     "@gemologic/sheen-tokens": "workspace:*",
     "@floating-ui/dom": "^1.5.1",
@@ -119,7 +137,7 @@
   },
   "devDependencies": {
     "@formisch/solid": "1.0.0",
-    "solid-js": "1.9.15",
+    "solid-js": "1.9.19",
     "valibot": "1.4.2"
   }
 }

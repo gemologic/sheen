@@ -14,6 +14,7 @@
     ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" },
     "./catalog": { "types": "./dist/catalog.d.ts", "import": "./dist/catalog.js" },
     "./core.css": "./dist/core.css",
+    "./primitives.css": "./dist/primitives.css",
     "./fonts.css": "./dist/fonts.css",
     "./fonts/*.woff2": "./dist/fonts/*.woff2",
     "./themes.css": "./dist/themes.css",

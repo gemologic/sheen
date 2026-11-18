@@ -1,6 +1,7 @@
 import { For, Show, createMemo, createSignal, onCleanup, onMount } from "solid-js";
 import { createTableRequests } from "@gemologic/sheen-table";
 import { Button, Input, Table, TableBody, TableCaption, TableCell, TableRow } from "@gemologic/sheen";
+import "@gemologic/sheen-table/styles.css";
 
 interface Query { pagination: false; dataset: "a" | "b"; revision: number; delay: number; reject: boolean }
 interface Row { id: string; label: string }

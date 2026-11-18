@@ -57,7 +57,7 @@ test("gallery table uses the full DataTable surface for the deterministic 100k p
   await ready(page);
   const pagination = page.getByRole("navigation", { name: "Pagination", exact: true });
   await expect(pagination.getByRole("status")).toHaveText("Page 1 of 10,000");
-  await expect(page.getByRole("button", { name: "+ Filter", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Add filter", exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Export", exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Columns", exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Saved views", exact: true })).toBeVisible();

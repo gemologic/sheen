@@ -4,6 +4,7 @@ import { AppShell, ListDetailLayout, resolveListDetailActive } from "@gemologic/
 import type { ListDetailItem } from "@gemologic/sheen-patterns";
 import { useSolidRouterAdapter } from "@gemologic/sheen-patterns/solid-router";
 import { GalleryScenario } from "../../gallery-scenario.tsx";
+import "@gemologic/sheen-patterns/styles.css";
 
 function createIssueItems(): readonly ListDetailItem[] {
   return Array.from({ length: 24 }, (_, index) => ({

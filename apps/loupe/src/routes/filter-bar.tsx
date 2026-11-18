@@ -4,6 +4,8 @@ import type { DataTableResult, FilterNode, TableState } from "@gemologic/sheen-t
 import { createSignal } from "solid-js";
 import { filterRows, filterSchema } from "../fixtures/filter-table";
 import type { FilterFixtureRow } from "../fixtures/filter-table";
+import "@gemologic/sheen-date/styles.css";
+import "@gemologic/sheen-table/styles.css";
 
 const columns = defineColumns<FilterFixtureRow>([
   { id: "name", header: "Name", accessor: row => row.name, width: "fill", filter: { type: "text" } },

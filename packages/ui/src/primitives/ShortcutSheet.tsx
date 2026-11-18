@@ -22,7 +22,7 @@ export function ShortcutSheet(props: ShortcutSheetProps): JSX.Element {
         <Heading level={3}>{group}</Heading>
         <dl class="sheen-shortcut-bindings">
           <For each={bindings().filter(binding => binding.group === group).map(binding => binding.id)}>{id => <Show when={records().get(id)}>{binding => <div>
-            <dt><Text>{binding().label}</Text><Text tone="muted">{binding().scope}</Text></dt>
+            <dt><Text>{binding().label}</Text><Show when={binding().scope !== "global"}><Text tone="muted">{binding().scope}</Text></Show></dt>
             <dd><Kbd>{binding().displayKeys}</Kbd>
               <Show when={binding().shadowed}><Text tone="muted">{theme.messages().shortcutShadowed}</Text></Show>
               <Show when={binding().characterOnly && !characters()}><Text tone="muted">{theme.messages().shortcutDisabled}</Text></Show>

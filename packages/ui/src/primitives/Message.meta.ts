@@ -1,0 +1,19 @@
+import { defineMeta } from "../metadata.ts";
+import type { MessageProps } from "./Message.tsx";
+
+export default defineMeta<MessageProps>({
+  name: "Message", package: "@gemologic/sheen", category: "ai", summary: "One conversation turn with an optional avatar, author, timestamp, content, and actions row.",
+  props: {
+    ref: { description: "Native article reference." },
+    from: { description: "Who produced the turn. User turns align to the inline end in a bubble; system turns are centered notes.", control: { kind: "select", values: ["user", "assistant", "system"] } },
+    author: { description: "Visible author name; it also names the article." },
+    avatar: { description: "Avatar or icon shown beside the turn." },
+    timestamp: { description: "Machine-readable time for the time element's datetime." },
+    timeLabel: { description: "Display time text. The time element renders only when this is provided.", control: { kind: "text" } },
+    actions: { description: "Per-turn actions such as copy or retry, in normal tab order." },
+  },
+  tokens: ["--sheen-color-bg-raised", "--sheen-color-fg-muted", "--sheen-text-body-size", "--sheen-surface-radius"],
+  a11y: { role: "article", keyboard: ["Tab reaches actions in order"] },
+  examples: [{ title: "Assistant turn", code: '<Message from="assistant" author="Assistant" timestamp="2026-11-15T09:30:00Z" timeLabel="9:30 AM" actions={<Button size="xs">Copy</Button>}>Here is the summary you asked for.</Message>' }],
+  guidance: { do: ["Supply both timestamp and timeLabel so the visible time is locale formatted and machine readable."], dont: ["Do not hide actions until hover; keyboard and touch users need them in the tab order."] },
+});

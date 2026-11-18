@@ -51,6 +51,8 @@ export interface SheenAccessorColumn<Row extends object> extends ColumnBase<Row>
   /** Omit to infer number/date from filter or numeric, otherwise text. */
   readonly sort?: ColumnSort;
   readonly aggregate?: ColumnAggregate;
+  /** Tint a numeric cell up or down when its value changes for the same row. Off under reduced motion. */
+  readonly flash?: boolean;
 }
 export interface SheenDisplayColumn<Row extends object> extends ColumnBase<Row> {
   readonly accessor?: never;
@@ -62,10 +64,11 @@ export interface SheenDisplayColumn<Row extends object> extends ColumnBase<Row> 
   readonly sort?: never;
   readonly aggregate?: never;
   readonly editor?: never;
+  readonly flash?: never;
 }
 export type SheenColumnInput<Row extends object> = SheenAccessorColumn<Row> | SheenDisplayColumn<Row>;
 
-interface ResolvedColumn<Row extends object> {
+export interface ResolvedColumn<Row extends object> {
   readonly id: string;
   readonly header: string;
   readonly accessor: ((row: Row) => ColumnValue) | null;
@@ -86,6 +89,7 @@ interface ResolvedColumn<Row extends object> {
   readonly faceted: boolean;
   readonly sort: SortColumn | null;
   readonly aggregate: ColumnAggregate | null;
+  readonly flash: boolean;
   readonly unsafeTanStack: UnsafeTanStackColumnOptions | null;
 }
 
@@ -106,7 +110,7 @@ class DefinedColumns<Row extends object> implements SheenColumns<Row> {
   [inspectColumns](): readonly ResolvedColumn<Row>[] { return this.#definitions; }
 }
 
-const baseKeys = new Set(["id", "header", "accessor", "cell", "cellDependencies", "footer", "width", "minWidth", "maxWidth", "align", "numeric", "pin", "visible", "search", "sensitive", "editor", "filter", "sort", "aggregate", "__unsafe_tanstack"]);
+const baseKeys = new Set(["id", "header", "accessor", "cell", "cellDependencies", "footer", "width", "minWidth", "maxWidth", "align", "numeric", "pin", "visible", "search", "sensitive", "editor", "filter", "sort", "aggregate", "flash", "__unsafe_tanstack"]);
 function assertRecord(value: unknown, label: string): asserts value is Record<string, unknown> {
   if (typeof value !== "object" || value === null || Array.isArray(value)) throw new Error(`${label} must be an object`);
   const prototype = Object.getPrototypeOf(value);
@@ -251,12 +255,14 @@ export function defineColumns<Row extends object>(values: readonly SheenColumnIn
     const aggregate = input.aggregate ?? null;
     if (aggregate !== null && aggregate !== "sum" && aggregate !== "average" && aggregate !== "min" && aggregate !== "max" && aggregate !== "count") throw new Error(`${label}.aggregate is invalid`);
     if (aggregate !== null && aggregate !== "count" && !numeric && filter?.type !== "number") throw new Error(`${label}.${aggregate} requires a numeric column`);
+    if (input.flash !== undefined && (typeof input.flash !== "boolean" || accessor === null)) throw new Error(`${label}.flash must be boolean on an accessor column`);
+    const flash = input.flash ?? false;
     let unsafeTanStack: UnsafeTanStackColumnOptions | null = null;
     if (input.__unsafe_tanstack !== undefined) {
       assertRecord(input.__unsafe_tanstack, `${label}.__unsafe_tanstack`);
       unsafeTanStack = Object.freeze({ ...input.__unsafe_tanstack });
     }
-    definitions.push(Object.freeze({ id: input.id, header: input.header, accessor, cell, cellDependencies, footer: functions.footer, width, minWidth, maxWidth, align, numeric, pin, visible, search, sensitive, editor, filter, faceted, sort, aggregate, unsafeTanStack }));
+    definitions.push(Object.freeze({ id: input.id, header: input.header, accessor, cell, cellDependencies, footer: functions.footer, width, minWidth, maxWidth, align, numeric, pin, visible, search, sensitive, editor, filter, faceted, sort, aggregate, flash, unsafeTanStack }));
     index++;
   }
   return new DefinedColumns(Object.freeze(definitions));

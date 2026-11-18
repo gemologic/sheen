@@ -13,9 +13,10 @@ describe("Button server contract", () => {
     expect(html).not.toMatch(/shortcut|mod\+s|Editing/);
   });
 
-  it("retains native loading suppression inside a shortcut owner", () => {
+  it("keeps a loading button focusable inside a shortcut owner", () => {
     const html = renderToString(() => <ShortcutProvider platform="other" development={true}><Button shortcut={save} loading>Save</Button></ShortcutProvider>);
-    expect(html).toContain(" disabled");
+    expect(html).not.toMatch(/\sdisabled/);
+    expect(html).toContain('aria-disabled="true"');
     expect(html).toContain('aria-busy="true"');
     expect(html).not.toMatch(/shortcut=|mod\+s/);
   });

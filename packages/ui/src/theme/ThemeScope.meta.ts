@@ -12,7 +12,7 @@ export default defineMeta<ThemeScopeProps>({
     motion: { description: "Local motion preference; OS reduced motion still wins.", control: { kind: "select", values: ["full", "reduced", null] } },
     direction: { description: "Local writing direction; omitted inherits and null resets.", control: { kind: "select", values: ["ltr", "rtl", null] } },
     locale: { description: "Local explicit formatting locale; omitted inherits and null resets." },
-    controllable: { description: "Allows scoped setters to modify local overrides only.", default: false, control: { kind: "boolean" } },
+    controllable: { description: "Makes scoped setters modify local overrides only. Without it, setters forward axes the scope does not pin to the parent and reject pinned axes.", default: false, control: { kind: "boolean" } },
     class: { description: "Class for the scope wrapper." },
     messages: { description: "Partial translations layered over the parent scope's messages." },
   },

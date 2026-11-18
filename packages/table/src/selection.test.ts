@@ -11,8 +11,11 @@ describe("table selection ownership", () => {
     selection.setLoadedIds(["a", "b"]);
     selection.setSelected("a", true);
     selection.setLoadedIds(["c", "d"]);
+    expect(selection.loadedSelectedCount()).toBe(0);
+    expect(selection.isLoaded("a")).toBe(false);
     selection.selectLoaded();
     expect(selection.getPayload()).toEqual({ kind: "ids", ids: ["a", "c", "d"] });
+    expect(selection.loadedSelectedCount()).toBe(2);
     expect(selection.isSelected("a")).toBe(true);
     expect(() => selection.setSelected("unknown", true)).toThrow("loaded matching row");
     selection.selectLoaded(false);
@@ -24,7 +27,9 @@ describe("table selection ownership", () => {
     selection.selectAllMatching();
     selection.setSelected("b", false);
     const first = selection.getPayload();
+    expect(selection.loadedSelectedCount()).toBe(1);
     selection.setLoadedIds(["c"]);
+    expect(selection.loadedSelectedCount()).toBe(1);
     expect(selection.isSelected("c")).toBe(true);
     expect(selection.isSelected("unknown")).toBe(false);
     selection.setSelected("c", false);

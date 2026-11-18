@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-test("skeletons reserve token geometry without animation or keyboard stops", async ({ page }) => {
+test("skeletons reserve token geometry, shimmer only with full motion, and have no keyboard stops", async ({ page }) => {
   await page.goto("/loading");
   await expect(page.getByTestId("text")).toHaveCSS("height", "20px");
   await expect(page.getByTestId("rectangle")).toHaveCSS("height", "36px");
@@ -10,7 +10,7 @@ test("skeletons reserve token geometry without animation or keyboard stops", asy
   for (const element of await page.locator(".sheen-skeleton").all()) {
     await expect(element).toHaveAttribute("aria-hidden", "true");
     await expect(element).toHaveAttribute("inert", "");
-    await expect(element).toHaveCSS("animation-name", "none");
+    await expect(element).toHaveCSS("animation-name", "sheen-skeleton-shimmer");
   }
   await page.getByRole("button", { name: "Toggle theme" }).focus();
   await page.keyboard.press("Tab");
@@ -22,7 +22,7 @@ test("skeletons reserve token geometry without animation or keyboard stops", asy
   await expect(placeholder).toHaveAttribute("data-identity", "retained");
   await expect(placeholder).not.toHaveCSS("background-color", dark);
   await page.emulateMedia({ reducedMotion: "reduce" });
-  await expect(placeholder).toHaveCSS("animation-name", "none");
+  await expect(placeholder).toHaveCSS("animation-duration", "0s");
 });
 
 test("skeleton hydration retains server DOM and geometry", async ({ page }) => {
@@ -69,7 +69,7 @@ test("spinners expose localized status content and honor scoped and OS reduced m
   await expect(page.getByTestId("decorative-spinner")).toHaveCSS("width", "14px");
   await expect(page.getByTestId("reduced-spinner")).toHaveCSS("width", "20px");
   const mark = spinner.locator(".sheen-spinner-mark");
-  await expect(mark).toHaveCSS("animation-duration", "0.25s");
+  await expect(mark).toHaveCSS("animation-duration", "0.8s");
   await expect(page.getByTestId("reduced-spinner").locator(".sheen-spinner-mark")).toHaveCSS("animation-duration", "0s");
   await page.emulateMedia({ reducedMotion: "reduce" });
   await expect(mark).toHaveCSS("animation-duration", "0s");

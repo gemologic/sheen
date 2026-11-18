@@ -2,6 +2,7 @@ import { Show, createMemo, createSignal } from "solid-js";
 import { Button, Checkbox, ThemeScope } from "@gemologic/sheen";
 import { defineSeries } from "@gemologic/sheen-charts/core";
 import { TimeSeries } from "@gemologic/sheen-charts/time-series";
+import "@gemologic/sheen-charts/styles.css";
 
 const timestamps = new Float64Array(Array.from({ length: 48 }, (_, index) => Date.UTC(2026, 8, 1, 12, index)));
 const initialP50 = new Float64Array(Array.from({ length: 48 }, (_, index) => 18 + Math.sin(index / 5) * 3));

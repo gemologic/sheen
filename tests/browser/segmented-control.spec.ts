@@ -3,6 +3,7 @@ import { expect, test } from "@playwright/test";
 
 test("SegmentedControl roves, submits one value, skips disabled options, and bounds overflow", async ({ page }) => {
   await page.goto("/segmented-control");
+  await expect(page.locator('[data-sheen-portal="root"]')).toHaveAttribute("data-sheen-ready", "true");
   const group = page.getByRole("radiogroup", { name: "Report period", exact: true });
   const week = group.getByRole("radio", { name: "Week", exact: true });
   await week.focus();
@@ -11,6 +12,12 @@ test("SegmentedControl roves, submits one value, skips disabled options, and bou
   await page.keyboard.press("End");
   await expect(group.getByRole("radio", { name: "Year", exact: true })).toBeChecked();
   await expect(group.getByRole("radio", { name: "Year", exact: true })).toBeFocused();
+  const yearLabel = group.locator(".sheen-segmented-input:checked + .sheen-segmented-item-label");
+  const indicator = group.locator(".sheen-segmented-indicator");
+  await expect.poll(async () => {
+    const [target, marker] = [await yearLabel.boundingBox(), await indicator.boundingBox()];
+    return target && marker ? Math.abs(target.x - marker.x) + Math.abs(target.width - marker.width) : Number.POSITIVE_INFINITY;
+  }).toBeLessThan(1);
   await page.keyboard.press("Home");
   await expect(group.getByRole("radio", { name: "Last hour", exact: true })).toBeChecked();
   await page.getByRole("button", { name: "Inspect values", exact: true }).click();

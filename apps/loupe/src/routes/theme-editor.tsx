@@ -31,6 +31,7 @@ import {
   writeEditorStorage,
 } from "../theme-editor-state.ts";
 import type { OklchChannels } from "../theme-editor-state.ts";
+import "@gemologic/sheen-charts/styles.css";
 
 const modes: readonly SelectOption[] = [{ value: "dark", label: "Dark" }, { value: "light", label: "Light" }];
 const tokenNames = Object.keys(semanticDefaults).filter(isTokenName);

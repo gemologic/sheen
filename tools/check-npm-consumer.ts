@@ -34,6 +34,34 @@ async function execute(command: string, arguments_: readonly string[], cwd: stri
   return result.stdout;
 }
 
+/**
+ * High advisories accepted with no upstream fix. Each entry names the reason and is removed once a fixed release exists.
+ * GHSA-fc5q-39xc-vjpf: picomatch extglob ReDoS (all versions, reported 2026-11-17). Vite only matches globs from build config, never request input.
+ */
+const acceptedAdvisories = new Set(["https://github.com/advisories/GHSA-fc5q-39xc-vjpf"]);
+
+/** Fails on any high or critical advisory outside `acceptedAdvisories`. `npm audit` exits non-zero when it finds any, so read its report either way. */
+async function auditConsumer(cwd: string): Promise<void> {
+  let report: string;
+  try {
+    report = await execute("npm", ["audit", "--json"], cwd);
+  } catch (error) {
+    if (!record(error) || typeof error.stdout !== "string" || error.stdout === "") throw error;
+    report = error.stdout;
+  }
+  const parsed: unknown = JSON.parse(report);
+  assert.ok(record(parsed) && record(parsed.vulnerabilities), "npm audit --json must report vulnerabilities");
+  const blocking = new Set<string>();
+  for (const vulnerability of Object.values(parsed.vulnerabilities)) {
+    if (!record(vulnerability) || !Array.isArray(vulnerability.via)) continue;
+    for (const advisory of vulnerability.via) {
+      if (!record(advisory) || typeof advisory.url !== "string") continue;
+      if ((advisory.severity === "high" || advisory.severity === "critical") && !acceptedAdvisories.has(advisory.url)) blocking.add(`${String(advisory.title)} ${advisory.url}`);
+    }
+  }
+  assert.deepEqual([...blocking], [], "packed consumer has unaccepted high or critical advisories");
+}
+
 const browserConsumer = `
 export { Button, FileDropzone } from "@gemologic/sheen";
 export { SearchIcon } from "@gemologic/sheen-icons/icons/search";
@@ -147,9 +175,9 @@ try {
   assert.ok(expectedVersion, "packed public packages must expose a version");
 
   await writeFile(join(consumerDirectory, "package.json"), `${JSON.stringify({ name: "sheen-packed-consumer", private: true, type: "module" }, null, 2)}\n`);
-  await execute("npm", ["install", "--ignore-scripts", "--save-exact", "--no-fund", ...tarballs, "solid-js@1.9.15", "vite@8.2.2", "vite-plugin-solid@2.11.14", "typescript@6.0.3"], consumerDirectory);
+  await execute("npm", ["install", "--ignore-scripts", "--save-exact", "--no-fund", ...tarballs, "solid-js@1.9.19", "vite@8.3.8", "vite-plugin-solid@2.11.14", "typescript@6.0.3"], consumerDirectory);
   await execute("npm", ["ls", "--all"], consumerDirectory);
-  await execute("npm", ["audit", "--audit-level=high"], consumerDirectory);
+  await auditConsumer(consumerDirectory);
 
   await writeFile(join(consumerDirectory, "browser-consumer.tsx"), browserConsumer);
   await writeFile(join(consumerDirectory, "node-consumer.mjs"), nodeConsumer(expectedVersion));

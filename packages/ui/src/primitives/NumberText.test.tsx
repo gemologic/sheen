@@ -23,4 +23,9 @@ describe("NumberText", () => {
     expect(html).toContain('data-number-part="percentSign">%</span>');
     for (const value of [Number.NaN, Infinity, -Infinity]) expect(() => renderToString(() => <ThemeProvider><NumberText value={value} /></ThemeProvider>)).toThrow("finite value");
   });
+
+  it("server-renders the final value when animated changes are enabled", () => {
+    const html = renderToString(() => <ThemeProvider><NumberText value={42} tween flash /></ThemeProvider>);
+    expect(html.replace(/<[^>]*>/gu, "")).toBe("42");
+  });
 });

@@ -182,11 +182,11 @@ test("date filter adapter supplies the table editor without changing the table c
   await page.goto("/filter-bar");
   await ready(page);
   const section = page.getByRole("region", { name: "Typed client filters" });
-  await section.getByRole("button", { name: "+ Filter", exact: true }).click();
+  await section.getByRole("button", { name: "Add filter", exact: true }).click();
   const picker = page.getByRole("dialog", { name: "Filter columns" });
   await picker.getByRole("searchbox", { name: "Search filter columns" }).fill("Crea");
   await picker.getByRole("button", { name: "Created", exact: true }).click();
-  const editor = page.getByRole("dialog", { name: "+ Filter: Created" });
+  const editor = page.getByRole("dialog", { name: "Add filter: Created" });
   await editor.getByRole("button", { name: /Operator/u }).click();
   await page.getByRole("option", { name: "is between", exact: true }).click();
   await expect(editor.locator(".sheen-date-range-picker")).toBeVisible();
@@ -224,3 +224,53 @@ test("open date layers pass axe, reflow as a phone sheet, expose target sizes, a
   expect(geometry.targets.every(target => target.width >= 24 && target.height >= 24)).toBe(true);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
 });
+
+for (const host of [
+  { kind: "dialog", opener: "Open schedule dialog", title: "Schedule review", label: "Review date" },
+  { kind: "drawer", opener: "Open schedule drawer", title: "Schedule rollout", label: "Rollout date" },
+] as const) {
+  test(`a date picker inside a modal ${host.kind} owns one layer of Escape, pointer, and focus`, async ({ page }) => {
+    await page.goto("/date-time");
+    await ready(page);
+    await page.getByRole("button", { name: host.opener, exact: true }).click();
+    const modal = page.getByRole("dialog", { name: host.title, exact: true });
+    await expect(modal).toBeVisible();
+    const trigger = modal.locator(".sheen-date-picker-trigger");
+    const input = modal.getByRole("textbox", { name: host.label, exact: true });
+    const popup = page.locator('.sheen-date-content[data-state="open"]');
+
+    await trigger.click();
+    await expect(popup).toBeVisible();
+    await expect(popup.getByRole("button", { name: "Selected date. Sunday, November 1, 2026", exact: true })).toBeFocused();
+    await expectNoAxeViolations(page, `date picker open inside a ${host.kind}`);
+
+    await popup.getByRole("button", { name: "Switch to next month", exact: true }).click();
+    await expect(popup.getByRole("button", { name: "Choose Tuesday, December 1, 2026", exact: true })).toBeVisible();
+    await expect(modal).toBeVisible();
+    await expect(popup).toBeVisible();
+    await popup.getByRole("button", { name: "Switch to previous month", exact: true }).click();
+    await expect(popup.getByRole("button", { name: "Selected date. Sunday, November 1, 2026", exact: true })).toBeVisible();
+
+    await popup.getByRole("button", { name: "Selected date. Sunday, November 1, 2026", exact: true }).focus();
+    await page.keyboard.press("ArrowRight");
+    await expect(popup.getByRole("button", { name: "Choose Monday, November 2, 2026", exact: true })).toBeFocused();
+
+    await page.keyboard.press("Escape");
+    await expect(popup).toHaveCount(0);
+    await expect(modal).toBeVisible();
+    await expect(trigger).toBeFocused();
+
+    await trigger.click();
+    await expect(popup).toBeVisible();
+    await page.keyboard.press("ArrowRight");
+    await expect(popup.getByRole("button", { name: "Choose Monday, November 2, 2026", exact: true })).toBeFocused();
+    await page.keyboard.press("Enter");
+    await expect(input).toHaveValue("11/02/2026");
+    await expect(popup).toHaveCount(0);
+    await expect(modal).toBeVisible();
+
+    await trigger.focus();
+    await page.keyboard.press("Escape");
+    await expect(modal).toBeHidden();
+  });
+}

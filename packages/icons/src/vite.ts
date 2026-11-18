@@ -96,9 +96,11 @@ export function sheenIcons(options: SheenIconsOptions = {}): Plugin {
       const encodedSets = parts[0], rawName = parts[1];
       if (!encodedSets || !rawName || !isIconName(rawName)) throw new Error(`Invalid virtual sheen icon id: ${id}`);
       const selectedSets = encodedSets.split("+").filter((set): set is IconSetName => set === "radix" || set === "phosphor");
-      const selected = selectedSets.map(set => iconData[rawName].find(icon => icon.set === set));
-      if (selected.some(icon => !icon)) throw new Error(`Incomplete generated icon data for ${rawName}`);
-      return `import { createStaticIcon } from "@gemologic/sheen-icons/runtime";\nexport default createStaticIcon(${JSON.stringify(rawName)}, ${JSON.stringify(selected)});\n`;
+      const selected = selectedSets.map(set => iconData[rawName].find(icon => icon.set === set)).filter(icon => icon !== undefined);
+      if (selected.length !== selectedSets.length) throw new Error(`Incomplete generated icon data for ${rawName}`);
+      const bodies = [...new Set(selected.map(icon => icon.body))];
+      const entries = selected.map(icon => `{ set: ${JSON.stringify(icon.set)}, body: body${bodies.indexOf(icon.body)}, width: ${icon.width}, height: ${icon.height} }`);
+      return `import { createStaticIcon } from "@gemologic/sheen-icons/runtime";\n${bodies.map((body, index) => `const body${index} = ${JSON.stringify(body)};`).join("\n")}\nexport default createStaticIcon(${JSON.stringify(rawName)}, [${entries.join(", ")}]);\n`;
     },
     transform(code, id) {
       if (!/\.[cm]?[jt]sx(?:\?|$)/.test(id)) return null;

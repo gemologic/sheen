@@ -4,6 +4,7 @@ import type { TableState } from "@gemologic/sheen-table";
 import { Button, Input } from "@gemologic/sheen";
 import { exportSchema, exportState } from "../fixtures/table-export";
 import { useSolidRouterAdapter } from "@gemologic/sheen-patterns/solid-router";
+import "@gemologic/sheen-table/styles.css";
 
 export default function TableUrlFixture() {
   const router = useSolidRouterAdapter();

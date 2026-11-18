@@ -1,6 +1,8 @@
 export { chartColorTokens, defineSeries, toCategorical, toColumnar, validateCategorical, validateColumnar } from "./chart-types.ts";
 export type {
-  AreaChartProps, BarChartProps, ChartAnnotation, ChartCategoricalData, ChartColorToken, ChartCommonProps, ChartCursorOptions, ChartData, ChartLegend,
+  AreaChartProps, BarChartProps, BarSparklineProps, ChartAnnotation, ChartCategoricalData, ChartColorToken, ChartCommonProps, ChartCursorOptions, ChartData, ChartLegend,
+  ChartMatrixData, ChartNumberFormat, ChartScatterColumns, ChartScatterSize, DonutChartProps, GaugeProps, GaugeThreshold, GaugeTone, HeatmapProps,
+  HistogramBinning, HistogramBins, HistogramProps, ScatterChartProps,
   ChartSeriesEncoding,
   ChartNumberAxis, ChartSeries, ChartTimeAxis, ChartTone, ChartValueAxis, ChartValueFormat, LineChartProps, RowSeries,
   SparklineProps, StatGroupProps, StatProps, StatTrend, StatValence, TimeSeriesProps, TimeSeriesUPlotOptions, ToCategoricalOptions, ToColumnarOptions,

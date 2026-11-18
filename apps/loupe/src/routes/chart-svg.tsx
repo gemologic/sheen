@@ -3,6 +3,7 @@ import { Button, Checkbox, ThemeScope } from "@gemologic/sheen";
 import { Sparkline, StatGroup } from "@gemologic/sheen-charts/svg";
 import { ChartDataTable } from "@gemologic/sheen-charts/table";
 import { defineSeries } from "@gemologic/sheen-charts/core";
+import "@gemologic/sheen-charts/styles.css";
 
 const initial = new Float64Array([18, 16, 15, Number.NaN, 14, 13, 12, 13]);
 const refreshed = new Float64Array([13, 12, Number.NaN, 11, 10, 9, 8, 7]);

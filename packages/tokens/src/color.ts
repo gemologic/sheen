@@ -5,6 +5,17 @@ export const fromLinearChannel = (value: number): number => value <= 0.0031308 ?
 export const clampChannel = (value: number): number => Math.min(1, Math.max(0, value));
 
 export function parseColor(value: string): Color {
+  const color = parseUnclamped(value);
+  return { r: clampChannel(color.r), g: clampChannel(color.g), b: clampChannel(color.b), a: color.a };
+}
+
+/** True when the emitted hex fallback reproduces the color exactly, including out-of-gamut sources. */
+export function isExactHex(value: string): boolean {
+  const color = parseUnclamped(value), fallback = parseColor(toHex(color));
+  return Math.max(Math.abs(color.r - fallback.r), Math.abs(color.g - fallback.g), Math.abs(color.b - fallback.b), Math.abs(color.a - fallback.a)) < 1e-6;
+}
+
+function parseUnclamped(value: string): Color {
   const hex = /^#([\da-f]{3}|[\da-f]{4}|[\da-f]{6}|[\da-f]{8})$/i.exec(value.trim())?.[1];
   if (hex) {
     const full = hex.length <= 4 ? [...hex].map(char => char + char).join("") : hex;
@@ -24,8 +35,8 @@ export function parseColor(value: string): Color {
   if (mix?.[1] && mix[2] && mix[3]) {
     const weight = Number(mix[2]) / 100;
     if (!Number.isFinite(weight) || weight < 0 || weight > 1) throw new Error(`Invalid mix weight: ${value}`);
-    const first = parseColor(mix[1]);
-    const second = parseColor(mix[3]);
+    const first = parseUnclamped(mix[1]);
+    const second = parseUnclamped(mix[3]);
     const x = toOklab(first), y = toOklab(second);
     const alpha = first.a * weight + second.a * (1 - weight);
     const w = alpha === 0 ? 0 : first.a * weight / alpha;
@@ -38,7 +49,7 @@ function fromOklab(l: number, a: number, b: number, alpha: number): Color {
   const x = (l + 0.3963377774 * a + 0.2158037573 * b) ** 3;
   const y = (l - 0.1055613458 * a - 0.0638541728 * b) ** 3;
   const z = (l - 0.0894841775 * a - 1.291485548 * b) ** 3;
-  return { r: clampChannel(fromLinearChannel(4.0767416621 * x - 3.3077115913 * y + 0.2309699292 * z)), g: clampChannel(fromLinearChannel(-1.2684380046 * x + 2.6097574011 * y - 0.3413193965 * z)), b: clampChannel(fromLinearChannel(-0.0041960863 * x - 0.7034186147 * y + 1.707614701 * z)), a: alpha };
+  return { r: fromLinearChannel(4.0767416621 * x - 3.3077115913 * y + 0.2309699292 * z), g: fromLinearChannel(-1.2684380046 * x + 2.6097574011 * y - 0.3413193965 * z), b: fromLinearChannel(-0.0041960863 * x - 0.7034186147 * y + 1.707614701 * z), a: alpha };
 }
 
 function toOklab(color: Color): { l: number; a: number; b: number } {
@@ -70,9 +81,20 @@ export function toHex(color: Color): string {
   return `#${byte(color.r)}${byte(color.g)}${byte(color.b)}${color.a < 1 ? byte(color.a) : ""}`;
 }
 
+export interface Oklch { readonly l: number; readonly c: number; readonly h: number }
+
+export function oklchComponents(color: Color): Oklch {
+  const lab = toOklab(color);
+  return { l: lab.l, c: Math.hypot(lab.a, lab.b), h: (Math.atan2(lab.b, lab.a) * 180 / Math.PI + 360) % 360 };
+}
+
+/** Unclamped sRGB for an OKLCH coordinate; channels outside 0..1 mean the coordinate is out of gamut. */
+export function fromOklch({ l, c, h }: Oklch): Color {
+  const hue = h * Math.PI / 180;
+  return fromOklab(l, c * Math.cos(hue), c * Math.sin(hue), 1);
+}
+
 export function toOklch(value: string): string {
-  const color = parseColor(value), lab = toOklab(color);
-  const chroma = Math.hypot(lab.a, lab.b);
-  const hue = (Math.atan2(lab.b, lab.a) * 180 / Math.PI + 360) % 360;
-  return `oklch(${(lab.l * 100).toFixed(5)}% ${chroma.toFixed(7)} ${hue.toFixed(4)}${color.a < 1 ? ` / ${color.a.toFixed(5)}` : ""})`;
+  const color = parseColor(value), { l, c, h } = oklchComponents(color);
+  return `oklch(${(l * 100).toFixed(5)}% ${c.toFixed(7)} ${h.toFixed(4)}${color.a < 1 ? ` / ${color.a.toFixed(5)}` : ""})`;
 }

@@ -1,6 +1,7 @@
 import { Input, ThemeScope } from "@gemologic/sheen";
 import { DataTable, defineColumns } from "@gemologic/sheen-table";
 import { createSignal } from "solid-js";
+import "@gemologic/sheen-table/styles.css";
 
 interface Account { readonly id: string; readonly name: string; readonly amount: number }
 

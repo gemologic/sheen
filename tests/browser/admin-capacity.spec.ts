@@ -100,6 +100,8 @@ test("traffic legends distinguish series and tooltip precision matches native da
   const values = cells;
   for (const value of values) expect(value).toMatch(/^[\d,]+$/u);
   const plot = chart.getByRole("img", { name: "Workspace traffic", exact: true });
+  // WebKit replays a mousemove after layout changes; park the pointer off the plot so it cannot take over the keyboard cursor.
+  await page.mouse.move(0, 0);
   await plot.focus();
   await plot.press("Home");
   const tooltip = chart.locator(".sheen-chart-tooltip");

@@ -103,6 +103,10 @@ export interface TimeSeriesUPlotOptions {
 
 export interface TimeSeriesProps extends ChartCommonProps {
   readonly x: ChartTimeAxis;
+  /** Fill under the first series with a gradient that fades toward the baseline. */
+  readonly area?: boolean;
+  /** Mark the latest finite sample of each visible series; the marker pulses unless motion is reduced. */
+  readonly live?: boolean;
   readonly cursor?: ChartCursorOptions;
   readonly onZoom?: (range: readonly [number, number] | null) => void;
   readonly __unsafe_uplot?: TimeSeriesUPlotOptions;
@@ -144,6 +148,154 @@ export interface SparklineProps {
   readonly height?: number;
 }
 
+/** Number formatting for a quantitative channel without axis-domain options. */
+export type ChartNumberFormat = ChartValueFormat | Intl.NumberFormatOptions;
+
+export interface DonutChartProps {
+  readonly label: string;
+  readonly summary: string;
+  readonly categoryLabel: string;
+  readonly valueLabel: string;
+  /** One definition per part, drawn clockwise from twelve o'clock in declaration order. At most eight parts. */
+  readonly series: readonly ChartSeries[];
+  /** One non-negative value or NaN per series, in series order. NaN draws no slice and stays a missing table value. */
+  readonly values: Float64Array;
+  readonly format?: ChartNumberFormat;
+  /** Hole radius as a fraction of the outer radius, from 0 (pie) to 0.85. */
+  readonly innerRadius?: number;
+  /** Replaces the default visible total in the donut hole. Ignored for a pie. */
+  readonly center?: JSX.Element;
+  readonly height: number;
+  readonly legend?: ChartLegend;
+  readonly tooltip?: boolean;
+  readonly empty?: JSX.Element;
+  readonly loading?: boolean;
+  readonly table?: ChartTableOptions;
+  readonly class?: string;
+}
+
+export interface ChartScatterColumns {
+  readonly x: Float64Array;
+  readonly y: Float64Array;
+  /** Optional non-negative size channel; requires the chart `size` option. */
+  readonly size?: Float64Array;
+}
+
+export interface ChartScatterSize {
+  readonly label: string;
+  readonly format?: ChartNumberFormat;
+  /** Marker radius range in CSS pixels for the smallest and largest size value. */
+  readonly range?: readonly [number, number];
+}
+
+export interface ScatterChartProps {
+  readonly label: string;
+  readonly summary: string;
+  readonly xLabel: string;
+  readonly yLabel: string;
+  readonly series: readonly ChartSeries[];
+  /** Equal-length numeric columns per declared series key. A NaN x or y omits that point. */
+  readonly data: Readonly<Record<string, ChartScatterColumns>>;
+  readonly x?: ChartValueAxis;
+  readonly y?: ChartValueAxis;
+  readonly size?: ChartScatterSize;
+  readonly height: number;
+  readonly legend?: ChartLegend;
+  readonly tooltip?: boolean;
+  readonly empty?: JSX.Element;
+  readonly loading?: boolean;
+  readonly table?: ChartTableOptions;
+  readonly class?: string;
+}
+
+export interface ChartMatrixData {
+  readonly x: readonly string[];
+  readonly y: readonly string[];
+  /** Row-major values: `values[yIndex * x.length + xIndex]`. NaN is a missing cell. */
+  readonly values: Float64Array;
+}
+
+export interface HeatmapProps {
+  readonly label: string;
+  readonly summary: string;
+  readonly xLabel: string;
+  readonly yLabel: string;
+  readonly valueLabel: string;
+  readonly data: ChartMatrixData;
+  /** Single sequential hue. Steps mix this token with transparency so they read on any surface. */
+  readonly color?: ChartColorToken;
+  /** Color-scale domain. Defaults to the finite data extent. */
+  readonly domain?: readonly [number, number];
+  readonly format?: ChartNumberFormat;
+  readonly height: number;
+  readonly legend?: boolean;
+  readonly tooltip?: boolean;
+  readonly empty?: JSX.Element;
+  readonly loading?: boolean;
+  readonly table?: ChartTableOptions;
+  readonly class?: string;
+}
+
+/** Requested bin count, or explicit strictly increasing bin edges. */
+export type HistogramBins = number | readonly number[];
+
+export interface HistogramBinning {
+  /** Bin edges; bin `i` covers `[edges[i], edges[i + 1])`, and the last bin also includes its upper edge. */
+  readonly edges: Float64Array;
+  readonly counts: Float64Array;
+  /** NaN inputs, which are never counted. */
+  readonly missing: number;
+  /** Finite inputs outside explicit edges, which are never counted. */
+  readonly outside: number;
+}
+
+export interface HistogramProps {
+  readonly label: string;
+  readonly summary: string;
+  readonly valueLabel: string;
+  readonly countLabel: string;
+  readonly values: Float64Array;
+  readonly bins?: HistogramBins;
+  readonly color?: ChartColorToken;
+  /** Formatting for bin edges. Counts always use integer formatting. */
+  readonly format?: ChartNumberFormat;
+  readonly height: number;
+  readonly tooltip?: boolean;
+  readonly empty?: JSX.Element;
+  readonly loading?: boolean;
+  readonly table?: ChartTableOptions;
+  readonly class?: string;
+}
+
+export type BarSparklineProps = SparklineProps;
+
+export type GaugeTone = "success" | "warning" | "danger";
+
+export interface GaugeThreshold {
+  readonly value: number;
+  readonly tone: GaugeTone;
+  readonly label: string;
+}
+
+export interface GaugeProps {
+  readonly label: string;
+  /** Finite value, or NaN for a missing reading. Values outside the range clamp the arc but keep their exact text. */
+  readonly value: number;
+  readonly min: number;
+  readonly max: number;
+  /** Bands entered at each threshold value. The active band supplies the fill tone and a visible text label. */
+  readonly thresholds?: readonly GaugeThreshold[];
+  /** Whether a band applies at or above its value (higher is worse) or at or below it (lower is worse). */
+  readonly thresholdDirection?: "ascending" | "descending";
+  readonly format?: ChartNumberFormat;
+  /** Fill color while no threshold band is active. */
+  readonly color?: ChartColorToken;
+  readonly summary?: string;
+  /** Maximum rendered inline size in CSS pixels. */
+  readonly size?: number;
+  readonly class?: string;
+}
+
 export type StatTrend = "up" | "down" | "flat";
 export type StatValence = "positive" | "negative" | "neutral";
 
@@ -154,6 +306,8 @@ export interface StatProps {
   readonly trend?: StatTrend;
   readonly trendLabel?: string;
   readonly valence?: StatValence;
+  /** Count formatted numeric values from the previous value on update. Defaults to true; reduced motion jumps. */
+  readonly tween?: boolean;
   /** Optional supplementary display, such as a labeled Sparkline or Meter. Keep the text value complete. */
   readonly visual?: JSX.Element;
   readonly class?: string;

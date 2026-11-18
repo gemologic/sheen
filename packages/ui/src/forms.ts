@@ -3,6 +3,8 @@ export type { FieldProps, FieldControlProps } from "./primitives/Field.tsx";
 export { Input } from "./primitives/Input.tsx";
 export type { InputProps } from "./primitives/Input.tsx";
 export { InputGroup } from "./primitives/InputGroup.tsx";
+export { Form, FormSection, FormActions } from "./primitives/Form.tsx";
+export type { FormProps, FormSectionProps, FormActionsProps } from "./primitives/Form.tsx";
 export type { InputGroupProps } from "./primitives/InputGroup.tsx";
 export { SearchInput } from "./primitives/SearchInput.tsx";
 export type { SearchInputProps } from "./primitives/SearchInput.tsx";

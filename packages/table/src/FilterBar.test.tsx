@@ -34,7 +34,7 @@ describe("FilterBar SSR", () => {
     expect(text).toContain("Name contains Alpha");
     expect(text).toContain("Not: Status is any of closed");
     expect(html.match(/class="sheen-filter-remove"/g)).toHaveLength(2);
-    expect(text).toContain("+ Filter");
+    expect(text).toContain("Add filter");
     expect(changes).toEqual([]);
   });
 

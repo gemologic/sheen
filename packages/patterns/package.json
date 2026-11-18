@@ -37,6 +37,11 @@
       "solid": "./src/admin.ts",
       "import": "./dist/admin.js"
     },
+    "./marketing": {
+      "types": "./dist/marketing.d.ts",
+      "solid": "./src/marketing.ts",
+      "import": "./dist/marketing.js"
+    },
     "./admin-config": {
       "types": "./dist/admin-config.d.ts",
       "solid": "./src/admin-config.ts",
@@ -53,7 +58,8 @@
       "import": "./dist/tanstack-router.js"
     },
     "./styles.css": "./src/styles.css",
-    "./admin/styles.css": "./src/admin.css"
+    "./admin/styles.css": "./src/admin.css",
+    "./marketing/styles.css": "./src/marketing.css"
   },
   "scripts": {
     "build": "vite build && tsc -p tsconfig.build.json"
@@ -63,7 +69,7 @@
     "@solidjs/meta": "0.29.4",
     "@solidjs/router": "1.0.0",
     "@tanstack/solid-router": ">=1.170 <2",
-    "solid-js": "1.9.15"
+    "solid-js": "1.9.19"
   },
   "peerDependenciesMeta": {
     "@solidjs/router": {
@@ -78,6 +84,6 @@
     "@solidjs/meta": "0.29.4",
     "@solidjs/router": "1.0.0",
     "@tanstack/solid-router": "1.170.31",
-    "solid-js": "1.9.15"
+    "solid-js": "1.9.19"
   }
 }

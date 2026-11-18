@@ -5,6 +5,8 @@ import { useStreamingSeries } from "@gemologic/sheen-charts/streaming";
 import { DataTable, defineColumns } from "@gemologic/sheen-table";
 import { createHostileChartData, createHostileMenu, createHostileRows, hostileChartSample, hostileChartSeries, hostileChartStart, hostileLongText, hostileMultilingualText, hostileZeroWidthText } from "../../hostile-fixture.ts";
 import type { HostileRow } from "../../hostile-fixture.ts";
+import "@gemologic/sheen-table/styles.css";
+import "@gemologic/sheen-charts/styles.css";
 
 const rows = createHostileRows();
 const columns = defineColumns<HostileRow>([

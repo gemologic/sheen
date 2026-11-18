@@ -12,9 +12,10 @@ describe("IconButton SSR", () => {
     expect(html).toContain('type="button"');
     expect(html).toContain("sheen-icon-button custom");
   });
-  it("uses native disabled state during loading and validates its name", () => {
+  it("stays focusable during loading and validates its name", () => {
     const html = renderToString(() => <ThemeProvider><IconButton label="Save" loading>+</IconButton></ThemeProvider>);
-    expect(html).toContain(" disabled");
+    expect(html).not.toMatch(/\sdisabled/);
+    expect(html).toContain('aria-disabled="true"');
     expect(html).toContain('aria-busy="true"');
     expect(() => renderToString(() => <ThemeProvider><IconButton label=" ">+</IconButton></ThemeProvider>)).toThrow("nonempty accessible label");
   });

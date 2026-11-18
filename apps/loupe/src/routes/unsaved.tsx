@@ -3,6 +3,7 @@ import { Button, Input } from "@gemologic/sheen";
 import { AppShell, useUnsavedChanges } from "@gemologic/sheen-patterns";
 import { A, useBeforeLeave } from "@solidjs/router";
 import { useSolidRouterAdapter } from "@gemologic/sheen-patterns/solid-router";
+import "@gemologic/sheen-patterns/styles.css";
 
 function Editor(props: { secondary?: boolean }) {
   const [draft, setDraft] = createSignal("");

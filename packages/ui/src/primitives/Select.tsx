@@ -3,6 +3,7 @@ import { For, Show, createEffect, createMemo, createSignal, createUniqueId, onCl
 import type { JSX } from "solid-js";
 import { useTheme } from "../theme/ThemeProvider.tsx";
 import { cn } from "../utils/cn.ts";
+import { Glyph } from "./Glyph.tsx";
 import { useShortcutKeyboardOwner } from "./ShortcutProvider.tsx";
 
 export interface SelectOption {
@@ -130,7 +131,7 @@ export function Select(props: SelectProps): JSX.Element {
     <Primitive.Trigger as={TriggerButton} data-sheen-select-trigger="" id={`${id}-trigger`} ref={setTrigger} form={local.form} class="sheen-input sheen-select-trigger"
       onClick={event => { if (!local.disabled && (!event.currentTarget.dataset.pointerType || event.detail === 0)) setOpen(current => !current); }}>
       <span id={`${id}-value`} data-placeholder={!selected() || undefined}>{selected()?.label ?? local.placeholder ?? theme.messages().selectOption}</span>
-      <span aria-hidden="true">▾</span>
+      <Glyph name="chevron-down" class="sheen-select-chevron" />
     </Primitive.Trigger>
     <select id={`${id}-native`} ref={native} class="sheen-select-native" aria-hidden="true" tabIndex={-1} name={local.name} form={local.form}
       required={local.required} disabled={local.disabled} aria-label={local.label}
@@ -160,7 +161,7 @@ export function Select(props: SelectProps): JSX.Element {
             return <Primitive.Item item={collection().getItem(key) ?? initialItem} class="sheen-select-option">
               <Primitive.ItemLabel>{options().get(key)?.label}</Primitive.ItemLabel>
               <Show when={options().get(key)?.description}>{description => <Primitive.ItemDescription class="sheen-select-option-description">{description()}</Primitive.ItemDescription>}</Show>
-              <Primitive.ItemIndicator class="sheen-select-indicator" aria-hidden="true">✓</Primitive.ItemIndicator>
+              <Primitive.ItemIndicator class="sheen-select-indicator" aria-hidden="true"><Glyph name="check" /></Primitive.ItemIndicator>
             </Primitive.Item>;
           }}</For>}
         </Primitive.Listbox>

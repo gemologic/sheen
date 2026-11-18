@@ -2,6 +2,7 @@ import { Show, createEffect, createSignal, onCleanup, onMount } from "solid-js";
 import { Button, ThemeScope, useTheme } from "@gemologic/sheen";
 import { useThemeTokens } from "@gemologic/sheen-charts";
 import { invalidateThemeTokens } from "@gemologic/sheen-charts/loupe";
+import "@gemologic/sheen-charts/styles.css";
 
 function CanvasToken(props: { readonly label: string }) {
   const colors = useThemeTokens(["--sheen-chart-1", "--sheen-chart-grid"]);

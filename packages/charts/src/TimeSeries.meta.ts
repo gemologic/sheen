@@ -9,7 +9,7 @@ export default defineMeta<TimeSeriesProps>({
   props: {
     label: { description: "Required visible and accessible chart name." },
     summary: { description: "Required narrative interpretation used alongside the visual and table alternative." },
-    xLabel: { description: "Required time-axis label and native table heading." },
+    xLabel: { description: "Required time-domain name for the native table heading and screen-reader context. The canvas axis shows tick labels only, so the plot keeps its height." },
     series: { description: "Stable validated series definitions with semantic color tokens and optional solid, dashed, dotted, or dash-dot non-color encoding." },
     data: { description: "Equal-length Float64 columns using UTC epoch milliseconds and NaN gaps." },
     x: { description: "Time formatting configuration; timezone changes presentation only." },
@@ -23,12 +23,14 @@ export default defineMeta<TimeSeriesProps>({
     table: { description: "Native table page size and disclosure label; the alternative cannot be disabled." },
     class: { description: "Optional class appended to the figure root." },
     cursor: { description: "Optional named cursor-sync group." },
+    area: { description: "Fills under the first series with a gradient fading toward the baseline, using chart-area-opacity.", default: false },
+    live: { description: "Marks the latest finite sample of each visible series. The marker pulses unless motion is reduced and hides when zoomed past it.", default: false },
     onZoom: { description: "Receives the accepted x range after drag zoom and null after reset." },
     __unsafe_uplot: { description: "Explicit typed escape hatch for uPlot options not owned by the Sheen lifecycle." },
   },
   tokens: [
     "--sheen-chart-1", "--sheen-chart-2", "--sheen-chart-3", "--sheen-chart-4", "--sheen-chart-5", "--sheen-chart-6", "--sheen-chart-7", "--sheen-chart-8",
-    "--sheen-chart-grid", "--sheen-chart-axis", "--sheen-chart-crosshair", "--sheen-chart-line-width", "--sheen-color-fg", "--sheen-color-fg-muted",
+    "--sheen-chart-grid", "--sheen-chart-axis", "--sheen-chart-crosshair", "--sheen-chart-line-width", "--sheen-chart-area-opacity", "--sheen-color-fg", "--sheen-color-fg-muted", "--sheen-color-bg",
   ],
   a11y: {
     role: "labeled figure with an image description and native table disclosure",

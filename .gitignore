@@ -65,7 +65,5 @@ playwright-report/
 /apps/loupe/public/llms.txt
 /apps/loupe/public/llms-full.txt
 
-# Repository instructions and public planning documents are intentionally versioned even when a global ignore hides them.
+# Repository agent instructions are intentionally versioned even when a global ignore hides them.
 !AGENTS.md
-!SPEC.md
-!TODO.md

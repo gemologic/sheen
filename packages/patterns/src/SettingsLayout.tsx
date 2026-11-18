@@ -1,5 +1,5 @@
 import { Button, Heading, useTheme } from "@gemologic/sheen";
-import { For, Show, createEffect, createMemo, createSignal, createUniqueId, onCleanup, splitProps } from "solid-js";
+import { For, Show, createEffect, createMemo, createSignal, createUniqueId, onCleanup, onMount, splitProps } from "solid-js";
 import type { JSX } from "solid-js";
 import { useUnsavedChanges } from "./unsaved-changes.ts";
 
@@ -81,11 +81,48 @@ export function SettingsLayout(props: SettingsLayoutProps): JSX.Element {
   createEffect(() => { if (!dirty()) setFailed(false); });
   useUnsavedChanges(dirty);
   onCleanup(() => { disposed = true; sectionElements.clear(); });
-  const activate = (id: string) => {
+  const select = (id: string) => {
+    if (active() === id) return;
     if (local.activeSection === undefined) setActiveDraft(id);
     local.onSectionChange?.(id);
+  };
+  // A navigation click owns the location until its scroll settles, even if the target cannot reach the reading band.
+  let navigating = false;
+  const activate = (id: string) => {
+    select(id);
+    navigating = true;
     sectionElements.get(id)?.scrollIntoView({ block: "start" });
   };
+  onMount(() => {
+    // The current location follows reading position: the first section crossing the upper band of the viewport.
+    const visible = new Set<string>();
+    const observer = new IntersectionObserver(entries => {
+      for (const entry of entries) {
+        const id = entry.target instanceof HTMLElement ? entry.target.dataset.sectionId : undefined;
+        if (id === undefined) continue;
+        if (entry.isIntersecting) visible.add(id);
+        else visible.delete(id);
+      }
+      const first = ids().find(id => visible.has(id));
+      if (first !== undefined && !navigating) select(first);
+    }, { rootMargin: "0px 0px -60% 0px" });
+    const release = () => { navigating = false; };
+    document.addEventListener("scrollend", release, true);
+    document.addEventListener("wheel", release, { capture: true, passive: true });
+    document.addEventListener("touchmove", release, { capture: true, passive: true });
+    onCleanup(() => {
+      document.removeEventListener("scrollend", release, true);
+      document.removeEventListener("wheel", release, true);
+      document.removeEventListener("touchmove", release, true);
+    });
+    createEffect(() => {
+      ids();
+      observer.disconnect();
+      visible.clear();
+      for (const element of sectionElements.values()) observer.observe(element);
+    });
+    onCleanup(() => observer.disconnect());
+  });
   const save = async () => {
     if (!dirty() || pending()) return;
     if (typeof local.onSave !== "function") throw new Error("SettingsLayout onSave must be a function");
@@ -103,7 +140,8 @@ export function SettingsLayout(props: SettingsLayoutProps): JSX.Element {
   const status = () => error() ?? (pending() ? theme.messages().savingChanges : dirty() ? theme.messages().unsavedChanges : "");
   return <div {...others} class={`sheen-settings-layout ${local.class ?? ""}`} role="group" aria-label={label()} data-dirty={dirty()} data-pending={pending() || undefined}>
     <div class="sheen-settings-layout-body">
-      <nav class="sheen-settings-nav" aria-label={theme.messages().settingsSections}>
+      <nav class="sheen-settings-nav" aria-labelledby={`${prefix}-nav-heading`}>
+        <p id={`${prefix}-nav-heading`} class="sheen-settings-nav-heading">{theme.messages().settingsSections}</p>
         <ul><For each={ids()}>{id => <li><Button variant="ghost" class="sheen-settings-nav-button" aria-current={active() === id ? "location" : undefined} aria-controls={`${prefix}-${id}`} onClick={() => activate(id)}>{sections().find(section => section.id === id)?.label}</Button></li>}</For></ul>
       </nav>
       <div class="sheen-settings-sections">

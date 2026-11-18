@@ -1,18 +1,20 @@
-import { defineTheme, emitTokenDeclarations, validateContrast } from "./define.ts";
+import { defineTheme } from "./define.ts";
 import { accentTokens } from "./accents.ts";
-import { accentNames } from "./catalog.ts";
-import type { AccentName, IconSetName } from "./catalog.ts";
+import type { IconSetName } from "./catalog.ts";
 import { currentSchemaVersion, semanticDefaults } from "./schema.ts";
-import type { Mode, Theme, Tokens } from "./schema.ts";
+import type { Theme, Tokens } from "./schema.ts";
 import { primitives } from "./primitives.ts";
 
 const lightTokens: Tokens = {
   ...semanticDefaults,
   "color-bg": "#fafafa", "color-bg-subtle": "#f4f4f5", "color-bg-raised": "#ffffff", "color-bg-inset": "#f4f4f5",
-  "color-bg-hover": "#e4e4e7", "color-bg-active": "#d4d4d8", "color-bg-selected": "#e0e7ff",
+  "color-bg-hover": "#ededf0", "color-bg-active": "#e0e0e4", "color-bg-selected": "#e6e6ea",
   "color-fg": "#18181b", "color-fg-muted": "#52525b", "color-fg-subtle": "#71717a",
-  "color-border": "#d4d4d8", "color-border-control": "#71717a", "color-border-strong": "#71717a", "color-border-subtle": "#e4e4e7",
+  "color-border": "#d4d4d8", "color-border-control": "#7b7b84", "color-border-strong": "#71717a", "color-border-subtle": "#e4e4e7",
   "color-focus-ring": "#18181b",
+  "elevation-raised": "0 1px 2px #0000000d, 0 1px 3px #00000014",
+  "elevation-overlay": "0 0 0 1px #0000000a, 0 4px 8px #0000000f, 0 12px 32px #0000001f",
+  "elevation-modal": "0 0 0 1px #0000000d, 0 8px 16px #00000014, 0 24px 64px #00000033",
   "color-info": "#1e3a8a", "color-info-fg": "#1e3a8a", "color-info-subtle": "#eff6ff", "color-info-border": "#1e40af",
   "color-success": "#14532d", "color-success-fg": "#14532d", "color-success-subtle": "#f0fdf4", "color-success-border": "#166534",
   "color-warning": "#78350f", "color-warning-fg": "#78350f", "color-warning-subtle": "#fffbeb", "color-warning-border": "#92400e",
@@ -36,13 +38,13 @@ export const paper = theme("paper", "Paper", {
   "color-bg": "#171716", "color-bg-subtle": "#111110", "color-bg-raised": "#252523", "color-bg-inset": "#10100f",
   "color-bg-hover": "#2b2b28", "color-bg-active": "#33332f", "color-bg-selected": "#393934",
   "color-fg": "#f5f5ef", "color-fg-muted": "#c4c4bb", "color-fg-subtle": "#8a8a82",
-  "color-border": "#343431", "color-border-control": "#9b9b92", "color-border-strong": "#9b9b92", "color-border-subtle": "#292927",
+  "color-border": "#343431", "color-border-control": "#86867f", "color-border-strong": "#9b9b92", "color-border-subtle": "#292927",
   "color-focus-ring": "#ffffff",
 }, {
   "color-bg": "#ffffff", "color-bg-subtle": "#f7f7f5", "color-bg-raised": "#ffffff", "color-bg-inset": "#f1f1ef",
   "color-bg-hover": "#e9e9e6", "color-bg-active": "#ddddda", "color-bg-selected": "#e4e4e0",
   "color-fg": "#171716", "color-fg-muted": "#555550", "color-fg-subtle": "#777771",
-  "color-border": "#d0d0cc", "color-border-control": "#70706a", "color-border-strong": "#70706a", "color-border-subtle": "#e5e5e1",
+  "color-border": "#d0d0cc", "color-border-control": "#797974", "color-border-strong": "#70706a", "color-border-subtle": "#e5e5e1",
   "color-focus-ring": "#171716",
 });
 const readingType: Partial<Tokens> = {
@@ -55,14 +57,14 @@ export const vellum = theme("vellum", "Vellum", {
   "color-bg": "#1c1917", "color-bg-raised": "#292524", "color-bg-subtle": "#151210", "color-bg-inset": "#171412",
   "color-bg-hover": "#302a26", "color-bg-active": "#39312c", "color-bg-selected": "#40372f",
   "color-fg": "#faf7f2", "color-fg-muted": "#cec5b8", "color-fg-subtle": "#938a7d",
-  "color-border": "#3f3832", "color-border-control": "#a89e90", "color-border-strong": "#a89e90", "color-border-subtle": "#302a26",
+  "color-border": "#3f3832", "color-border-control": "#8e8579", "color-border-strong": "#a89e90", "color-border-subtle": "#302a26",
   "color-focus-ring": "#fffaf2",
 }, {
   ...readingType,
   "color-bg": "#fbf7ed", "color-bg-raised": "#fffdf8", "color-bg-subtle": "#f5eddf", "color-bg-inset": "#f1e8d8",
   "color-bg-hover": "#e9dfcf", "color-bg-active": "#ddd1bf", "color-bg-selected": "#e4dacb",
   "color-fg": "#211d18", "color-fg-muted": "#5b534a", "color-fg-subtle": "#7d7469",
-  "color-border": "#d6cab8", "color-border-control": "#746a5e", "color-border-strong": "#746a5e", "color-border-subtle": "#e8dece",
+  "color-border": "#d6cab8", "color-border-control": "#7a7165", "color-border-strong": "#746a5e", "color-border-subtle": "#e8dece",
   "color-focus-ring": "#211d18",
 }, "phosphor");
 export const contrast = theme("contrast", "Contrast", {
@@ -82,26 +84,26 @@ export const slate = theme("slate", "Slate", {
   "color-bg": "#0f172a", "color-bg-subtle": "#0b1120", "color-bg-raised": "#1e293b", "color-bg-inset": "#111827",
   "color-bg-hover": "#25334a", "color-bg-active": "#2d3c54", "color-bg-selected": "#334155",
   "color-fg": "#f8fafc", "color-fg-muted": "#cbd5e1", "color-fg-subtle": "#94a3b8",
-  "color-border": "#334155", "color-border-control": "#94a3b8", "color-border-strong": "#94a3b8", "color-border-subtle": "#1e293b",
+  "color-border": "#334155", "color-border-control": "#818fa4", "color-border-strong": "#94a3b8", "color-border-subtle": "#1e293b",
   "color-focus-ring": "#ffffff",
 }, {
   "color-bg": "#f8fafc", "color-bg-subtle": "#f1f5f9", "color-bg-raised": "#ffffff", "color-bg-inset": "#e2e8f0",
   "color-bg-hover": "#e2e8f0", "color-bg-active": "#cbd5e1", "color-bg-selected": "#dbeafe",
   "color-fg": "#172033", "color-fg-muted": "#475569", "color-fg-subtle": "#64748b",
-  "color-border": "#cbd5e1", "color-border-control": "#64748b", "color-border-strong": "#64748b", "color-border-subtle": "#e2e8f0",
+  "color-border": "#cbd5e1", "color-border-control": "#65758c", "color-border-strong": "#64748b", "color-border-subtle": "#e2e8f0",
   "color-focus-ring": "#172033",
 });
 export const graphite = theme("graphite", "Graphite", {
   "color-bg": "#171717", "color-bg-subtle": "#101010", "color-bg-raised": "#262626", "color-bg-inset": "#121212",
   "color-bg-hover": "#2e2e2e", "color-bg-active": "#363636", "color-bg-selected": "#404040",
   "color-fg": "#fafafa", "color-fg-muted": "#d4d4d4", "color-fg-subtle": "#a3a3a3",
-  "color-border": "#383838", "color-border-control": "#a3a3a3", "color-border-strong": "#a3a3a3", "color-border-subtle": "#2b2b2b",
+  "color-border": "#383838", "color-border-control": "#8f8f8f", "color-border-strong": "#a3a3a3", "color-border-subtle": "#2b2b2b",
   "color-focus-ring": "#ffffff",
 }, {
   "color-bg": "#fafafa", "color-bg-subtle": "#f5f5f5", "color-bg-raised": "#ffffff", "color-bg-inset": "#ededed",
   "color-bg-hover": "#e5e5e5", "color-bg-active": "#d4d4d4", "color-bg-selected": "#dedede",
   "color-fg": "#171717", "color-fg-muted": "#525252", "color-fg-subtle": "#737373",
-  "color-border": "#d4d4d4", "color-border-control": "#6b6b6b", "color-border-strong": "#6b6b6b", "color-border-subtle": "#e5e5e5",
+  "color-border": "#d4d4d4", "color-border-control": "#747474", "color-border-strong": "#6b6b6b", "color-border-subtle": "#e5e5e5",
   "color-focus-ring": "#171717",
 });
 const studioType: Partial<Tokens> = {
@@ -126,7 +128,7 @@ export const studio = theme("studio", "Studio", {
   "color-bg": "#08090a", "color-bg-subtle": "#0b0c0e", "color-bg-raised": "#101113", "color-bg-inset": "#212226",
   "color-bg-hover": "#191a1b", "color-bg-active": "#212226", "color-bg-selected": "#212226",
   "color-fg": "#f7f8f8", "color-fg-muted": "#969ca6", "color-fg-subtle": "#969ca6",
-  "color-border": "#252628", "color-border-control": "#7f858e", "color-border-strong": "#353639", "color-border-subtle": "#1c1d1f",
+  "color-border": "#252628", "color-border-control": "#6b7078", "color-border-strong": "#353639", "color-border-subtle": "#1c1d1f",
   "color-focus-ring": "#ffffff",
 }, {
   ...studioType,
@@ -138,18 +140,3 @@ export const studio = theme("studio", "Studio", {
 }, "phosphor");
 export const themes: readonly Theme[] = Object.freeze([obsidian, paper, vellum, contrast, slate, graphite, studio]);
 
-export function buildAccent(name: AccentName): string {
-  const rules: string[] = [];
-  for (const mode of ["dark", "light"] satisfies Mode[]) {
-    const tokens = accentTokens(name, mode);
-    for (const base of themes) {
-      const diagnostics = validateContrast({ ...base[mode], ...accentTokens(name, mode, base.id) }, base.id === "contrast" ? 7 : 4.5);
-      if (diagnostics.length) throw new Error(`${base.id}/${mode}/${name}: ${diagnostics.join("\n")}`);
-    }
-    rules.push(`[data-sheen-mode="${mode}"][data-sheen-accent="${name}"] {\n${emitTokenDeclarations(tokens)}\n}`);
-    rules.push(`[data-sheen-theme="contrast"][data-sheen-mode="${mode}"][data-sheen-accent="${name}"] {\n${emitTokenDeclarations(accentTokens(name, mode, "contrast"))}\n}`);
-  }
-  return rules.join("\n") + "\n";
-}
-
-export function buildAccents(): string { return accentNames.map(buildAccent).join(""); }

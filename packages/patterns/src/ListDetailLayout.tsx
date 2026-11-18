@@ -1,4 +1,4 @@
-import { Link, ScrollArea } from "@gemologic/sheen";
+import { breakpointQuery, Link, ScrollArea } from "@gemologic/sheen";
 import { For, Show, createEffect, createMemo, createSignal, createUniqueId, onCleanup, onMount, splitProps } from "solid-js";
 import type { JSX } from "solid-js";
 import { usePaneScrollRestoration } from "./pane-restoration.ts";
@@ -126,7 +126,7 @@ export function ListDetailLayout(props: ListDetailLayoutProps): JSX.Element {
     const document = detailPane()?.ownerDocument ?? listPane()?.ownerDocument;
     const view = document?.defaultView;
     if (!document || !view) return;
-    const media = view.matchMedia("(max-width: 767px)");
+    const media = view.matchMedia(breakpointQuery("md", "down"));
     let previous = activeId();
     let focusFrame: number | undefined;
     const schedule = (element: HTMLElement | undefined) => {
@@ -190,7 +190,7 @@ export function ListDetailLayout(props: ListDetailLayoutProps): JSX.Element {
   return <div {...others} ref={element => { if (typeof local.ref === "function") local.ref(element); }} class={`sheen-list-detail ${local.class ?? ""}`} data-active-detail={active() ? "" : undefined} data-active-id={activeId() ?? undefined}>
     <div class="sheen-list-detail-list-pane">
       <ScrollArea ref={setListPane} class="sheen-list-detail-list" label={listLabel()}>
-        <ul><For each={itemIds()}>{id => <ItemLink id={id} />}</For></ul>
+        <ul class="sheen-list-detail-items"><For each={itemIds()}>{id => <ItemLink id={id} />}</For></ul>
       </ScrollArea>
     </div>
     <div class="sheen-list-detail-detail-pane">

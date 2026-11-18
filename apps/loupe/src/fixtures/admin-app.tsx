@@ -18,6 +18,9 @@ import { For, Match, Show, Switch, batch, createEffect, createMemo, createSignal
 import { capacityTargetUsed, createAdminWorkload, refreshAdminWorkload, regionCapacity, trafficSeries } from "./admin-app-data.ts";
 import type { AdminAccountRow, AdminWorkload, AdminWorkloadSnapshot, AdminWorkloadSummary } from "./admin-app-data.ts";
 import { AdminPolicies } from "./admin-policies.tsx";
+import "@gemologic/sheen-table/styles.css";
+import "@gemologic/sheen-charts/styles.css";
+import "@gemologic/sheen-patterns/admin/styles.css";
 
 const columns = defineColumns<AdminAccountRow>([
   { id: "name", header: "Account", accessor: row => row.name, search: true, filter: { type: "text" }, sort: "text", width: "fill", cellDependencies: ["id"], cell: (value, row) => <span class="loupe-admin-account-cell"><strong>{String(value)}</strong><small>{row.id}</small></span> },
@@ -578,7 +581,7 @@ function OverviewContent(props: Pick<AdminStarterPageProps, "rows" | "summary" |
     <section class="loupe-admin-dashboard-grid" aria-label="Traffic and service health">
       <div class="loupe-admin-chart-card loupe-admin-chart-card-wide">
         <TimeSeries label="Workspace traffic" summary="Requests, events, and background jobs per minute." xLabel="UTC time" series={trafficSeries} data={props.traffic}
-          x={{ type: "time", tz: "UTC" }} y={{ format: { maximumFractionDigits: 0 }, zero: false }} height={360} loading={props.refreshing} table={{ pageSize: 12, viewLabel: "View traffic samples" }} />
+          x={{ type: "time", tz: "UTC" }} y={{ format: { maximumFractionDigits: 0 }, zero: false }} height={440} loading={props.refreshing} table={{ pageSize: 12, viewLabel: "View traffic samples" }} />
       </div>
       <div class="loupe-admin-content-card loupe-admin-service-panel"><header><div><h2>Service health</h2><Text tone="muted">{services.filter(service => service.status === "Operational").length} healthy · {services.filter(service => service.status !== "Operational").length} need attention<br />Median response latency</Text></div><Link href="/admin/status">Open status</Link></header>
         <ul><For each={services}>{service => <li data-service-id={service.id}><div><strong>{service.name}</strong><small>{service.region}</small></div><NumberText value={service.latency} format={{ style: "unit", unit: "millisecond", maximumFractionDigits: 0 }} /><Badge tone={service.status === "Operational" ? "success" : "warning"}><span aria-hidden="true">{service.status === "Operational" ? "✓" : "!"}</span> {service.status}</Badge></li>}</For></ul>

@@ -4,6 +4,9 @@ import { createMemo } from "solid-js";
 import { createComposerFixtures } from "../composer/fixtures.ts";
 import SelfContainedAdmin from "../generated/composer-self-contained.tsx";
 import StructureOnlyAdmin from "../generated/composer-structure-only.tsx";
+import "@gemologic/sheen-table/styles.css";
+import "@gemologic/sheen-charts/styles.css";
+import "@gemologic/sheen-patterns/admin/styles.css";
 
 const fixtures = createComposerFixtures("northstar-v1");
 

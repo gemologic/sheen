@@ -1,6 +1,6 @@
 # Owned runtime compatibility
 
-Sheen ships pinned, modified Kobalte core/utils, the CMDK Solid adapter, and Solid's DOM renderer in the UI package. The application retains ordinary `solid-js@1.9.15` for its shared reactive core. There is no vendored second core, install-time patching, or original Kobalte runtime dependency.
+Sheen ships pinned, modified Kobalte core/utils, the CMDK Solid adapter, and Solid's DOM renderer in the UI package. The application retains ordinary `solid-js@1.9.19` for its shared reactive core. There is no vendored second core, install-time patching, or original Kobalte runtime dependency.
 
 Configure `sheenRuntime()` from `@gemologic/sheen/vite` in Vite 8 or SolidStart. It redirects browser `solid-js/web` imports to Sheen's patched renderer, deduplicates the core, and rejects an unqualified core version. SSR keeps the application's pinned Solid server renderer and request-storage pair; Sheen's Node/worker renderer entries delegate to that peer. Copying the server renderer would create a second `RequestContext` symbol, causing Nitro's request storage and SolidStart routing to disagree. Generated apps configure the plugin automatically. Other bundlers need a separately qualified adapter. Direct imports of Solid signals, stores, JSX types, and routers remain normal. Original Kobalte overlays have independent layer/focus state; mixing them into Sheen's stack is unsupported.
 
@@ -25,6 +25,6 @@ The two shell-drawer-overlay cases exercise both breakpoint directions, native p
 
 The live `/menus` browser fixture exercises locked-document keyboard opening, nested light/RTL scopes with English locale, and one-layer dismissal. Run these regressions and the complete browser suite on any replacement version. Do not remove a correction based only on a successful build.
 
-## Solid 1.9.15
+## Solid 1.9.19
 
 See [hydration.md](hydration.md) for the delegated-event replay correction, pending-lazy hydration-completion guard, and delayed-JavaScript acceptance tests. Both development/production ESM and CommonJS runtime files carry the corrections.

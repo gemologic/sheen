@@ -5,6 +5,7 @@ import { Button } from "./Button.tsx";
 import type { ButtonProps } from "./Button.tsx";
 import type { ShortcutAction } from "../utils/shortcut-registry.ts";
 import { createTooltipLayer, TooltipLayer } from "./tooltip-layer.tsx";
+import { useShortcutLabel } from "./ShortcutProvider.tsx";
 
 export interface TooltipProps extends Omit<ButtonProps, "type" | "shortcut"> {
   type?: "button" | "submit" | "reset";
@@ -22,10 +23,11 @@ export function Tooltip(props: TooltipProps): JSX.Element {
   const disabled = () => button.disabled || button.loading || false;
   const state = createTooltipLayer(() => trigger, disabled);
   const shortcutAction = () => typeof local.shortcut === "string" ? undefined : local.shortcut;
+  const shortcutLabel = useShortcutLabel(() => typeof local.shortcut === "string" ? local.shortcut : local.shortcut?.keys);
   const shortcutHint = () => {
     state.open();
-    if (typeof local.shortcut === "string") return local.shortcut;
-    return trigger?.getAttribute("data-sheen-shortcut") ?? local.shortcut?.keys;
+    if (typeof local.shortcut === "string") return shortcutLabel();
+    return trigger?.getAttribute("data-sheen-shortcut") ?? shortcutLabel();
   };
   return <Primitive.Root open={state.open()} onOpenChange={state.change} disabled={disabled()}
     placement={local.placement ?? "top"} openDelay={local.openDelay ?? 500} closeDelay={local.closeDelay ?? 100} gutter={6}>

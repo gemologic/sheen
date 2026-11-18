@@ -5,7 +5,7 @@ export const englishTableMessages = Object.freeze({
   cardView: "{caption}, card view", rowActions: "Actions for row {id}",
   sort: "Sort", sortColumn: "Sort by {column}", sortedAscending: "ascending", sortedDescending: "descending", notSorted: "not sorted", sortPriority: "priority {position} of {count}",
   export: "Export", exportCSV: "Export CSV", exportJSON: "Export JSON", preparingExport: "Preparing export", exportFailed: "Export failed", retryExport: "Retry export", downloadLastExport: "Download last export",
-  filters: "Filters", filterAdd: "+ Filter", filterColumns: "Filter columns", filterSearchColumns: "Search filter columns", filterEdit: "Edit filter", filterRemove: "Remove filter", filterApply: "Apply filter",
+  filters: "Filters", filterAdd: "Add filter", filterColumns: "Filter columns", filterSearchColumns: "Search filter columns", filterEdit: "Edit filter", filterRemove: "Remove filter", filterApply: "Apply filter",
   filterOperator: "Operator", filterValue: "Value", filterMinimum: "Minimum", filterMaximum: "Maximum", filterDate: "Date", filterStartDate: "Start date", filterEndDate: "End date", filterValues: "Values",
   filterCaseSensitive: "Case sensitive", filterNegated: "Exclude matches", filterInheritedNegation: "This condition is also inside an excluded group.", filterInvalid: "Enter a valid filter value.",
   filterEquals: "is", filterContains: "contains", filterStartsWith: "starts with", filterEndsWith: "ends with", filterLessThan: "is less than", filterAtMost: "is at most", filterGreaterThan: "is greater than", filterAtLeast: "is at least", filterBetween: "is between", filterIsEmpty: "is empty", filterIsAnyOf: "is any of",

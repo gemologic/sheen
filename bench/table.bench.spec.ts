@@ -42,6 +42,8 @@ interface TableBenchmarkRun {
   readonly searchMs: number;
   readonly filterMs: number;
   readonly refreshMs: number;
+  readonly selectRowMs: number;
+  readonly keyboardMs: number;
   readonly retainedContent: RetainedContentSample;
   readonly resize: MotionSample;
   readonly scroll: MotionSample;
@@ -305,6 +307,56 @@ async function measureFilter(apply: Locator): Promise<number> {
   });
 }
 
+async function mountSelectionTable(page: Page): Promise<void> {
+  await page.goto("/table-benchmark?selection=true");
+  await page.locator('[data-benchmark-ready="true"]').waitFor();
+  await page.locator("[data-benchmark-mount]").click();
+  await expect(page.locator('tbody tr[data-index="2"] [data-sheen-selection-control]')).toHaveCount(1, { timeout: 15_000 });
+  await expect(page.locator("table")).toHaveAttribute("aria-rowcount", String(tableBenchmarkFixture.rows + 1));
+}
+
+async function measureSelectRow(page: Page): Promise<number> {
+  return page.locator('tbody tr[data-index="2"]').evaluate(async element => {
+    if (!(element instanceof HTMLTableRowElement)) throw new Error("Missing benchmark selection row");
+    element.focus({ preventScroll: true });
+    await new Promise<void>(resolveFrame => requestAnimationFrame(() => resolveFrame()));
+    performance.mark("sheen-table-select-row-start");
+    element.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, cancelable: true, key: " " }));
+    const deadline = performance.now() + 15_000;
+    while (element.getAttribute("aria-selected") !== "true" || element.ownerDocument.activeElement !== element) {
+      if (performance.now() > deadline) throw new Error("Timed out waiting for row selection acceptance");
+      await new Promise<void>(resolveFrame => requestAnimationFrame(() => resolveFrame()));
+    }
+    await new Promise<void>(resolveFrame => requestAnimationFrame(() => resolveFrame()));
+    performance.mark("sheen-table-select-row-end");
+    return performance.measure("sheen-table-select-row", "sheen-table-select-row-start", "sheen-table-select-row-end").duration;
+  });
+}
+
+async function measureKeyboard(page: Page): Promise<number> {
+  return page.evaluate(async last => {
+    const start = document.activeElement;
+    if (!(start instanceof HTMLTableRowElement) || start.dataset.index !== "2") throw new Error("Keyboard workload must start on the selected benchmark row");
+    const focusedIndex = (): string | undefined => document.activeElement instanceof HTMLTableRowElement ? document.activeElement.dataset.index : undefined;
+    const press = async (key: string, expected: number): Promise<void> => {
+      const target = document.activeElement;
+      if (!(target instanceof HTMLTableRowElement)) throw new Error(`Missing focused benchmark row before ${key}`);
+      target.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, cancelable: true, key }));
+      const deadline = performance.now() + 15_000;
+      while (focusedIndex() !== String(expected)) {
+        if (performance.now() > deadline) throw new Error(`Timed out waiting for ${key} to focus row ${expected}`);
+        await new Promise<void>(resolveFrame => requestAnimationFrame(() => resolveFrame()));
+      }
+    };
+    performance.mark("sheen-table-keyboard-start");
+    await press("End", last);
+    await press("ArrowUp", last - 1);
+    await new Promise<void>(resolveFrame => requestAnimationFrame(() => resolveFrame()));
+    performance.mark("sheen-table-keyboard-end");
+    return performance.measure("sheen-table-keyboard", "sheen-table-keyboard-start", "sheen-table-keyboard-end").duration;
+  }, tableBenchmarkFixture.rows - 1);
+}
+
 async function measureResize(page: Page, session: CDPSession): Promise<MotionSample> {
   const handle = page.getByRole("separator", { name: "Resize Name" });
   const bounds = await handle.boundingBox();
@@ -413,7 +465,10 @@ async function runOnce(browser: Browser): Promise<TableBenchmarkRun> {
     await clearSearch(page);
     const apply = await prepareFilter(page);
     const filterMs = await measureFilter(apply);
-    return Object.freeze({ calibrationMs, renderMs, multiSortMs, searchMs, filterMs, refreshMs: refresh.duration, retainedContent: refresh.retained, resize, scroll });
+    await mountSelectionTable(page);
+    const selectRowMs = await measureSelectRow(page);
+    const keyboardMs = await measureKeyboard(page);
+    return Object.freeze({ calibrationMs, renderMs, multiSortMs, searchMs, filterMs, refreshMs: refresh.duration, selectRowMs, keyboardMs, retainedContent: refresh.retained, resize, scroll });
   } finally {
     await context.close();
   }
@@ -426,14 +481,17 @@ function normalizedSummary(runs: readonly TableBenchmarkRun[]): TableNormalizedB
     search: median(runs.map(run => run.searchMs / run.calibrationMs)),
     filter: median(runs.map(run => run.filterMs / run.calibrationMs)),
     refresh: median(runs.map(run => run.refreshMs / run.calibrationMs)),
+    selectRow: median(runs.map(run => run.selectRowMs / run.calibrationMs)),
+    keyboard: median(runs.map(run => run.keyboardMs / run.calibrationMs)),
   });
 }
 
+const metricNames: readonly (keyof TableNormalizedBaseline)[] = ["render", "multiSort", "search", "filter", "refresh", "selectRow", "keyboard"];
+
 function driftFailures(current: TableNormalizedBaseline, history: readonly { readonly normalized: TableNormalizedBaseline }[]): readonly string[] {
-  const names: readonly (keyof TableNormalizedBaseline)[] = ["render", "multiSort", "search", "filter", "refresh"];
   const failures: string[] = [];
-  for (const name of names) {
-    const values = [...history.map(entry => entry.normalized[name]), current[name]].slice(-4);
+  for (const name of metricNames) {
+    const values = [...history, { normalized: current }].flatMap(entry => entry.normalized[name] ?? []).slice(-4);
     if (values.length === 4 && values.slice(1).every((value, index) => value > (values[index] ?? value))) failures.push(`${name} increased in three consecutive baselines`);
   }
   return Object.freeze(failures);
@@ -450,11 +508,21 @@ test("calibrated table workloads stay within normalized and absolute frame gates
   const normalized = normalizedSummary(runs);
   const latest = compatibleHistory.at(-1);
   if (!latest) throw new Error("Table benchmark baseline history must not be empty");
-  const metricNames: readonly (keyof TableNormalizedBaseline)[] = ["render", "multiSort", "search", "filter", "refresh"];
   const failures: string[] = [];
+  const warnings: string[] = [];
   for (const name of metricNames) {
-    const maximum = latest.normalized[name] * (1 + tableBenchmarkBaseline.maximumRegression);
-    if (normalized[name] > maximum) failures.push(`${name} normalized median ${normalized[name].toFixed(4)} exceeds ${maximum.toFixed(4)}`);
+    const reference = latest.normalized[name];
+    const value = normalized[name];
+    if (value === undefined) {
+      failures.push(`${name} was not measured`);
+      continue;
+    }
+    if (reference === undefined) {
+      warnings.push(`${name} normalized median ${value.toFixed(4)} is recorded without a regression gate until a reviewed ${runnerClass} baseline includes it`);
+      continue;
+    }
+    const maximum = reference * (1 + tableBenchmarkBaseline.maximumRegression);
+    if (value > maximum) failures.push(`${name} normalized median ${value.toFixed(4)} exceeds ${maximum.toFixed(4)}`);
   }
 
   const resizeCdp = runs.flatMap(run => run.resize.cdp.intervals);
@@ -494,7 +562,8 @@ test("calibrated table workloads stay within normalized and absolute frame gates
     baseline: tableBenchmarkBaseline,
     selectedBaselineVersion: latest.version,
     runs: Object.freeze(runs),
-    summary: Object.freeze({ rawMedianMs: Object.freeze({ calibration: median(runs.map(run => run.calibrationMs)), render: median(runs.map(run => run.renderMs)), multiSort: median(runs.map(run => run.multiSortMs)), search: median(runs.map(run => run.searchMs)), filter: median(runs.map(run => run.filterMs)), refresh: median(runs.map(run => run.refreshMs)) }), normalized, frames: frameSummary }),
+    summary: Object.freeze({ rawMedianMs: Object.freeze({ calibration: median(runs.map(run => run.calibrationMs)), render: median(runs.map(run => run.renderMs)), multiSort: median(runs.map(run => run.multiSortMs)), search: median(runs.map(run => run.searchMs)), filter: median(runs.map(run => run.filterMs)), refresh: median(runs.map(run => run.refreshMs)), selectRow: median(runs.map(run => run.selectRowMs)), keyboard: median(runs.map(run => run.keyboardMs)) }), normalized, frames: frameSummary }),
+    warnings: Object.freeze(warnings),
     failures: Object.freeze(failures),
   });
   const artifacts = resolve(process.cwd(), "test-results/bench");

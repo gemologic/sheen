@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { renderToString } from "solid-js/web";
 import { DynamicIcon, createStaticIcon } from "./runtime.tsx";
 import { iconData } from "./generated/catalog.ts";
-import { iconNames } from "./registry.ts";
+import { fallbackIconSet, iconNames, iconRegistry } from "./registry.ts";
 
 describe("icon runtime", () => {
   it("renders both selected glyphs without duplicating accessibility content", () => {
@@ -29,10 +29,21 @@ describe("icon runtime", () => {
   });
 
   it("keeps the dynamic registry explicit and complete", () => {
-    expect(iconNames).toHaveLength(42);
-    expect(new Set(iconNames)).toHaveLength(42);
+    expect(iconNames).toHaveLength(257);
+    expect(new Set(iconNames)).toHaveLength(257);
     for (const name of iconNames) expect(iconData[name].map(icon => icon.set)).toEqual(["radix", "phosphor"]);
     expect(() => renderToString(() => <DynamicIcon name="not-a-sheen-icon" />)).toThrow("Unknown semantic icon");
+  });
+
+  it("renders the fallback artwork under the set tag that lacks its own glyph", () => {
+    expect(Object.hasOwn(iconRegistry.terminal, "radix")).toBe(false);
+    const [radix, phosphor] = iconData.terminal;
+    expect(radix?.set).toBe("radix");
+    expect(phosphor?.set).toBe(fallbackIconSet);
+    expect(radix?.body).toBe(phosphor?.body);
+    const html = renderToString(() => <DynamicIcon name="terminal" />);
+    expect(html.match(/viewBox="0 0 256 256"/g)).toHaveLength(2);
+    expect(html).toContain('data-sheen-icon-set-value="radix"');
   });
 
   it("rejects duplicate or empty static icon data", () => {

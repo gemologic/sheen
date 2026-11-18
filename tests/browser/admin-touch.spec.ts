@@ -45,3 +45,19 @@ test("phone policy and settings forms support touch editing and submission", asy
   await expect(name).toHaveValue("Touch workspace");
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });
+
+test("badges keep label height when touch enlarges controls", async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page.goto("/admin");
+  await expect(page.locator('[data-sheen-portal="root"]')).toHaveAttribute("data-sheen-ready", "true");
+  expect(await page.evaluate(() => matchMedia("(pointer: coarse)").matches)).toBe(true);
+  const trigger = page.locator(".sheen-admin-notifications > [data-sheen-popover-trigger]");
+  const badge = trigger.locator(".sheen-badge");
+  await expect(badge).toBeVisible();
+  const [badgeBox, triggerBox] = await Promise.all([badge.boundingBox(), trigger.boundingBox()]);
+  if (badgeBox === null || triggerBox === null) throw new Error("Expected notification geometry");
+  expect(badgeBox.height).toBeLessThanOrEqual(24);
+  expect(triggerBox.height).toBeGreaterThanOrEqual(36);
+  expect(badgeBox.y).toBeGreaterThanOrEqual(triggerBox.y);
+  expect(badgeBox.y + badgeBox.height).toBeLessThanOrEqual(triggerBox.y + triggerBox.height);
+});

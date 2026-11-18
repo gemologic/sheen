@@ -2,6 +2,7 @@ import { For, Show, createMemo, createSignal, onCleanup, onMount } from "solid-j
 import { createClientExport, createTableSelection, filterClientRows, paginateClientRows, selectClientRows } from "@gemologic/sheen-table";
 import type { FilterColumn, FilterNode } from "@gemologic/sheen-table";
 import { Button, Checkbox, Link, Pagination, Table, TableBody, TableCaption, TableCell, TableRow } from "@gemologic/sheen";
+import "@gemologic/sheen-table/styles.css";
 
 export default function TableSelectionFixture() {
   const source = [{ id: "a", status: "open" }, { id: "b", status: "open" }, { id: "c", status: "open" }, { id: "d", status: "closed" }];

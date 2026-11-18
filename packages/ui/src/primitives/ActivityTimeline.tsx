@@ -1,4 +1,5 @@
 import { For, Show, createMemo, splitProps } from "solid-js";
+import { Glyph } from "./Glyph.tsx";
 import type { JSX } from "solid-js";
 import { useTheme } from "../theme/ThemeProvider.tsx";
 import type { Messages } from "../theme/messages.ts";
@@ -31,11 +32,11 @@ function stateLabel(state: WorkflowState, messages: Messages): string {
   return messages.workflowUpcoming;
 }
 
-function marker(state: WorkflowState): string {
-  if (state === "completed") return "✓";
-  if (state === "current") return "●";
-  if (state === "error") return "!";
-  return "○";
+function marker(state: WorkflowState): JSX.Element {
+  if (state === "completed") return <Glyph name="check" />;
+  if (state === "current") return <Glyph name="dot" />;
+  if (state === "error") return <Glyph name="alert" />;
+  return "";
 }
 
 /** A stable-ID chronological activity list with explicit non-color state labels. */
@@ -63,8 +64,12 @@ export function ActivityTimeline(props: ActivityTimelineProps): JSX.Element {
         <article class="sheen-activity-timeline-content">
           <header><strong>{current().title}</strong><span class="sheen-workflow-state">{stateLabel(current().state, theme.messages())}</span></header>
           <Show when={current().description}>{description => <p>{description()}</p>}</Show>
-          <Show when={current().actor}>{actor => <span class="sheen-activity-timeline-actor">{actor()}</span>}</Show>
-          <Show when={current().timestamp && current().timeLabel}><time dateTime={current().timestamp}>{current().timeLabel}</time></Show>
+          <Show when={current().actor || (current().timestamp && current().timeLabel)}>
+            <div class="sheen-activity-timeline-meta">
+              <Show when={current().actor}>{actor => <span class="sheen-activity-timeline-actor">{actor()}</span>}</Show>
+              <Show when={current().timestamp && current().timeLabel}><time dateTime={current().timestamp}>{current().timeLabel}</time></Show>
+            </div>
+          </Show>
         </article>
       </li>}</Show>;
     }}</For>

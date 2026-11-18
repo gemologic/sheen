@@ -19,7 +19,7 @@ describe("SettingsLayout", () => {
   it("renders deterministic section navigation and a persistent clean save bar", () => {
     const html = render();
     expect(html).toContain('aria-label="Workspace settings"');
-    expect(html).toContain('aria-label="Settings sections"');
+    expect(html).toMatch(/<nav class="sheen-settings-nav" aria-labelledby="([^"]+)"><p id="\1" class="sheen-settings-nav-heading">Settings sections<\/p>/);
     expect(html).toContain('aria-current="location"');
     expect(html).toContain("Public account details");
     expect(html).toContain("Theme controls");

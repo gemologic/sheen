@@ -6,6 +6,7 @@ import { Sparkline } from "@gemologic/sheen-charts/svg";
 import { useStreamingSeries } from "@gemologic/sheen-charts/streaming";
 import { TimeSeries } from "@gemologic/sheen-charts/time-series";
 import { chartBenchmarkFixture, createChartBenchmarkData } from "../../../../bench/fixtures/chart.ts";
+import "@gemologic/sheen-charts/styles.css";
 
 type BenchmarkFixture = "large" | "streaming" | "sparkline" | "theme";
 

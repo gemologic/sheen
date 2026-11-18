@@ -5,6 +5,7 @@ import { useTheme } from "../theme/ThemeProvider.tsx";
 import { Button } from "./Button.tsx";
 import { buttonVariants } from "./button-variants.ts";
 import { cn } from "../utils/cn.ts";
+import { Glyph } from "./Glyph.tsx";
 import { useModalShortcutScope } from "./ShortcutProvider.tsx";
 
 export interface DialogProps extends ParentProps {
@@ -39,6 +40,8 @@ export function ModalFrame(props: DialogProps & { alert?: boolean }): JSX.Elemen
   useModalShortcutScope(() => props.shortcutScope ?? `dialog:${id}`, open);
   let content: HTMLDivElement | undefined;
   let closeButton: HTMLButtonElement | undefined;
+  /** Alerts and custom close labels keep a labelled footer action; other dialogs close from a corner icon placed last in tab order. */
+  const textClose = (): boolean => Boolean(props.alert) || props.closeLabel !== undefined;
   createEffect(() => {
     if (open()) onCleanup(theme.layers.register(id));
   });
@@ -70,9 +73,10 @@ export function ModalFrame(props: DialogProps & { alert?: boolean }): JSX.Elemen
         </div>
         <div class="sheen-dialog-body">{props.children}</div>
         <div class="sheen-dialog-footer">
-          <KobalteDialog.CloseButton as={Button} ref={element => { closeButton = element; }} disabled={!dismissible()} aria-label={props.closeLabel ?? theme.messages().close}>{props.closeLabel ?? theme.messages().close}</KobalteDialog.CloseButton>
+          <Show when={textClose()}><KobalteDialog.CloseButton as={Button} variant="ghost" ref={element => { closeButton = element; }} disabled={!dismissible()} aria-label={props.closeLabel ?? theme.messages().close}>{props.closeLabel ?? theme.messages().close}</KobalteDialog.CloseButton></Show>
           {props.footer}
         </div>
+        <Show when={!textClose()}><KobalteDialog.CloseButton as={Button} variant="ghost" class="sheen-dialog-close" size="sm" ref={element => { closeButton = element; }} disabled={!dismissible()} aria-label={theme.messages().close}><Glyph name="close" /></KobalteDialog.CloseButton></Show>
       </KobalteDialog.Content>
     </KobalteDialog.Portal>}</Show>
   </KobalteDialog.Root>;

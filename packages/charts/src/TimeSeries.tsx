@@ -18,7 +18,7 @@ const tokenNames: readonly ThemeTokenName[] = Object.freeze([
   "--sheen-color-market-up", "--sheen-color-market-down", "--sheen-color-market-flat",
   "--sheen-color-fg", "--sheen-color-fg-muted",
   "--sheen-color-accent", "--sheen-chart-grid", "--sheen-chart-axis", "--sheen-chart-crosshair",
-  "--sheen-chart-line-width", "--sheen-font-sans", "--sheen-text-caption-size", "--sheen-text-caption-weight",
+  "--sheen-chart-line-width", "--sheen-chart-area-opacity", "--sheen-color-bg", "--sheen-font-sans", "--sheen-text-caption-size", "--sheen-text-caption-weight",
 ]);
 
 function updateAxisFont(axis: uPlot.Axis, font: string): boolean {
@@ -176,18 +176,33 @@ function lineWidth(values: ThemeTokenValues): number {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : 1.5;
 }
 
-function chartSeries(definitions: readonly ChartSeries[], visible: readonly boolean[], values: () => ThemeTokenValues): uPlot.Series[] {
+function areaFill(plot: uPlot, stroke: string, values: ThemeTokenValues): CanvasGradient | string {
+  const opacity = Number.parseFloat(values["--sheen-chart-area-opacity"] ?? "");
+  const strength = Math.round(Math.min(1, Math.max(0, Number.isFinite(opacity) ? opacity * 2 : 0.24)) * 100);
+  const gradient = plot.ctx.createLinearGradient(0, plot.bbox.top, 0, plot.bbox.top + plot.bbox.height);
+  try {
+    gradient.addColorStop(0, `color-mix(in srgb, ${stroke} ${strength}%, transparent)`);
+    gradient.addColorStop(1, "transparent");
+  } catch { return "transparent"; }
+  return gradient;
+}
+
+function chartSeries(definitions: readonly ChartSeries[], visible: readonly boolean[], values: () => ThemeTokenValues, area: boolean): uPlot.Series[] {
   return [
     {},
-    ...definitions.map((definition, index) => ({
-      label: definition.label,
-      show: visible[index] ?? false,
-      spanGaps: false,
-      stroke: () => color(values(), tokenByColor[definition.color], "#ffffff"),
-      width: lineWidth(values()),
-      dash: seriesDash(resolveChartSeriesEncoding(definition, index)),
-      points: { show: false },
-    })),
+    ...definitions.map((definition, index) => {
+      const stroke = (): string => color(values(), tokenByColor[definition.color], "#ffffff");
+      return {
+        label: definition.label,
+        show: visible[index] ?? false,
+        spanGaps: false,
+        stroke,
+        ...(area && index === 0 ? { fill: (plot: uPlot) => areaFill(plot, stroke(), values()) } : {}),
+        width: lineWidth(values()),
+        dash: seriesDash(resolveChartSeriesEncoding(definition, index)),
+        points: { show: false },
+      };
+    }),
   ];
 }
 
@@ -207,11 +222,12 @@ function axes(props: TimeSeriesProps, values: () => ThemeTokenValues, locale: st
   const font = `${fontWeight} ${fontSize} ${fontFamily}`;
   return [
     {
-      label: props.xLabel,
       stroke: () => color(values(), "--sheen-chart-axis", "#ffffff"),
       font,
       labelFont: font,
       space: 64,
+      size: 28,
+      gap: 6,
       values: (_plot, splits, _axisIndex, _foundSpace, increment) => splits.map(value => formatAxis(value, increment)),
       grid: { show: false },
       ticks: { show: false },
@@ -248,7 +264,7 @@ function options(props: TimeSeriesProps, definitions: readonly ChartSeries[], vi
     width,
     height,
     ms: 1,
-    series: chartSeries(definitions, visible, values),
+    series: chartSeries(definitions, visible, values, props.area === true),
     scales: scales(props),
     axes: axes(props, values, locale),
     legend: { show: false },
@@ -270,6 +286,11 @@ function options(props: TimeSeriesProps, definitions: readonly ChartSeries[], vi
       ready: [lifecycle.ready],
     },
   };
+}
+
+function ZoomGlyph(props: { readonly kind: "in" | "out" | "reset" }): JSX.Element {
+  const path = props.kind === "in" ? "M3 8h10M8 3v10" : props.kind === "out" ? "M3 8h10" : "M3.5 6.5A4.75 4.75 0 1 1 3.25 9M3.5 2.75v3.75h3.75";
+  return <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d={path} fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" /></svg>;
 }
 
 export function TimeSeries(props: TimeSeriesProps): JSX.Element {
@@ -304,6 +325,8 @@ export function TimeSeries(props: TimeSeriesProps): JSX.Element {
     xLabel: xLabel(),
     cursor: props.cursor,
     tooltip: props.tooltip,
+    area: props.area,
+    live: props.live,
     locale: locale(),
   }));
   const [zoomed, setZoomed] = createSignal(false);
@@ -314,6 +337,7 @@ export function TimeSeries(props: TimeSeriesProps): JSX.Element {
   const tooltipRowElements = new Map<string, HTMLLIElement>();
   const tooltipValueElements = new Map<string, HTMLSpanElement>();
   const annotationElements: SVGGElement[] = [];
+  const liveElements = new Map<string, HTMLSpanElement>();
   let plot: uPlot | undefined;
   let resizeObserver: ResizeObserver | undefined;
   let resizeFrame: number | undefined;
@@ -426,9 +450,29 @@ export function TimeSeries(props: TimeSeriesProps): JSX.Element {
     props.onZoom?.(next ? range : null);
   }
 
+  /** Places one marker on the latest finite sample of each visible series. */
+  function updateLive(current: uPlot): void {
+    const series = untrack(definitions);
+    const shown = untrack(visibility.values);
+    for (const [index, definition] of series.entries()) {
+      const element = liveElements.get(definition.key);
+      if (!element) continue;
+      const column = current.data[index + 1];
+      const times = current.data[0];
+      let last = column ? column.length - 1 : -1;
+      while (last >= 0 && (column?.[last] === null || column?.[last] === undefined || Number.isNaN(column?.[last]))) last--;
+      const value = last >= 0 ? column?.[last] : undefined;
+      const time = last >= 0 ? times[last] : undefined;
+      const maximum = current.scales.x?.max;
+      if (!props.live || !shown[index] || value === undefined || value === null || time === undefined || (maximum !== undefined && time > maximum)) { element.hidden = true; continue; }
+      element.hidden = false;
+      element.style.translate = `${current.over.offsetLeft + current.valToPos(time, "x")}px ${current.over.offsetTop + current.valToPos(value, "y")}px`;
+    }
+  }
+
   const lifecycle: TimeSeriesLifecycle = Object.freeze({
     cursor: updateTooltip,
-    draw: updateAnnotations,
+    draw: (current: uPlot) => { updateAnnotations(current); updateLive(current); },
     scale: updateZoom,
     ready: (current: uPlot) => {
       plotReady = true;
@@ -482,7 +526,7 @@ export function TimeSeries(props: TimeSeriesProps): JSX.Element {
       initializationFrame = window.requestAnimationFrame(() => {
         initializationFrame = undefined;
         if (plot || !plotHost || !currentTokens["--sheen-chart-axis"] || !currentTokens["--sheen-chart-1"]) return;
-        if (preparedDefinitions !== untrack(definitions) || preparedSource !== untrack(data) || preparedConfiguration !== untrack(configuration)) {
+        if (preparedDefinitions !== untrack(definitions) || preparedConfiguration !== untrack(configuration)) {
           scheduleInitialization();
           return;
         }
@@ -491,6 +535,12 @@ export function TimeSeries(props: TimeSeriesProps): JSX.Element {
         resizeObserver = new ResizeObserver(scheduleResize);
         resizeObserver.observe(plotHost);
         setEnhanced(true);
+        // A stream can publish every frame; initialize with the prepared snapshot and deliver the newer one as a normal update.
+        const latestSource = untrack(data);
+        if (latestSource !== preparedSource) {
+          pendingRendererUpdate = Object.freeze({ data: latestSource, definitions: preparedDefinitions });
+          scheduleRendererUpdate();
+        }
       });
     });
   }
@@ -668,6 +718,14 @@ export function TimeSeries(props: TimeSeriesProps): JSX.Element {
 
   return <figure class={cn("sheen-time-series", props.class)} aria-busy={props.loading || rendererPending() || undefined} data-enhanced={enhanced() || undefined} data-zoomed={zoomed() || undefined}>
     <figcaption class="sheen-chart-caption"><span class="sheen-chart-title">{label()}</span><span id={summaryId} class="sheen-chart-summary">{summary()}</span></figcaption>
+    <div class="sheen-chart-toolbar">
+      <ChartLegend series={definitions()} layout={props.legend} visible={visibility.values()} onToggle={visibility.toggle} />
+      <div class="sheen-chart-zoom-controls" role="toolbar" aria-label={messages().zoomControls}>
+        <button type="button" aria-label={messages().zoomIn} title={messages().zoomIn} disabled={!zoomAvailable()} onClick={() => zoomBy(0.5)}><ZoomGlyph kind="in" /></button>
+        <button type="button" aria-label={messages().zoomOut} title={messages().zoomOut} disabled={!zoomed()} onClick={() => zoomBy(2)}><ZoomGlyph kind="out" /></button>
+        <button type="button" aria-label={messages().resetZoom} title={messages().resetZoom} disabled={!zoomed()} onClick={resetZoom}><ZoomGlyph kind="reset" /></button>
+      </div>
+    </div>
     <div ref={plotHost} class="sheen-time-series-plot" role="img" aria-label={label()} aria-describedby={`${summaryId} ${instructionId}`}
       aria-keyshortcuts={props.tooltip === false ? undefined : "ArrowLeft ArrowRight Home End Escape"} tabIndex={props.tooltip === false ? undefined : 0}
       onKeyDown={handlePlotKeyDown} onDblClick={event => { event.preventDefault(); resetZoom(); }} style={{ height: `${height()}px` }}>
@@ -688,16 +746,11 @@ export function TimeSeries(props: TimeSeriesProps): JSX.Element {
           <span ref={element => { tooltipValueElements.set(series().key, element); }} class="sheen-chart-tooltip-value" />
         </li>}</Index></ul>
       </div>
+      <div class="sheen-time-series-live" aria-hidden="true"><Index each={definitions()}>{series => <span ref={element => { liveElements.set(series().key, element); }} class="sheen-time-series-live-marker" data-color={series().color} hidden />}</Index></div>
       <div ref={keyboardStatus} class="sheen-chart-visually-hidden" aria-live="polite" />
       <span id={instructionId} class="sheen-chart-visually-hidden">{messages().keyboardInstructions}</span>
       <Show when={data().t.length === 0}><div class="sheen-chart-empty">{props.empty ?? theme.messages().empty}</div></Show>
     </div>
-    <div class="sheen-chart-zoom-controls" role="toolbar" aria-label={messages().zoomControls}>
-      <button type="button" disabled={!zoomAvailable()} onClick={() => zoomBy(0.5)}>{messages().zoomIn}</button>
-      <button type="button" disabled={!zoomed()} onClick={() => zoomBy(2)}>{messages().zoomOut}</button>
-      <button type="button" disabled={!zoomed()} onClick={resetZoom}>{messages().resetZoom}</button>
-    </div>
-    <ChartLegend series={definitions()} layout={props.legend} visible={visibility.values()} onToggle={visibility.toggle} />
     <ChartDataTable label={label()} summary={summary()} xLabel={xLabel()} series={definitions()} data={data()} x={props.x}
       {...(props.y === undefined ? {} : { y: props.y })}
       {...(props.table?.pageSize === undefined ? {} : { pageSize: props.table.pageSize })}

@@ -3,6 +3,7 @@ import { cp, mkdir, mkdtemp, realpath, rm, symlink } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
+import { gzipSync } from "node:zlib";
 import { build } from "vite";
 import type { Plugin } from "vite";
 import solid from "vite-plugin-solid";
@@ -80,7 +81,12 @@ try {
     plugins: [pluginModule.sheenIcons({ sets: ["radix", "phosphor"] }), solid()],
   }), /Unknown semantic icon/);
 
-  process.stdout.write(`Icon consumers passed: literal=${literal.code.length}B, static=${staticIcon.code.length}B, dynamic=${dynamic.code.length}B\n`);
+  const gzip = (code: string): number => gzipSync(code).byteLength;
+  const sizes = { literal: gzip(literal.code), static: gzip(staticIcon.code), dynamic: gzip(dynamic.code) };
+  assert.ok(sizes.literal < 1_500 && sizes.static < 1_500, "a single icon import must stay under 1,500 bytes gzip");
+  assert.ok(sizes.dynamic < 65_000, "DynamicIcon with the complete registry must stay under 65,000 bytes gzip");
+
+  process.stdout.write(`Icon consumers passed (gzip): literal=${sizes.literal}B, static=${sizes.static}B, dynamic=${sizes.dynamic}B\n`);
 } finally {
   process.chdir(originalWorkingDirectory);
   await rm(temporary, { recursive: true, force: true });

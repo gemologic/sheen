@@ -4,12 +4,7 @@
 @import "@gemologic/sheen-tokens/core.css";
 @import "@gemologic/sheen-tokens/preset.css";
 @import "@gemologic/sheen/styles.css";
-@import "@gemologic/sheen-code/styles.css";
-@import "@gemologic/sheen-date/styles.css";
 @import "@gemologic/sheen-icons/styles.css";
-@import "@gemologic/sheen-table/styles.css";
-@import "@gemologic/sheen-charts/styles.css";
-@import "@gemologic/sheen-patterns/admin/styles.css";
 
 * { box-sizing: border-box; }
 html, body { margin: 0; block-size: 100%; overflow: hidden; background: var(--sheen-color-bg); }
@@ -107,6 +102,7 @@ p { color: var(--sheen-color-fg-muted); margin-block-end: var(--sheen-space-bloc
 .loupe-component-categories > a:hover { color: var(--sheen-color-fg); border-color: var(--sheen-color-border-control); }
 .loupe-component-categories small { color: var(--sheen-color-fg-muted); font-variant-numeric: tabular-nums; }
 .loupe-component-sections { display: grid; gap: calc(2 * var(--sheen-space-section)); }
+.loupe-component-sections[hidden], .loupe-component-section[hidden], .loupe-component-card[hidden] { display: none; }
 .loupe-component-section { display: grid; gap: var(--sheen-space-block-lg); scroll-margin-block-start: 5rem; }
 .loupe-component-section > header { display: flex; align-items: baseline; justify-content: space-between; gap: var(--sheen-space-inline-md); padding-block-end: var(--sheen-space-block-sm); border-block-end: 1px solid var(--sheen-color-border); }
 .loupe-component-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: stretch; gap: var(--sheen-space-inline-md); }
@@ -351,11 +347,11 @@ p { color: var(--sheen-color-fg-muted); margin-block-end: var(--sheen-space-bloc
 .loupe-token-palettes { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: var(--sheen-space-gutter); }
 .loupe-token-palettes > section { display: grid; gap: var(--sheen-space-block-sm); padding: var(--sheen-space-inline-md); border: 1px solid var(--sheen-color-border); border-radius: var(--sheen-surface-radius); background: var(--sheen-color-bg-raised); }
 .loupe-token-palettes > section > div { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); min-block-size: 48px; overflow: hidden; border-radius: var(--sheen-control-radius); }
-.loupe-gallery-scenario { display: grid; grid-template-rows: auto minmax(0, 1fr); align-content: start; gap: var(--sheen-space-section); min-block-size: 100%; }
+.loupe-gallery-scenario { display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); align-content: start; gap: var(--sheen-space-section); min-block-size: 100%; }
 .loupe-gallery-scenario[data-inside-shell] { padding: var(--sheen-space-section); }
-.loupe-gallery-scenario-heading { display: flex; align-items: start; justify-content: space-between; gap: var(--sheen-space-gutter); }
+.loupe-gallery-scenario-heading { display: flex; flex-wrap: wrap; align-items: start; justify-content: space-between; gap: var(--sheen-space-gutter); min-inline-size: 0; }
 .loupe-gallery-scenario-heading p { margin-block-end: 0; }
-.loupe-gallery-scenario-controls { display: flex; align-items: end; gap: var(--sheen-space-inline-sm); }
+.loupe-gallery-scenario-controls { display: flex; flex-wrap: wrap; align-items: end; gap: var(--sheen-space-inline-sm); min-inline-size: 0; }
 .loupe-gallery-scenario-controls output { align-self: center; color: var(--sheen-color-fg-muted); font-variant-numeric: tabular-nums; }
 .loupe-gallery-scenario-loading { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-content: start; gap: var(--sheen-space-gutter); min-block-size: 24rem; }
 .loupe-gallery-scenario-content { min-block-size: 0; }

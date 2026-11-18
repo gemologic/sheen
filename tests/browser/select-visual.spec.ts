@@ -26,7 +26,7 @@ test("Select visual states and popup contrast in five configurations", async ({ 
       return [...popup.querySelectorAll(".sheen-select-option:not([data-disabled])")].map(option => {
         const style = getComputedStyle(option);
         return { text: color(style.color), fill: option.hasAttribute("data-highlighted") ? color(style.backgroundColor) : fill,
-          focus: option.hasAttribute("data-highlighted") ? color(style.outlineColor) : undefined };
+          focus: option.hasAttribute("data-highlighted") ? color(style.boxShadow.match(/rgba?\([^)]*\)/)?.[0] ?? "transparent") : undefined };
       });
     });
     expect(colors).toHaveLength(2);

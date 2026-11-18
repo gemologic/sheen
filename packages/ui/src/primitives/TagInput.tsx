@@ -260,7 +260,7 @@ export function TagInput(props: TagInputProps): JSX.Element {
         onCleanup(() => removeButtons.delete(value));
         return <li class="sheen-tag-input-value" data-tag-value={value}>
           <span class="sheen-tag-input-value-label">{value}</span>
-          <Button ref={element => removeButtons.set(value, element)} class="sheen-tag-input-remove" size="xs" disabled={local.disabled} aria-disabled={local.readOnly || undefined} aria-label={`${theme.messages().remove} ${value}`}
+          <Button variant="ghost" ref={element => removeButtons.set(value, element)} class="sheen-tag-input-remove" size="xs" disabled={local.disabled} aria-disabled={local.readOnly || undefined} aria-label={`${theme.messages().remove} ${value}`}
             aria-describedby={`${generatedId}-reorder`} onKeyDown={event => onTagKeyDown(event, value)} onClick={() => remove(value, true)}>{theme.messages().remove}</Button>
         </li>;
       }}</For></ul>

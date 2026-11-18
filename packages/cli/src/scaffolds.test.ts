@@ -7,7 +7,7 @@ import { Project } from "ts-morph";
 import { afterEach, describe, expect, it } from "vitest";
 import { runCli } from "./cli.js";
 import { applyPlan } from "./files.js";
-import { componentScaffold, createAppScaffold, themeScaffold } from "./scaffolds.js";
+import { accentScaffold, componentScaffold, createAppScaffold, themeScaffold } from "./scaffolds.js";
 import type { AppScaffoldAssets } from "./scaffolds.js";
 
 const temporary: string[] = [];
@@ -130,13 +130,14 @@ describe("scaffold filesystem contract", () => {
   it("rejects invalid names and paths outside the selected root", async () => {
     const root = await temporaryRoot();
     expect(() => themeScaffold("Midnight")).toThrow("lower kebab-case");
+    expect(() => accentScaffold("Brand")).toThrow("lower kebab-case");
     expect(() => componentScaffold("bad-name")).toThrow("PascalCase");
     await expect(applyPlan([{ path: "../outside", content: "nope" }], { root })).rejects.toThrow("escapes its root");
   });
 });
 
 describe("scaffold generated output", () => {
-  it("typechecks the component and theme templates against the real workspace contracts", () => {
+  it("typechecks the component, theme, and accent templates against the real workspace contracts", () => {
     const project = new Project({
       tsConfigFilePath: new URL("tsconfig.json", workspace).pathname,
       skipAddingFilesFromTsConfig: true,
@@ -145,6 +146,7 @@ describe("scaffold generated output", () => {
     const sources = [
       ...componentScaffold("CliContractProbe").map(file => project.createSourceFile(new URL(file.path, workspace).pathname, file.content, { overwrite: true })),
       ...themeScaffold("cli-contract-probe").map(file => project.createSourceFile(new URL(`apps/loupe/${file.path}`, workspace).pathname, file.content, { overwrite: true })),
+      ...accentScaffold("cli-contract-probe").map(file => project.createSourceFile(new URL(`apps/loupe/${file.path}`, workspace).pathname, file.content, { overwrite: true })),
     ];
     const generatedPaths = new Set(sources.map(source => source.getFilePath()));
     const diagnostics = project.getPreEmitDiagnostics().filter(diagnostic => {

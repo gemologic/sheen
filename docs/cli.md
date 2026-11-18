@@ -1,6 +1,6 @@
 # Sheen CLI
 
-`@gemologic/sheen-cli` installs the `sheen` executable. The M5 implementation exposes app/theme/component scaffolds, manifest forwarding, vendored-skill synchronization, and doctor.
+`@gemologic/sheen-cli` installs the `sheen` executable. The CLI exposes app/theme/accent/component scaffolds, manifest forwarding, vendored-skill synchronization, and doctor.
 
 ## Application scaffold
 
@@ -10,7 +10,7 @@ sheen new app my-application
 
 The command creates one guarded `my-application/` tree. It uses SolidStart 2's `vite.config.ts` entry, file routes, Solid Router adapter, fixed `AppShell`, scoped `ThemeProvider`, shortcut provider, toaster mount, recommended Sheen lint configuration, a pinned Nix development environment, and a starter route. The blocking theme script and keyboard hydration script are emitted ahead of interactive markup. Client hydration is the default, fresh installs are dark, and the starter imports all seven themes and twelve independent accents with visible theme, accent, and mode controls.
 
-The scaffold vendors the generated Sheen skill/context and configures `sheenRuntime()` from `@gemologic/sheen/vite`. Sheen owns its patched overlay backend and DOM renderer; the app retains ordinary `solid-js@1.9.15` as its shared core. No consumer patches or Kobalte dependency are generated. The Sheen package ranges use the generating CLI's version, including prereleases. Keep the runtime plugin enabled and requalify any replacement with the [hydration](hydration.md) and [owned runtime](dependency-patches.md) regressions.
+The scaffold vendors the generated Sheen skill/context and configures `sheenRuntime()` from `@gemologic/sheen/vite`. Sheen owns its patched overlay backend and DOM renderer; the app retains ordinary `solid-js@1.9.19` as its shared core. No consumer patches or Kobalte dependency are generated. The Sheen package ranges use the generating CLI's version, including prereleases. Keep the runtime plugin enabled and requalify any replacement with the [hydration](hydration.md) and [owned runtime](dependency-patches.md) regressions.
 
 The generated ESLint config requires a description on every disable directive. `sheen doctor` separately scans source files for `sheen/*` disable directives, reports exact per-file counts, and fails above ten. This is static text inspection: it does not evaluate generated sources, custom ESLint processors, configuration overrides, or runtime behavior, so the lint run remains the correctness gate.
 
@@ -22,10 +22,11 @@ Run scaffolds from the repository root, or pass `--root <path>` explicitly:
 
 ```sh
 sheen new theme midnight-blue
+sheen new accent acme
 sheen new component AccountCard
 ```
 
-Themes are written to `src/themes/<name>.ts`. They derive both modes from the validated Obsidian theme, retain dark as the default, and pass the resulting definition through `defineTheme`. Component scaffolds write the component, metadata, demo, and SSR test together under `packages/ui/src/primitives/`.
+Themes are written to `src/themes/<name>.ts`. They derive both modes from the validated Obsidian theme, retain dark as the default, and pass the resulting definition through `defineTheme`. Accents are written to `src/accents/<name>.ts`: a seed `defineAccent` validated against the bundled themes and the matching `buildAccent` CSS string; replace the placeholder seed with the brand color and add any private themes to the validation list (see [custom brand accents](private-themes.md#custom-brand-accents)). Component scaffolds write the component, metadata, demo, and SSR test together under `packages/ui/src/primitives/`.
 
 Names and destinations are validated before any write. If one planned file already exists, the entire live operation refuses. `--dry-run` prints unified replacement previews and writes nothing. `--force` computes and prints every diff before the first overwrite; it does not grant access outside the selected root.
 

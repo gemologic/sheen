@@ -178,13 +178,26 @@ export function generateCompactContext(manifest: SheenManifest): string {
     "# Sheen component index",
     "",
     "Generated from sheen.manifest.json. Import public @gemologic/sheen entries. Link changes URLs; Button acts. Omit absent optional props instead of passing undefined. Use semantic tokens, explicit locale, complete SSR, and retained refresh content.",
-    "Setup: solid-js@1.9.15 is the shared app core; add sheenRuntime() from @gemologic/sheen/vite to Vite/SolidStart. Sheen owns the browser renderer and overlay backend; SSR retains the peer renderer/request storage. Do not add consumer patches or remove the plugin.",
+    "Setup: solid-js@1.9.19 is the shared app core; add sheenRuntime() from @gemologic/sheen/vite to Vite/SolidStart. Sheen owns the browser renderer and overlay backend; SSR retains the peer renderer/request storage. Do not add consumer patches or remove the plugin.",
     "Aliases: s=string, b=boolean, n=number, v=void, ro=readonly, node=JSX.Element, P=Promise, Abort=AbortSignal, size=\"sm\"|\"md\"|\"lg\", mute=\"muted\"|\"inherit\". Native props, defaults, and referenced examples are in the full context.",
   ];
   const canonicalExamples = new Map<string, string>();
   for (const [packageName, components] of groups(manifest)) {
     lines.push("", `## ${packageName}`);
+    // Static icon components share one signature; the Icon line already lists every semantic name.
+    const iconSignatures = new Map<string, ManifestComponent[]>();
     for (const component of components) {
+      if (component.package !== "@gemologic/sheen-icons" || !component.name.endsWith("Icon")) continue;
+      const key = signature(component);
+      iconSignatures.set(key, [...(iconSignatures.get(key) ?? []), component]);
+    }
+    const [shared, staticIcons] = [...iconSignatures].sort((left, right) => right[1].length - left[1].length)[0] ?? ["", []];
+    const collapsed = staticIcons.length > 1;
+    if (collapsed) {
+      lines.push(`- <Name>Icon(${shared}): One statically importable component per Icon name, PascalCase plus Icon (add → AddIcon, chevronDown → ChevronDownIcon), ${staticIcons.length} in total; <AddIcon decorative={false} label="Add"/>`);
+    }
+    for (const component of components) {
+      if (collapsed && staticIcons.includes(component)) continue;
       const example = component.examples[0];
       if (!example) throw new Error(`${component.name} requires a canonical example`);
       const compact = compactExample(example);
@@ -199,7 +212,7 @@ export function generateCompactContext(manifest: SheenManifest): string {
 }
 
 export function generateFullContext(manifest: SheenManifest): string {
-  const lines = ["# Sheen full component context", "", "Generated from sheen.manifest.json. Do not edit by hand.", "", "Install solid-js@1.9.15 as the shared application core and configure sheenRuntime() from @gemologic/sheen/vite in Vite/SolidStart. Sheen ships its patched browser renderer and overlay backend; SSR retains the peer renderer and matching request storage. Consumers need no dependency patches or Kobalte dependency. Keep the setup plugin enabled. Other bundlers require an explicitly qualified adapter."];
+  const lines = ["# Sheen full component context", "", "Generated from sheen.manifest.json. Do not edit by hand.", "", "Install solid-js@1.9.19 as the shared application core and configure sheenRuntime() from @gemologic/sheen/vite in Vite/SolidStart. Sheen ships its patched browser renderer and overlay backend; SSR retains the peer renderer and matching request storage. Consumers need no dependency patches or Kobalte dependency. Keep the setup plugin enabled. Other bundlers require an explicitly qualified adapter."];
   for (const [packageName, components] of groups(manifest)) {
     lines.push("", `## ${packageName}`);
     for (const component of components) {
@@ -240,7 +253,7 @@ description: Build SolidJS interfaces with the Sheen design system, its public c
 Read the bundled \`llms.txt\` before choosing components or props.
 
 - Import application components only from public \`@gemologic/sheen*\` entries. Never import Kobalte, Corvu, TanStack, uPlot, or d3 directly in consuming apps.
-- Keep \`solid-js@1.9.15\` as the shared app core and \`sheenRuntime()\` from \`@gemologic/sheen/vite\` in Vite/SolidStart. Sheen ships the browser renderer and overlay backend; SSR keeps the peer renderer/request-storage pair. Do not add consumer patches.
+- Keep \`solid-js@1.9.19\` as the shared app core and \`sheenRuntime()\` from \`@gemologic/sheen/vite\` in Vite/SolidStart. Sheen ships the browser renderer and overlay backend; SSR keeps the peer renderer/request-storage pair. Do not add consumer patches.
 - Use \`Link\` when an interaction changes the URL and \`Button\` for actions.
 - Use semantic \`--sheen-color-*\`, spacing, type, radius, and motion tokens. Do not use tier-one ramps in components.
 - Keep Solid props reactive. Use props directly or \`splitProps\`; never destructure component props.

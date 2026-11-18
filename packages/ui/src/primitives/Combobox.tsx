@@ -1,4 +1,5 @@
 import * as Primitive from "#sheen-kobalte/combobox";
+import { Glyph } from "./Glyph.tsx";
 import { For, Show, createEffect, createMemo, createSignal, createUniqueId, onCleanup, onMount, splitProps } from "solid-js";
 import type { Accessor, JSX } from "solid-js";
 import { useTheme } from "../theme/ThemeProvider.tsx";
@@ -143,7 +144,7 @@ function OptionItem(props: Primitive.ComboboxRootItemComponentProps<ComboboxOpti
   }}>
     <Primitive.ItemLabel>{props.item.rawValue.label}</Primitive.ItemLabel>
     <Show when={props.item.rawValue.description}>{description => <Primitive.ItemDescription class="sheen-select-option-description">{description()}</Primitive.ItemDescription>}</Show>
-    <Primitive.ItemIndicator class="sheen-select-indicator" aria-hidden="true">✓</Primitive.ItemIndicator>
+    <Primitive.ItemIndicator class="sheen-select-indicator" aria-hidden="true"><Glyph name="check" /></Primitive.ItemIndicator>
   </Primitive.Item>;
 }
 

@@ -5,6 +5,7 @@ import { AppShell, SettingsLayout } from "@gemologic/sheen-patterns";
 import type { SettingsLayoutSection } from "@gemologic/sheen-patterns";
 import { useSolidRouterAdapter } from "@gemologic/sheen-patterns/solid-router";
 import { GalleryScenario } from "../../gallery-scenario.tsx";
+import "@gemologic/sheen-patterns/styles.css";
 
 const timezones: readonly SelectOption[] = [{ value: "UTC", label: "UTC" }, { value: "America/New_York", label: "New York" }, { value: "Asia/Tokyo", label: "Tokyo" }];
 

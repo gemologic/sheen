@@ -14,6 +14,7 @@ export default defineMeta<ThemeProviderProps>({
     direction: { description: "Explicit writing direction.", default: "ltr", control: { kind: "select", values: ["ltr", "rtl"] } },
     locale: { description: "Explicit server/client Intl locale.", default: "en-US", control: { kind: "text" } },
     themes: { description: "Registered themes. Load their CSS and configure the same prepaint catalog." },
+    accents: { description: "Custom accent IDs built with defineAccent/buildAccent. Load their CSS and pass the same IDs to createThemeScript({ accents })." },
     storageKey: { description: "Root preference storage key.", default: "sheen" },
     hydration: { description: "Client prepaint handoff or cookie-authoritative SSR.", default: "client", control: { kind: "select", values: ["client", "cookie"] } },
     persist: { description: "Cookie-mode app callback, awaited before accepting preference changes." },

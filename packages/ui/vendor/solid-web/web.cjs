@@ -1,4 +1,4 @@
-// Vendored and modified by Gemologic Sheen from solid-js@1.9.15; see package THIRD_PARTY_NOTICES.md.
+// Vendored and modified by Gemologic Sheen from solid-js@1.9.19; see package THIRD_PARTY_NOTICES.md.
 'use strict';
 
 var solidJs = require('solid-js');
@@ -196,7 +196,7 @@ function render(code, element, init, options = {}) {
   let disposer;
   solidJs.createRoot(dispose => {
     disposer = dispose;
-    element === document ? code() : insert(element, code(), element.firstChild ? null : undefined, init);
+    element === document ? code() : insert(element, code(), !init && element.firstChild ? null : undefined, init);
   }, options.owner);
   return () => {
     disposer();
@@ -509,24 +509,28 @@ function eventHandler(e) {
     }
   });
   if (solidJs.sharedConfig.registry && !solidJs.sharedConfig.done && !solidJs.sharedConfig.count) solidJs.sharedConfig.done = _$HY.done = true;
-  const path = e.composedPath && e.composedPath();
-  if (path && path.length) {
-    retarget(path[0]);
-    for (let i = 0; i < path.length - 2; i++) {
-      node = path[i];
-      if (!handleNode()) break;
-      if (node._$host) {
-        node = node._$host;
-        walkUpTree();
-        break;
-      }
-      if (node.parentNode === oriCurrentTarget) {
-        break;
+  try {
+    const path = e.composedPath && e.composedPath();
+    if (path && path.length) {
+      retarget(path[0]);
+      for (let i = 0; i < path.length - 2; i++) {
+        node = path[i];
+        if (!handleNode()) break;
+        if (node._$host) {
+          node = node._$host;
+          walkUpTree();
+          break;
+        }
+        if (node.parentNode === oriCurrentTarget) {
+          break;
+        }
       }
     }
+    else walkUpTree();
+    retarget(oriTarget);
+  } finally {
+    e = node = null;
   }
-  else walkUpTree();
-  retarget(oriTarget);
 }
 function insertExpression(parent, value, current, marker, unwrapArray) {
   const hydrating = isHydrating(parent);

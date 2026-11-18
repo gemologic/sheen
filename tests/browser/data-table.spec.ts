@@ -102,6 +102,23 @@ test("continuous client refresh preserves the first visible row anchor", async (
   await expect(anchorRow).toBeFocused();
 });
 
+test("double-clicking a column divider shrinks the column to its widest content", async ({ page }) => {
+  await page.goto("/data-table");
+  await expect(page.locator('[data-sheen-portal="root"]')).toHaveAttribute("data-sheen-ready", "true");
+  const table = page.getByRole("region", { name: "Column interaction example" }).getByRole("table", { name: "Interactive columns" });
+  const resize = table.locator('th[data-column="name"]').getByRole("separator", { name: "Resize Name" });
+  const overflowing = () => table.locator('[data-column="name"]').evaluateAll(cells => cells.filter(cell => cell.scrollWidth > cell.clientWidth + 1).length);
+  const width = async () => Number(await resize.getAttribute("aria-valuenow"));
+
+  await resize.focus();
+  for (let index = 0; index < 6; index++) await resize.press("Shift+ArrowRight");
+  const wide = await width();
+  await resize.dblclick();
+  const fitted = await width();
+  expect(fitted).toBeLessThan(wide);
+  expect(await overflowing()).toBe(0);
+});
+
 test("column resize stays on the CSS path during pointer movement and commits once", async ({ page }) => {
   await page.goto("/data-table");
   await expect(page.locator('[data-sheen-portal="root"]')).toHaveAttribute("data-sheen-ready", "true");
@@ -159,8 +176,10 @@ test("multi-sort keeps one primary aria-sort and exposes visible ordered indicat
   await expect(amount).not.toHaveAttribute("aria-sort");
   await expect(name).toHaveAttribute("data-sort-priority", "1");
   await expect(amount).toHaveAttribute("data-sort-priority", "2");
-  await expect(name.locator(".sheen-data-table-sort-indicator")).toHaveText("↑1");
-  await expect(amount.locator(".sheen-data-table-sort-indicator")).toHaveText("↑2");
+  await expect(name.locator(".sheen-data-table-sort-indicator")).toHaveText("1");
+  await expect(name.locator('.sheen-data-table-sort-direction [data-glyph="chevron-up"]')).toHaveCount(1);
+  await expect(amount.locator(".sheen-data-table-sort-indicator")).toHaveText("2");
+  await expect(amount.locator('.sheen-data-table-sort-direction [data-glyph="chevron-up"]')).toHaveCount(1);
   const nameDescription = await name.getByRole("button", { name: "Name", exact: true }).getAttribute("aria-describedby");
   const amountDescription = await amount.getByRole("button", { name: "Amount", exact: true }).getAttribute("aria-describedby");
   if (!nameDescription || !amountDescription) throw new Error("Expected sort descriptions");
@@ -506,6 +525,33 @@ test("row keyboard navigation realizes offscreen targets before focusing and act
   await expect(section.getByLabel("Activated client row")).toHaveText("client-299");
   await last.press("Home");
   await expect(section.locator('[data-row-id="client-0"]')).toBeFocused();
+});
+
+test("row keyboard indexes stay correct after a prepend and across grouped rows", async ({ page }) => {
+  await page.goto("/data-table");
+  await expect(page.locator('[data-sheen-portal="root"]')).toHaveAttribute("data-sheen-ready", "true");
+  const continuous = page.getByRole("region", { name: "Continuous client example" });
+  await continuous.locator('[data-row-id="client-0"]').focus();
+  await page.keyboard.press("End");
+  const last = continuous.locator('[data-row-id="client-299"]');
+  await expect(last).toBeFocused();
+  await continuous.getByRole("button", { name: "Prepend continuous row" }).click();
+  await expect(last).toHaveAttribute("data-index", "300");
+  await expect(last).toHaveAttribute("tabindex", "0");
+  await last.focus();
+  await page.keyboard.press("ArrowUp");
+  await expect(continuous.locator('[data-row-id="client-298"]')).toBeFocused();
+  await expect(continuous.locator('[data-row-id="client-298"]')).toHaveAttribute("data-index", "299");
+
+  const grouped = page.getByRole("region", { name: "Grouped client example" }).getByRole("treegrid", { name: "Grouped client rows" });
+  await grouped.locator('tr[data-group-id*="Alpha"]').focus();
+  await page.keyboard.press("ArrowDown");
+  await expect(grouped.locator('[data-row-id="group-a"]')).toBeFocused();
+  await page.keyboard.press("End");
+  await expect(grouped.locator('[data-row-id="group-d"]')).toBeFocused();
+  await page.keyboard.press("ArrowUp");
+  await expect(grouped.locator("tr[data-group-id]").last()).toBeFocused();
+  await expect(grouped.locator("tr[data-group-id]").last()).toContainText("Unassigned");
 });
 
 test("DataTable distinguishes page selection from immutable all-matching selection across pages", async ({ page }) => {

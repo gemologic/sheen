@@ -4,6 +4,8 @@ import type { SelectOption } from "@gemologic/sheen";
 import { Sparkline, StatGroup } from "@gemologic/sheen-charts";
 import { ErrorState } from "@gemologic/sheen-patterns";
 import { useSolidRouterAdapter } from "@gemologic/sheen-patterns/solid-router";
+import "@gemologic/sheen-charts/styles.css";
+import "@gemologic/sheen-patterns/styles.css";
 
 type DashboardState = "ready" | "empty" | "loading" | "error" | "permission";
 

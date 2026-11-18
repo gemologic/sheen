@@ -81,6 +81,24 @@ function parseChord(keys: string, platform: ShortcutRegistryOptions["platform"])
   return chord;
 }
 
+const keyLabels = new Map([["escape", "Esc"], [" ", "Space"], ["enter", "Enter"]]);
+
+function chordLabel(chord: Chord, platform: ShortcutRegistryOptions["platform"]): string {
+  return [chord.ctrl ? "Ctrl" : "", chord.alt ? platform === "mac" ? "⌥" : "Alt" : "", chord.shift ? platform === "mac" ? "⇧" : "Shift" : "", chord.meta ? platform === "mac" ? "⌘" : "Meta" : "", keyLabels.get(chord.key) ?? chord.key.toUpperCase()].filter(Boolean).join("+");
+}
+
+/**
+ * Display text for a shortcut definition such as `mod+k` or `g i`, using the platform's
+ * modifier names. Text that is not a shortcut definition is returned unchanged.
+ */
+export function formatShortcut(keys: string, platform: ShortcutRegistryOptions["platform"]): string {
+  try {
+    return keys.trim().replace(/\s*\+\s*/g, "+").split(/\s+/).map(chord => chordLabel(parseChord(chord, platform), platform)).join(" → ");
+  } catch {
+    return keys;
+  }
+}
+
 /** Pure registry core. The browser owner supplies active scopes, input context, and event prevention. */
 export function createShortcutRegistry(options: ShortcutRegistryOptions) {
   const scopes = new Map<string, Map<string, ShortcutEntry[]>>();
@@ -132,8 +150,7 @@ export function createShortcutRegistry(options: ShortcutRegistryOptions) {
         return chord;
       });
       const chords = parsed.map(identity);
-      const keyLabels = new Map([["escape", "Esc"], [" ", "Space"], ["enter", "Enter"]]);
-      const displayKeys = parsed.map(chord => [chord.ctrl ? "Ctrl" : "", chord.alt ? options.platform === "mac" ? "⌥" : "Alt" : "", chord.shift ? options.platform === "mac" ? "⇧" : "Shift" : "", chord.meta ? options.platform === "mac" ? "⌘" : "Meta" : "", keyLabels.get(chord.key) ?? chord.key.toUpperCase()].filter(Boolean).join("+")).join(" → ");
+      const displayKeys = parsed.map(chord => chordLabel(chord, options.platform)).join(" → ");
       const characterOnly = parsed.every(chord => !chord.ctrl && !chord.meta && !chord.alt && Array.from(chord.key).length === 1);
       const key = JSON.stringify(chords);
       const scope = scopes.get(definition.scope) ?? new Map<string, ShortcutEntry[]>();

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { ThemeProvider } from "../theme/ThemeProvider.tsx";
 import { renderToString } from "solid-js/web";
 import { Surface, Card } from "./Surface.tsx";
 import { Alert, Callout } from "./Notice.tsx";
@@ -24,8 +25,8 @@ describe("surface and notice SSR", () => {
     expect(html).not.toContain("data-elevated");
   });
   it("distinguishes urgent alerts from static callouts without focus side effects", () => {
-    const alert = renderToString(() => <Alert heading="Save failed">Draft retained</Alert>);
-    const note = renderToString(() => <Callout heading="Read this">Helpful details</Callout>);
+    const alert = renderToString(() => <ThemeProvider><Alert heading="Save failed">Draft retained</Alert></ThemeProvider>);
+    const note = renderToString(() => <ThemeProvider><Callout heading="Read this">Helpful details</Callout></ThemeProvider>);
     expect(alert).toContain('role="alert"');
     expect(alert).toContain('aria-atomic="true"');
     expect(alert).toContain('data-tone="danger"');

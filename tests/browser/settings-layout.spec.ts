@@ -123,3 +123,21 @@ test("settings layout has a bounded dark desktop baseline", async ({ page }) => 
   await ready(page);
   await expect(page.locator(".sheen-settings-layout")).toHaveScreenshot("settings-layout-dark.png", { animations: "disabled" });
 });
+
+test("the labelled section index follows reading position and yields to navigation clicks", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 420 });
+  await page.goto("/settings-layout");
+  await ready(page);
+  const index = page.getByRole("navigation", { name: "Settings sections", exact: true });
+  await expect(index.getByText("Settings sections", { exact: true })).toBeVisible();
+  const profile = index.getByRole("button", { name: "Profile", exact: true });
+  const appearance = index.getByRole("button", { name: "Appearance", exact: true });
+  await expect(profile).toHaveAttribute("aria-current", "location");
+  await page.locator('[data-section-id="appearance"]').hover();
+  await page.mouse.wheel(0, 2000);
+  await expect(appearance).toHaveAttribute("aria-current", "location");
+  await expect(profile).not.toHaveAttribute("aria-current", "location");
+  await profile.click();
+  await expect(profile).toHaveAttribute("aria-current", "location");
+  await expect(page.locator('[data-section-id="profile"]')).toBeInViewport();
+});

@@ -30,3 +30,6 @@ export const bundledThemeMetadata: readonly ThemeMetadata[] = Object.freeze([
 export function iconSetForTheme(themeId: string, themes: readonly ThemeMetadata[] = bundledThemeMetadata): IconSetName {
   return themes.find(theme => theme.id === themeId)?.iconSet ?? "radix";
 }
+
+export { breakpointNames, breakpointQuery, breakpoints } from "./breakpoints.ts";
+export type { BreakpointName } from "./breakpoints.ts";

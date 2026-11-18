@@ -2,6 +2,7 @@ import { Title } from "@solidjs/meta";
 import { Button, Input, Link } from "@gemologic/sheen";
 import { BrandSplitAuthLayout } from "@gemologic/sheen-patterns/auth";
 import { createSignal } from "solid-js";
+import "@gemologic/sheen-patterns/styles.css";
 
 function ProductContext() {
   return <div class="loupe-auth-story">

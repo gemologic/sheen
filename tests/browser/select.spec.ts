@@ -91,14 +91,14 @@ test("Select supports typeahead, Home/End, repeated selection, and transient mot
   const trigger = page.locator(".sheen-select-trigger").first();
   await trigger.focus();
   await page.keyboard.press("m");
-  await expect(trigger).toHaveText("Manual▾");
+  await expect(trigger).toHaveText("Manual");
   await page.keyboard.press("ArrowUp");
   await expect(page.getByRole("option", { name: "Manual", exact: true })).toBeFocused();
   await page.keyboard.press("Home");
   await expect(page.getByRole("option", { name: "Live", exact: true })).toBeFocused();
   await page.keyboard.press("End");
   await expect(page.getByRole("option", { name: "Manual", exact: true })).toBeFocused();
-  await expect(page.locator(".sheen-select-content")).toHaveCSS("animation-name", "sheen-select-enter");
+  await expect(page.locator(".sheen-select-content")).toHaveCSS("animation-name", "sheen-layer-enter");
   await page.keyboard.press("Enter");
   await expect(page.getByRole("listbox")).toHaveCount(0);
   await expect(trigger).toBeFocused();

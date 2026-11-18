@@ -24,7 +24,7 @@ export interface TabsProps extends Omit<JSX.HTMLAttributes<HTMLDivElement>, "chi
 function Trigger(props: { value: string; id: string; label: string; disabled: boolean; selected: boolean }): JSX.Element {
   const context = Primitive.useTabsContext();
   const tabIndex = () => props.disabled ? -1 : (context.listState().selectionManager().focusedKey() ?? (props.selected ? props.value : undefined)) === props.value ? 0 : -1;
-  return <Primitive.Trigger as={Button} value={props.value} id={`${props.id}-tab`} aria-controls={`${props.id}-panel`} disabled={props.disabled} tabIndex={tabIndex()} class="sheen-tabs-trigger">{props.label}</Primitive.Trigger>;
+  return <Primitive.Trigger as={Button} variant="ghost" value={props.value} id={`${props.id}-tab`} aria-controls={`${props.id}-panel`} disabled={props.disabled} tabIndex={tabIndex()} class="sheen-tabs-trigger">{props.label}</Primitive.Trigger>;
 }
 
 export function Tabs(props: TabsProps): JSX.Element {
@@ -90,6 +90,7 @@ export function Tabs(props: TabsProps): JSX.Element {
   return <Primitive.Root {...others} ref={element => { root = element; if (typeof local.ref === "function") local.ref(element); }} tabIndex={others.tabIndex ?? -1} id={id()} class={cn("sheen-tabs", local.class)} value={encodeURIComponent(selected() ?? "")} onChange={change} orientation={local.orientation ?? "horizontal"} activationMode={local.activationMode ?? "automatic"}>
     <Primitive.List aria-label={local.label} class="sheen-tabs-list">
       <For each={[...entries().keys()]}>{value => <Trigger value={encodeURIComponent(value)} id={`${id()}-${encodeURIComponent(value)}`} label={entries().get(value)?.label ?? ""} disabled={entries().get(value)?.disabled ?? false} selected={selected() === value} />}</For>
+      <Primitive.Indicator class="sheen-tabs-indicator" aria-hidden="true" />
     </Primitive.List>
     <For each={[...entries().keys()]}>{value => <div role="tabpanel" id={`${id()}-${encodeURIComponent(value)}-panel`} aria-labelledby={`${id()}-${encodeURIComponent(value)}-tab`} hidden={selected() !== value} inert={selected() !== value} tabIndex={0} class="sheen-tabs-panel">{local.children(value)}</div>}</For>
   </Primitive.Root>;

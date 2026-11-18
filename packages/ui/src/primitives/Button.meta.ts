@@ -4,10 +4,10 @@ import type { ButtonProps } from "./Button.tsx";
 export default defineMeta<ButtonProps>({
   name: "Button", package: "@gemologic/sheen", category: "primitives", summary: "Triggers an action. Use a link for navigation.",
   props: {
-    variant: { description: "Visual treatment; solid accent actions should be rare.", default: "ghost", control: { kind: "select", values: ["solid", "soft", "outline", "ghost", "link"] } },
+    variant: { description: "Visual treatment; solid accent actions should be rare.", default: "outline", control: { kind: "select", values: ["solid", "soft", "outline", "ghost", "link"] } },
     tone: { description: "Semantic color role, independent of visual treatment.", default: "neutral", control: { kind: "select", values: ["neutral", "accent", "danger", "success"] } },
     size: { description: "Density-aware control size.", default: "md", control: { kind: "select", values: ["xs", "sm", "md", "lg"] } },
-    loading: { description: "Marks pending work and disables activation.", default: false, control: { kind: "boolean" } },
+    loading: { description: "Marks pending work and suppresses activation while keeping the button focusable.", default: false, control: { kind: "boolean" } },
     shortcut: { description: "Typed shortcut registration whose action invokes this native button; omitted controls remain ordinary buttons." },
   },
   tokens: ["--sheen-button-radius", "--sheen-control-h-md", "--sheen-color-accent"],

@@ -25,10 +25,28 @@ export default defineMeta<CalloutProps>({
       "control": {
         "kind": "text"
       }
+    },
+    "icon": {
+      "description": "Leading icon; defaults to the tone's status glyph. Pass false to remove it."
+    },
+    "actions": {
+      "description": "Follow-up Buttons or Links shown after the message."
+    },
+    "onDismiss": {
+      "description": "Shows a dismiss button; the owner removes the notice in response."
+    },
+    "dismissLabel": {
+      "description": "Accessible name for the dismiss button.",
+      "default": "Dismiss",
+      "control": {
+        "kind": "text"
+      }
     }
   },
   "tokens": [
     "--sheen-color-info-subtle",
+    "--sheen-color-bg-raised",
+    "--sheen-color-border",
     "--sheen-color-info-fg",
     "--sheen-color-focus-ring-offset"
   ],

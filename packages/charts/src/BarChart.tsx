@@ -1,19 +1,29 @@
-import { For, Index, Show, createEffect, createMemo, createSignal, createUniqueId } from "solid-js";
+import { Index, Show, createEffect, createMemo, createUniqueId } from "solid-js";
 import type { JSX } from "solid-js";
-import {
-  Pagination, Table, TableBody, TableCaption, TableCell, TableHead, TableHeaderCell, TableRow, cn, useTheme,
-} from "@gemologic/sheen";
+import { cn, useTheme } from "@gemologic/sheen";
 import { scaleBand, scaleLinear } from "d3-scale";
 import { createChartTableFormatters } from "./format.ts";
 import { resolveChartMessages } from "./messages.ts";
 import { defineSeries, resolveChartSeriesEncoding, validateCategorical } from "./chart-types.ts";
-import type { BarChartProps, ChartCategoricalData, ChartColorToken, ChartSeries, ChartSeriesEncoding, ChartValueAxis } from "./chart-types.ts";
+import type { BarChartProps, ChartCategoricalData, ChartColorToken, ChartSeries, ChartSeriesEncoding } from "./chart-types.ts";
 import { createResponsiveSvgWidth } from "./responsive-svg.ts";
 import { ChartLegend, createSeriesVisibility } from "./ChartLegend.tsx";
+import { ChartRecordTable } from "./ChartRecordTable.tsx";
 
 const maximumMarks = 2_000;
-const defaultPageSize = 50;
-const maximumPageSize = 200;
+
+/** Presentation that differs between BarChart and the bar-rendered Histogram. */
+export interface BarChartVariant {
+  readonly component: string;
+  readonly class: string;
+  readonly padding: number;
+}
+
+type OptionalBarChartKey = "y" | "legend" | "tooltip" | "empty" | "loading" | "table" | "class" | "layout" | "arrangement";
+/** BarChart props as forwarded by wrappers, whose optional getters may report an absent value as undefined. */
+export type BarChartInput = Omit<BarChartProps, OptionalBarChartKey> & { readonly [Key in OptionalBarChartKey]?: BarChartProps[Key] | undefined };
+
+const barChartVariant: BarChartVariant = Object.freeze({ component: "BarChart", class: "sheen-bar-chart", padding: 0.18 });
 
 interface BarMark {
   readonly key: string;
@@ -56,8 +66,8 @@ interface BarModel {
   readonly layout: "vertical" | "horizontal";
 }
 
-function requiredText(value: string, name: string): string {
-  if (typeof value !== "string" || !value.trim()) throw new Error(`BarChart ${name} must be nonempty`);
+function requiredText(value: string, component: string, name: string): string {
+  if (typeof value !== "string" || !value.trim()) throw new Error(`${component} ${name} must be nonempty`);
   return value;
 }
 
@@ -67,7 +77,7 @@ function truncateLabel(value: string): string {
 
 function bandPosition(scale: ReturnType<typeof scaleBand<string>>, value: string): number {
   const position = scale(value);
-  if (position === undefined) throw new Error(`BarChart could not position category ${value}`);
+  if (position === undefined) throw new Error(`Bar chart could not position category ${value}`);
   return position;
 }
 
@@ -97,15 +107,15 @@ function extent(data: ChartCategoricalData, definitions: readonly ChartSeries[],
   return [minimum, maximum];
 }
 
-function model(props: BarChartProps, locale: string, chartWidth: number, visibleState: readonly boolean[]): BarModel {
-  requiredText(props.label, "label");
-  requiredText(props.summary, "summary");
-  requiredText(props.categoryLabel, "categoryLabel");
-  requiredText(props.valueLabel, "valueLabel");
-  if (!Number.isFinite(props.height) || props.height < 160) throw new Error("BarChart height must be a finite number of at least 160");
+function model(props: BarChartInput, variant: BarChartVariant, locale: string, chartWidth: number, visibleState: readonly boolean[]): BarModel {
+  requiredText(props.label, variant.component, "label");
+  requiredText(props.summary, variant.component, "summary");
+  requiredText(props.categoryLabel, variant.component, "categoryLabel");
+  requiredText(props.valueLabel, variant.component, "valueLabel");
+  if (!Number.isFinite(props.height) || props.height < 160) throw new Error(`${variant.component} height must be a finite number of at least 160`);
   const definitions = defineSeries(props.series);
   const data = validateCategorical(props.data, definitions);
-  if (data.categories.length * definitions.length > maximumMarks) throw new Error(`BarChart supports at most ${maximumMarks} SVG marks`);
+  if (data.categories.length * definitions.length > maximumMarks) throw new Error(`${variant.component} supports at most ${maximumMarks} SVG marks`);
   const layout = props.layout ?? "vertical";
   const arrangement = props.arrangement ?? "grouped";
   const left = layout === "horizontal" ? 120 : 52;
@@ -114,7 +124,7 @@ function model(props: BarChartProps, locale: string, chartWidth: number, visible
   const bottom = props.height - 56;
   const domain = extent(data, definitions, arrangement, visibleState);
   const valueScale = scaleLinear().domain(domain).nice(4).range(layout === "horizontal" ? [left, right] : [bottom, top]);
-  const categoryScale = scaleBand<string>().domain(data.categories).range(layout === "horizontal" ? [top, bottom] : [left, right]).padding(0.18);
+  const categoryScale = scaleBand<string>().domain(data.categories).range(layout === "horizontal" ? [top, bottom] : [left, right]).padding(variant.padding);
   const visible = definitions.filter((_definition, index) => visibleState[index]);
   const groupScale = scaleBand<string>().domain(visible.map(definition => definition.key)).range([0, categoryScale.bandwidth()]).padding(0.08);
   const positive = new Map<string, number>();
@@ -178,59 +188,11 @@ function model(props: BarChartProps, locale: string, chartWidth: number, visible
   return Object.freeze({ data, definitions, marks: Object.freeze(marks), valueTicks, categoryTicks, categoryPositions, categoryBandwidth: categoryScale.bandwidth(), height: props.height, left, right, top, bottom, zero: valueScale(0), layout });
 }
 
-function CategoricalDataTable(props: {
-  readonly label: string;
-  readonly summary: string;
-  readonly categoryLabel: string;
-  readonly series: readonly ChartSeries[];
-  readonly data: ChartCategoricalData;
-  readonly y?: ChartValueAxis;
-  readonly pageSize?: number;
-  readonly viewLabel?: string;
-  readonly loading?: boolean;
-}): JSX.Element {
-  const theme = useTheme();
-  const locale = createMemo(() => theme.state().locale);
-  const messages = createMemo(() => resolveChartMessages(theme.messages()));
-  const pageSize = createMemo(() => {
-    const value = props.pageSize ?? defaultPageSize;
-    if (!Number.isSafeInteger(value) || value < 1 || value > maximumPageSize) throw new Error(`BarChart table pageSize must be an integer from 1 to ${maximumPageSize}`);
-    return value;
-  });
-  const [requestedPage, setRequestedPage] = createSignal(0);
-  const pageCount = createMemo(() => Math.ceil(props.data.categories.length / pageSize()));
-  const page = createMemo(() => Math.min(requestedPage(), Math.max(0, pageCount() - 1)));
-  createEffect(() => { if (page() !== requestedPage()) setRequestedPage(page()); });
-  const indices = createMemo(() => {
-    const start = page() * pageSize();
-    return Array.from({ length: Math.min(pageSize(), Math.max(0, props.data.categories.length - start)) }, (_, offset) => start + offset);
-  });
-  const format = createMemo(() => createChartTableFormatters(locale(), { type: "number" }, props.y).value);
-  return <details class="sheen-chart-data" aria-busy={props.loading || undefined}>
-    <summary>{props.viewLabel ?? messages().viewAsTable}</summary>
-    <p class="sheen-chart-data-summary">{props.summary}</p>
-    <div class="sheen-chart-data-scroll" tabIndex={0} aria-label={props.label}>
-      <Table striped>
-        <TableCaption>{props.label}</TableCaption>
-        <TableHead><TableRow><TableHeaderCell>{props.categoryLabel}</TableHeaderCell><For each={props.series}>{series => <TableHeaderCell numeric>{series.label}</TableHeaderCell>}</For></TableRow></TableHead>
-        <TableBody><Show when={indices().length > 0} fallback={<TableRow><TableCell colSpan={props.series.length + 1}>{theme.messages().empty}</TableCell></TableRow>}>
-          <For each={indices()}>{index => <TableRow data-chart-row={index}><TableHeaderCell scope="row">{props.data.categories[index]}</TableHeaderCell>
-            <For each={props.series}>{series => {
-              const value = () => props.data.values[series.key]?.[index] ?? Number.NaN;
-              return <TableCell numeric>{Number.isNaN(value())
-                ? <><span aria-hidden="true">—</span><span class="sheen-chart-visually-hidden">{messages().missingValue}</span></>
-                : format()(value())}</TableCell>;
-            }}</For>
-          </TableRow>}</For>
-        </Show></TableBody>
-      </Table>
-    </div>
-    <Show when={pageCount() > 1}><Pagination class="sheen-chart-data-pagination" label={messages().tablePagination}
-      pageIndex={page()} pageCount={pageCount()} pending={props.loading ?? false} onPageChange={setRequestedPage} /></Show>
-  </details>;
+export function BarChart(props: BarChartProps): JSX.Element {
+  return renderBarChart(props, barChartVariant);
 }
 
-export function BarChart(props: BarChartProps): JSX.Element {
+export function renderBarChart(props: BarChartInput, variant: BarChartVariant): JSX.Element {
   const theme = useTheme();
   const locale = createMemo(() => theme.state().locale);
   const summaryId = createUniqueId();
@@ -238,7 +200,7 @@ export function BarChart(props: BarChartProps): JSX.Element {
   const viewport = createResponsiveSvgWidth();
   const definitions = createMemo(() => defineSeries(props.series));
   const visibility = createSeriesVisibility(definitions);
-  const resolved = createMemo(() => model(props, locale(), viewport.width(), visibility.values()));
+  const resolved = createMemo(() => model(props, variant, locale(), viewport.width(), visibility.values()));
   const format = createMemo(() => createChartTableFormatters(locale(), { type: "number" }, props.y).value);
   const messages = createMemo(() => resolveChartMessages(theme.messages()));
   const tooltipRows = new Map<string, HTMLLIElement>();
@@ -358,7 +320,7 @@ export function BarChart(props: BarChartProps): JSX.Element {
     else if (inspectedIndex >= 0) inspect(inspectedIndex, false);
   });
 
-  return <figure class={cn("sheen-svg-chart", "sheen-bar-chart", props.class)} aria-busy={props.loading || undefined} data-layout={resolved().layout} data-arrangement={props.arrangement ?? "grouped"}>
+  return <figure class={cn("sheen-svg-chart", variant.class, props.class)} aria-busy={props.loading || undefined} data-layout={resolved().layout} data-arrangement={props.arrangement ?? "grouped"}>
     <figcaption class="sheen-chart-caption"><span class="sheen-chart-title">{props.label}</span><span id={summaryId} class="sheen-chart-summary">{props.summary}</span></figcaption>
     <div class="sheen-svg-chart-plot" style={{ height: `${resolved().height}px` }}>
       <svg ref={viewport.ref} viewBox={`0 0 ${viewport.width()} ${resolved().height}`} role="img" aria-label={props.label} aria-describedby={`${summaryId} ${instructionId}`}
@@ -399,8 +361,13 @@ export function BarChart(props: BarChartProps): JSX.Element {
       <Show when={resolved().data.categories.length === 0}><div class="sheen-chart-empty">{props.empty ?? theme.messages().empty}</div></Show>
     </div>
     <ChartLegend series={resolved().definitions} layout={props.legend} visible={visibility.values()} onToggle={visibility.toggle} />
-    <CategoricalDataTable label={props.label} summary={props.summary} categoryLabel={props.categoryLabel} series={resolved().definitions} data={resolved().data}
-      {...(props.y === undefined ? {} : { y: props.y })}
+    <ChartRecordTable component={variant.component} label={props.label} summary={props.summary} headerLabel={props.categoryLabel}
+      columns={resolved().definitions} rowCount={resolved().data.categories.length} header={row => resolved().data.categories[row] ?? ""}
+      cell={(row, column) => {
+        const definition = resolved().definitions[column];
+        const value = definition === undefined ? Number.NaN : resolved().data.values[definition.key]?.[row] ?? Number.NaN;
+        return Number.isNaN(value) ? undefined : format()(value);
+      }}
       {...(props.table?.pageSize === undefined ? {} : { pageSize: props.table.pageSize })}
       {...(props.table?.viewLabel === undefined ? {} : { viewLabel: props.table.viewLabel })}
       {...(props.loading === undefined ? {} : { loading: props.loading })} />

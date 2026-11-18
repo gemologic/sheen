@@ -15,7 +15,7 @@ The initial AppShell integration now keeps the owner inside shell contexts, sepa
 - Expand visual theme/density/state coverage, nested scoped portals, and background isolation checks. Native scroll/motion checks and the initial reviewed LTR/RTL screenshots are described below.
 - Qualify resize with nested overlays open, delayed hydration, accepted/rejected controlled proposals, scroll/draft retention, and all supported test engines.
 
-The implementation task is complete with the later production integration, navigation, visual, controlled-state, overlay, hydration, and scroll-handoff evidence below. Cross-engine and exhaustive release qualification remain milestone-gate work.
+The implementation task is complete with the later production integration, navigation, visual, controlled-state, overlay, hydration, and scroll-handoff evidence below. Cross-engine and exhaustive release qualification remain release-gate work.
 
 Two reviewed 375×750 Chromium screenshot baselines cover obsidian/dark/LTR and paper/light/RTL with keyboard-visible Close focus. Assertions require 4.5:1 Close text and 3:1 focus contrast against the drawer surface. The title, scrolling region, footer, inline edge, and focus ring were visually inspected. A subsequent visual/motion/scroll run passed 24 executions without snapshot-update mode. These baselines do not cover every theme, density, state, or browser engine.
 

@@ -11,6 +11,8 @@ export default defineConfig({
         forms: "src/forms.ts",
         overlays: "src/overlays.ts",
         navigation: "src/navigation.ts",
+        ai: "src/ai.ts",
+        sortable: "src/sortable.ts",
         formisch: "src/formisch.ts",
         metadata: "src/metadata.ts",
         vite: "src/vite.ts",
@@ -18,7 +20,7 @@ export default defineConfig({
       formats: ["es"],
     },
     rolldownOptions: {
-      external: [/^solid-js(?:\/|$)/, /^#sheen-/, /^node:/, /^vite(?:\/|$)/, /^@corvu\/resizable(?:\/|$)/, /^@formisch\/solid(?:\/|$)/, /^@gemologic\/sheen-tokens(?:\/|$)/, "clsx"],
+      external: [/^solid-js(?:\/|$)/, /^#sheen-/, /^node:/, /^vite(?:\/|$)/, /^@corvu\/resizable(?:\/|$)/, /^@formisch\/solid(?:\/|$)/, /^@gemologic\/sheen-tokens(?:\/|$)/, /^@atlaskit\/pragmatic-drag-and-drop/, "clsx"],
       output: { preserveModules: true, preserveModulesRoot: "src", entryFileNames: "[name].js" },
     },
   },

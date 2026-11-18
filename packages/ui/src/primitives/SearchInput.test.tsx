@@ -11,7 +11,7 @@ describe("SearchInput SSR", () => {
     expect(html).not.toContain("Ignored");
     expect(html).toContain("Suche leeren");
     expect(html).toMatch(/class="[^"]*sheen-search-input-clear/);
-    expect(html).toContain('class="sheen-search-input-indicator" aria-hidden="true"');
+    expect(html).toMatch(/<svg[^>]*class="[^"]*sheen-search-input-indicator[^>]*aria-hidden="true"|<svg[^>]*aria-hidden="true"[^>]*class="[^"]*sheen-search-input-indicator/);
     expect(html.match(/<label\b/g)).toHaveLength(1);
   });
   it("disables clearing for empty, disabled, and readonly searches", () => {

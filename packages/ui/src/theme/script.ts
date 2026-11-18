@@ -30,13 +30,13 @@ function bootstrap(config: ScriptConfig): void {
   root.setAttribute("lang", state.locale ?? "en-US");
 }
 
-export function createThemeScript(options: { defaults?: ThemeState; storageKey?: string; themeIds?: readonly string[]; themes?: readonly ThemeMetadata[] } = {}): string {
+export function createThemeScript(options: { defaults?: ThemeState; storageKey?: string; themeIds?: readonly string[]; themes?: readonly ThemeMetadata[]; accents?: readonly string[] } = {}): string {
   const themes = options.themes ?? bundledThemeMetadata;
   const themeIds = options.themeIds ?? themes.map(theme => theme.id);
   const config: ScriptConfig = {
     defaults: options.defaults ?? { ...defaultThemeState },
     storageKey: options.storageKey ?? "sheen",
-    choices: { ...themeChoices, theme: themeIds },
+    choices: { ...themeChoices, theme: themeIds, accent: [...themeChoices.accent, ...(options.accents ?? []).filter(id => !themeChoices.accent.some(name => name === id))] },
     iconSets: Object.fromEntries(themes.map(theme => [theme.id, theme.iconSet])),
   };
   const json = JSON.stringify(config).replaceAll("<", "\\u003c").replaceAll("\u2028", "\\u2028").replaceAll("\u2029", "\\u2029");

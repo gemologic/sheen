@@ -6,7 +6,7 @@ Each report supplies generated nonblank line count, lint errors, total interacti
 
 Hard gates are any hallucinated prop, any failed rubric item, more than one lint error per 100 generated lines in aggregate, or less than 80% Sheen coverage across interactive elements. After the baseline is sealed, lint density may not increase, and coverage or rubric pass ratio may not decrease, by more than 5% relative to that baseline. Hard thresholds still apply even when the baseline is worse.
 
-The prompt/rubric fixtures and scoring math are executable. Diagnostic Codex CLI 0.153.4 runs with `gpt-5.6-sol` did not produce a complete baseline: xhigh reasoning timed out on the first prompt, and medium reasoning completed six of seven attempted prompts while the remote-orders prompt timed out. The completed medium samples exposed an `exactOptionalPropertyTypes` guidance gap that has been corrected in the generated context. These diagnostic artifacts are not a baseline. The M5 baseline and regression gate remain incomplete until all twenty raw outputs and audited reports exist for one pinned model/configuration.
+The prompt/rubric fixtures and scoring math are executable. Diagnostic Codex CLI 0.153.4 runs with `gpt-5.6-sol` did not produce a complete baseline: xhigh reasoning timed out on the first prompt, and medium reasoning completed six of seven attempted prompts while the remote-orders prompt timed out. The completed medium samples exposed an `exactOptionalPropertyTypes` guidance gap that has been corrected in the generated context. These diagnostic artifacts are not a baseline. The baseline and regression gate remain incomplete until all twenty raw outputs and audited reports exist for one pinned model/configuration.
 
 ## Baseline contract
 

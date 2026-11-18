@@ -2,7 +2,7 @@
 
 Run `pnpm check:consumers` after building tokens, UI, and table. `pnpm check` already runs this command after its build/typecheck stages. The same runner now checks the table pagination package's copied exports and declarations with real Node execution; see [table pagination](table-pagination.md).
 
-The UI check creates a temporary consumer outside the repository, copies the UI package manifest, dist, and vendored runtime, and initially copies only src/styles.css from source. It copies the tokens package separately and links the currently installed direct dependencies and Solid peer. No UI TypeScript/TSX implementation is available during the built-JavaScript check.
+The UI check creates a temporary consumer outside the repository, copies the UI package manifest, dist, and vendored runtime, and initially copies only the stylesheets (src/styles.css and the src/styles islands) from source. It copies the tokens package separately and links the currently installed direct dependencies and Solid peer. No UI TypeScript/TSX implementation is available during the built-JavaScript check.
 
 The consumer imports `@gemologic/sheen` by package name. Its strict typecheck exercises Button, Link, buttonVariants, cn, and SheenPolymorphicProps, including expected errors for missing Link href, Button href, and anchor props on the native button type seam. As with the existing private-theme check, skipLibCheck skips dependency declaration internals; the consumer's own positive and negative cases remain checked.
 
@@ -13,6 +13,22 @@ After that check, the runner copies UI source into the temporary package and bui
 Finally, an SSR build with the Solid plugin compiles the copied package's source entry, then Node executes that bundle. The runtime test renders a loading native Button and button-styled native Link with renderToString, checks their native tags and attributes, and confirms there is no document global. This qualifies the source-conditioned SSR route, not server rendering from the browser-compiled dist entry.
 
 These checks cover exported types, source-conditioned SSR, and tree shaking. They are distinct from clean npm installation and native runtime qualification below.
+
+## CSS islands
+
+`@gemologic/sheen/styles.css` remains the complete stylesheet. Applications that import only some JavaScript islands can import the matching CSS islands instead:
+
+| JavaScript entry | Stylesheet |
+| --- | --- |
+| `@gemologic/sheen/core` (and root-only exports such as `NumberText`) | `@gemologic/sheen/styles/core.css` |
+| `@gemologic/sheen/forms` | `@gemologic/sheen/styles/forms.css` |
+| `@gemologic/sheen/overlays` | `@gemologic/sheen/styles/overlays.css` |
+| `@gemologic/sheen/navigation` | `@gemologic/sheen/styles/navigation.css` |
+| `@gemologic/sheen/ai` | `@gemologic/sheen/styles/ai.css` |
+
+Always import `styles/core.css`, once and first. It owns the shared base: the layer order, the `[data-sheen-theme]` root, the shared button/input/link control and focus rules, and the pieces other islands render internally (Button, Kbd, Progress, Tag, Text, workflow markers, and the Tooltip/LinkTooltip layers used by IconButton and NavList). The other islands contain only their own component rules, so they never repeat core. One cross-island dependency remains: `ShortcutSheet` from the navigation entry renders a Dialog, so pages that use it also import `styles/overlays.css`. `styles.css` is exactly the five islands in core, forms, overlays, navigation, ai order; import either the full sheet or islands, not both.
+
+The consumer check builds each island and the full sheet through the public package exports. It requires each island to contain its own component rules and none of another island's, the full sheet to contain every island, and the full sheet to be no larger than the islands combined.
 
 ## Native client execution
 

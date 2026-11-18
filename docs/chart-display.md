@@ -8,6 +8,8 @@ Import small inline displays from `@gemologic/sheen-charts/svg`. This entry has 
 
 ## Native data alternative
 
+`BarSparkline` takes the same props as `Sparkline` and draws one rectangle subpath per finite value, anchored at zero so negative values extend below the baseline. `NaN` leaves its slot empty instead of drawing a zero-height bar. It is a separate component rather than a `type="bar"` option on `Sparkline`: the line-only `Sparkline` import sits at 997 of its 1,000 gzip bytes, so any bar branch inside it would push every line consumer over budget. Applications that import only `Sparkline` therefore retain no bar geometry, and `BarSparkline` has its own isolated sub-1,000-byte gate (954 bytes today).
+
 `Stat.visual` accepts a supplementary display, such as an accessible `Sparkline` or `Meter`. The metric's text value must remain complete without the visual. Use actual history for a sparkline and a defined range for a utilization track. In a reactive `StatGroup`, create the visual node once and update its reactive props; do not recreate it whenever the stats array changes. The slot stays within the lightweight SVG entry and does not import a chart engine.
 
 `ChartDataTable` is exported from `@gemologic/sheen-charts/table` and the package root. It requires a table label, narrative summary, domain-column label, series definitions, columnar data, and the same axis formatting used by the chart. A native `details`/`summary` disclosure works before JavaScript and keeps its table mounted through hydration and refresh. Future full chart components require `label`, `summary`, and `xLabel`, and compose this alternative by default rather than making accessibility opt-in.

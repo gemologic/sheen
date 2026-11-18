@@ -42,6 +42,14 @@ export function createTableSelection(initialFilter: FilterNode, columns: readonl
     },
     selectAllMatching() { explicit = new Set(); excluded = new Set(); inverted = true; },
     isSelected(id: string) { return inverted ? loaded.has(id) && !excluded.has(id) : explicit.has(id); },
+    isLoaded(id: string) { return loaded.has(id); },
+    /** Counts selected loaded rows from the smaller explicit/excluded set instead of walking every loaded row. */
+    loadedSelectedCount() {
+      const marked = inverted ? excluded : explicit;
+      let count = 0;
+      for (const id of marked) if (loaded.has(id)) count++;
+      return inverted ? loaded.size - count : count;
+    },
     getPayload(): BulkSelection {
       return inverted
         ? Object.freeze({ kind: "query", filter, excluded: Object.freeze([...excluded]) })

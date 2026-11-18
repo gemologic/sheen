@@ -1,4 +1,4 @@
-import { Badge, Button, Link, Popover, useTheme } from "@gemologic/sheen";
+import { Badge, Button, Glyph, Link, Popover, useTheme } from "@gemologic/sheen";
 import type { Accessor } from "solid-js";
 import { For, Show, createMemo, createSignal, splitProps } from "solid-js";
 import type { JSX } from "solid-js";
@@ -28,10 +28,10 @@ export function NotificationCenter(props: NotificationCenterProps): JSX.Element 
   const label = createMemo(() => local.notifications.label?.trim() || theme.messages().notifications);
   return <div {...rest} ref={local.ref} class={`sheen-admin-notifications ${local.class ?? ""}`} data-admin-notification-target={local.target ?? "topbar-end"}>
     <Popover title={label()} placement={local.target === "sidebar-footer" ? "top-end" : "bottom-end"} open={open()} onOpenChange={setOpen}
-      class="sheen-admin-notification-popover" trigger={<span class="sheen-admin-notification-trigger"><span aria-hidden="true">●</span><span>{label()}</span><Show when={unread()}>{count => <Badge tone="accent">{count()}</Badge>}</Show></span>}>
+      class="sheen-admin-notification-popover" trigger={<span class="sheen-admin-notification-trigger"><Glyph name="bell" /><span>{label()}</span><Show when={unread()}>{count => <Badge tone="accent">{count()}</Badge>}</Show></span>}>
       <Show when={ids().length > 0} fallback={<p class="sheen-admin-notification-empty">{local.notifications.emptyLabel ?? theme.messages().noNotifications}</p>}>
         <ul class="sheen-admin-notification-list"><For each={ids()}>{id => <NotificationItem item={() => items().get(id)} close={() => setOpen(false)} />}</For></ul>
-        <Show when={local.notifications.onMarkAllRead && unread() > 0}><Button class="sheen-admin-notification-read" onClick={() => local.notifications.onMarkAllRead?.()}>{theme.messages().markAllNotificationsRead}</Button></Show>
+        <Show when={local.notifications.onMarkAllRead && unread() > 0}><Button variant="ghost" class="sheen-admin-notification-read" onClick={() => local.notifications.onMarkAllRead?.()}>{theme.messages().markAllNotificationsRead}</Button></Show>
       </Show>
     </Popover>
   </div>;
@@ -42,7 +42,7 @@ function NotificationItem(props: { readonly item: Accessor<AdminNotificationMode
   const href = () => { const item = props.item(); return item?.kind === "link" ? item.href : ""; };
   const activate = (): void => { const item = props.item(); if (item?.kind === "action") item.onSelect(); props.close(); };
   return <Show when={props.item()}>{item => <li data-read={item().read || undefined} data-notification-id={item().id}>
-    <Show when={isLink()} fallback={<Button class="sheen-admin-notification-item" onClick={activate}><NotificationCopy item={item} /></Button>}>
+    <Show when={isLink()} fallback={<Button variant="ghost" class="sheen-admin-notification-item" onClick={activate}><NotificationCopy item={item} /></Button>}>
       <Link class="sheen-admin-notification-item" href={href()} onClick={props.close}><NotificationCopy item={item} /></Link>
     </Show>
   </li>}</Show>;

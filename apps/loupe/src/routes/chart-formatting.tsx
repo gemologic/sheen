@@ -4,6 +4,7 @@ import { defineSeries } from "@gemologic/sheen-charts/core";
 import type { ChartTimeAxis } from "@gemologic/sheen-charts/core";
 import { AreaChart, BarChart, LineChart } from "@gemologic/sheen-charts/charts-svg";
 import { TimeSeries } from "@gemologic/sheen-charts/time-series";
+import "@gemologic/sheen-charts/styles.css";
 
 const timestamp = Date.UTC(2026, 8, 1, 12);
 const data = Object.freeze({ t: new Float64Array([timestamp, timestamp + 60_000]), amount: new Float64Array([12_345.5, 23_456.7]) });

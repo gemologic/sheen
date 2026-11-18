@@ -4,6 +4,7 @@ import type { JSX, ParentProps } from "solid-js";
 import { Button } from "./Button.tsx";
 import { useTheme } from "../theme/ThemeProvider.tsx";
 import { cn } from "../utils/cn.ts";
+import { Glyph } from "./Glyph.tsx";
 
 export interface PopoverProps extends ParentProps {
   trigger: JSX.Element;
@@ -45,7 +46,7 @@ export function Popover(props: PopoverProps): JSX.Element {
           <Show when={props.description}><Primitive.Description>{props.description}</Primitive.Description></Show>
         </div>
         <div class="sheen-dialog-body">{props.children}</div>
-        <div class="sheen-dialog-footer"><Primitive.CloseButton as={Button} aria-label={theme.messages().close}>{theme.messages().close}</Primitive.CloseButton></div>
+        <Primitive.CloseButton as={Button} variant="ghost" class="sheen-dialog-close" size="sm" aria-label={theme.messages().close}><Glyph name="close" /></Primitive.CloseButton>
       </Primitive.Content>
     </Primitive.Portal>}</Show>
   </Primitive.Root>;

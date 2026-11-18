@@ -3,6 +3,7 @@ import { DataTable, createServerExport, defineColumns, serializeState } from "@g
 import type { DataTableResult, TableExportRequest } from "@gemologic/sheen-table";
 import { Button, Checkbox, Input, Link } from "@gemologic/sheen";
 import { exportSchema, exportState } from "../fixtures/table-export";
+import "@gemologic/sheen-table/styles.css";
 
 interface ExportRow { readonly id: string; readonly name: string; readonly note: string }
 const dataTableRows: readonly ExportRow[] = [

@@ -180,8 +180,8 @@ export function FileDropzone(props: FileDropzoneProps): JSX.Element {
         <div class="sheen-file-dropzone-item-copy" dir="auto"><strong>{current().name}</strong><span>{formatSize(current().size)}<Show when={current().type}> · {current().type}</Show></span></div>
         <span class="sheen-file-dropzone-status" data-status={current().status} dir="auto">{current().statusLabel}</span>
         <Show when={current().status === "uploading"}><Progress label={theme.messages().uploadProgress.replaceAll("{name}", current().name)} {...(current().progress === undefined ? {} : { value: current().progress })} /></Show>
-        <div class="sheen-file-dropzone-actions"><Show when={current().status === "error" && local.onRetry}><Button size="xs" disabled={local.disabled} aria-disabled={local.readOnly || undefined} aria-label={`${theme.messages().retry} ${current().name}`} onClick={() => run(local.onRetry, id)}>{theme.messages().retry}</Button></Show>
-          <Show when={local.onRemove}><Button size="xs" disabled={local.disabled} aria-disabled={local.readOnly || undefined} aria-label={`${theme.messages().remove} ${current().name}`} onClick={() => run(local.onRemove, id)}>{theme.messages().remove}</Button></Show></div>
+        <div class="sheen-file-dropzone-actions"><Show when={current().status === "error" && local.onRetry}><Button variant="ghost" size="xs" disabled={local.disabled} aria-disabled={local.readOnly || undefined} aria-label={`${theme.messages().retry} ${current().name}`} onClick={() => run(local.onRetry, id)}>{theme.messages().retry}</Button></Show>
+          <Show when={local.onRemove}><Button variant="ghost" size="xs" disabled={local.disabled} aria-disabled={local.readOnly || undefined} aria-label={`${theme.messages().remove} ${current().name}`} onClick={() => run(local.onRemove, id)}>{theme.messages().remove}</Button></Show></div>
       </li>}</Show>;
     }}</For></ul></Show>
     <span class="sheen-file-dropzone-announcer" role="status" aria-live="polite" aria-atomic="true">{dragActive() ? (local.dropLabel ?? theme.messages().dropFilesHere) : ""}</span>

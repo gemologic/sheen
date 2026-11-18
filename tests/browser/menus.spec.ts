@@ -91,6 +91,7 @@ test("menu item icons stay decorative and root content can match its trigger wid
   const trigger = page.getByRole("button", { name: "Workspace actions", exact: true });
   await trigger.click();
   const menu = page.getByRole("menu");
+  await menu.evaluate(element => Promise.all(element.getAnimations().map(animation => animation.finished)));
   const triggerBox = await trigger.boundingBox();
   const menuBox = await menu.boundingBox();
   if (!triggerBox || !menuBox) throw new Error("Expected trigger and menu geometry");

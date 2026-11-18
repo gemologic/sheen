@@ -23,7 +23,7 @@ export function PageHeader(props: PageHeaderProps): JSX.Element {
   return <div {...others} role="group" aria-labelledby={headingId} class={`sheen-page-header ${local.class ?? ""}`}>
     <Show when={breadcrumb()}><div class="sheen-page-header-breadcrumb">{breadcrumb()}</div></Show>
     <div class="sheen-page-header-row">
-      <Heading id={headingId} level={local.headingLevel ?? 1} size="h4">{title()}</Heading>
+      <Heading id={headingId} level={local.headingLevel ?? 1} size="h3">{title()}</Heading>
       <Show when={actions()}><div class="sheen-page-header-actions">{actions()}</div></Show>
     </div>
     <Show when={tabs()}><div class="sheen-page-header-tabs">{tabs()}</div></Show>

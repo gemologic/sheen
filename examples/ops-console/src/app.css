@@ -1,0 +1,33 @@
+@import "@gemologic/sheen-tokens/fonts.css";
+@import "@gemologic/sheen-tokens/themes.css";
+@import "@gemologic/sheen-tokens/core.css";
+@import "@gemologic/sheen/styles.css";
+@import "@gemologic/sheen-icons/styles.css";
+@import "@gemologic/sheen-table/styles.css";
+@import "@gemologic/sheen-charts/styles.css";
+@import "@gemologic/sheen-patterns/admin/styles.css";
+
+* { box-sizing: border-box; }
+html, body, #app { margin: 0; block-size: 100%; overflow: hidden; background: var(--sheen-color-bg); }
+
+.ops-page { display: grid; align-content: start; gap: var(--sheen-space-block-lg); padding: var(--sheen-space-section); min-inline-size: 0; }
+.ops-fill { display: grid; grid-template-rows: minmax(0, 1fr); block-size: 100%; min-block-size: 0; min-inline-size: 0; }
+.ops-fill-headed { grid-template-rows: auto minmax(0, 1fr); }
+.ops-fill-headed > .sheen-page-header { border-block-end: 1px solid var(--sheen-color-border); }
+.ops-charts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sheen-space-inline-lg); }
+.ops-chart-card { min-inline-size: 0; padding: var(--sheen-space-block-md) var(--sheen-space-inline-lg); border: 1px solid var(--sheen-color-border); border-radius: var(--sheen-surface-radius); background: var(--sheen-color-bg-raised); box-shadow: var(--sheen-elevation-raised); }
+.ops-meta { display: flex; flex-wrap: wrap; gap: var(--sheen-space-inline-md); color: var(--sheen-color-fg-muted); font-size: var(--sheen-text-caption-size); }
+.ops-account-cell { display: grid; min-inline-size: 0; }
+.ops-account-cell small { color: var(--sheen-color-fg-muted); font-family: var(--sheen-font-mono); font-size: var(--sheen-text-caption-size); }
+.ops-status-cell { display: inline-flex; align-items: center; gap: var(--sheen-space-inline-xs); }
+.ops-live-cell { font-variant-numeric: tabular-nums; }
+.ops-detail { display: grid; align-content: start; gap: var(--sheen-space-block-md); padding: var(--sheen-space-block-lg) var(--sheen-space-inline-lg); }
+.ops-detail header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--sheen-space-inline-sm); }
+.ops-detail h2 { margin: 0; font-size: var(--sheen-text-h3-size); line-height: var(--sheen-text-h3-leading); }
+
+@media (width < 1024px) {
+  .ops-charts { grid-template-columns: minmax(0, 1fr); }
+}
+@media (width < 768px) {
+  html, body, #app { block-size: auto; min-block-size: 100%; overflow: auto; }
+}

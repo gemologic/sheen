@@ -20,7 +20,7 @@ Component styles live in the `components` cascade layer, below consumer utilitie
 
 Text is inline; use paragraph markup around prose when appropriate. Heading requires a semantic level independently of its visual size. Code and Kbd emit their native elements. Badge is a text label, not automatically a button or live region. Tag removal uses a native button and a localized accessible name; the application owns collection mutation and focus restoration after removal.
 
-Surface establishes its own focus-ring offset; Card composes a raised, bordered Surface without an automatic shadow. Use the surface variant instead of replacing its background independently of the focus tokens. Separator is semantic unless explicitly decorative. Callout is a static note; Alert is urgent, does not steal focus, and never auto-dismisses. Initial server-rendered alerts are not guaranteed to be announced by screen readers; the [ARIA alert pattern](https://www.w3.org/WAI/ARIA/apg/patterns/alert/) distinguishes them from dynamically appearing alerts.
+Surface establishes its own focus-ring offset; Card composes a raised, bordered Surface; raised surfaces carry `elevation-raised` (an inner top highlight plus a contact shadow) so depth survives low-contrast dark fills. Use the surface variant instead of replacing its background independently of the focus tokens. Separator is semantic unless explicitly decorative. Callout is a static note; Alert is urgent, does not steal focus, and never auto-dismisses. Initial server-rendered alerts are not guaranteed to be announced by screen readers; the [ARIA alert pattern](https://www.w3.org/WAI/ARIA/apg/patterns/alert/) distinguishes them from dynamically appearing alerts.
 
 Visual fixtures must constrain their scrolling panes. Before accepting a tall-element screenshot, verify that both its first and last meaningful content are in view; an image with blank clipped regions is not coverage of that component.
 
@@ -30,7 +30,7 @@ Supply at least one example with a title and JSX expression. Optional `setup` co
 
 Run `pnpm manifest` after the package builds. The command checks export coverage, prop coverage, metadata shape, demo exports, example compilation, and stale metadata files before generating `sheen.manifest.json`, `llms.txt`, `llms-full.txt`, and `dist/skill/`. `pnpm check` includes it, so CI uses the same gate. Do not hand-edit generated artifacts.
 
-The generated context deliberately includes only sheen-authored props. Standard platform props remain exhaustive in `sheen.manifest.json`, but repeating inherited DOM declarations would bury the component contract in the compact and full guidance. See [agent context](agent-context.md) for the format and proof boundary. CLI scaffolds, lint rules, assay, and manifest-driven Loupe playground pages remain in TODO.md.
+The generated context deliberately includes only sheen-authored props. Standard platform props remain exhaustive in `sheen.manifest.json`, but repeating inherited DOM declarations would bury the component contract in the compact and full guidance. See [agent context](agent-context.md) for the format and proof boundary. CLI scaffolds, lint rules, assay, and manifest-driven Loupe playground pages remain open.
 
 ## Avatars and scalar indicators
 
@@ -50,7 +50,7 @@ Use `DescriptionList` for name/value content, with `DescriptionTerm` and `Descri
 
 Use `Table` for small, bounded semantic tables. Supply a caption or an accessible name, explicit row groups (`TableHead`, `TableBody`, `TableFoot`), and `TableHeaderCell` with the appropriate scope. Column scope is the default; row headers require `scope="row"`. Cell height is a minimum, so embedded controls and wrapped content may expand a row. Numeric cells use end alignment and tabular figures. Applications provide a constrained scrolling pane when needed.
 
-These components do not implement a grid widget. Static rows are not tab stops, and embedded controls retain their native keyboard order. Use M2 DataTable for virtualized datasets, selection, filtering, pagination, and delegated requests.
+These components do not implement a grid widget. Static rows are not tab stops, and embedded controls retain their native keyboard order. Use DataTable for virtualized datasets, selection, filtering, pagination, and delegated requests.
 
 ## DataTable sizing, layout, and pagination
 

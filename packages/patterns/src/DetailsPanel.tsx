@@ -1,4 +1,4 @@
-import { Button, Heading } from "@gemologic/sheen";
+import { Button, Glyph, Heading } from "@gemologic/sheen";
 import { children, createEffect, createMemo, createSignal, onCleanup, onMount, splitProps } from "solid-js";
 import type { JSX } from "solid-js";
 
@@ -118,7 +118,7 @@ export function DetailsPanel(props: DetailsPanelProps): JSX.Element {
     <aside ref={panel} class="sheen-admin-details" id={local.panelId} role={presentation() === "sheet" ? "dialog" : "complementary"}
       aria-modal={presentation() === "sheet" ? "true" : undefined} aria-label={title()} hidden={!local.open} inert={!local.open} tabIndex={-1} onKeyDown={keydown}>
       <ShowResize when={Boolean(local.resizable) && presentation() === "docked"} width={width()} minimum={minimum()} maximum={maximum()} onPointerDown={beginResize} onKeyDown={resizeKey} />
-      <header class="sheen-admin-details-header"><Heading level={2} size="h3">{title()}</Heading><Button ref={close} aria-label={local.closeLabel ?? "Close details"} onClick={() => local.onOpenChange(false)}>×</Button></header>
+      <header class="sheen-admin-details-header"><Heading level={2} size="h3">{title()}</Heading><Button variant="ghost" ref={close} aria-label={local.closeLabel ?? "Close details"} onClick={() => local.onOpenChange(false)}><Glyph name="close" /></Button></header>
       <div class="sheen-admin-details-content">{content()}</div>
     </aside>
   </div>;

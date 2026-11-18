@@ -20,7 +20,8 @@
 .sheen-stat-label { grid-column: 1 / -1; color: var(--sheen-color-fg-muted); font-size: var(--sheen-text-caption-size); line-height: var(--sheen-text-caption-leading); }
 .sheen-stat-value, .sheen-stat-trend { margin: 0; }
 .sheen-stat-value { min-inline-size: 0; overflow-wrap: anywhere; color: var(--sheen-color-fg); font-size: var(--sheen-text-stat-size); line-height: var(--sheen-text-stat-leading); font-weight: var(--sheen-text-stat-weight); letter-spacing: var(--sheen-text-stat-tracking); }
-.sheen-stat-trend { display: inline-flex; align-items: baseline; gap: var(--sheen-space-inline-xs); color: var(--sheen-color-fg-muted); font-size: var(--sheen-text-caption-size); }
+.sheen-stat-trend { display: inline-flex; align-items: center; gap: var(--sheen-space-inline-xs); color: var(--sheen-color-fg-muted); font-size: var(--sheen-text-caption-size); }
+.sheen-stat-trend > .sheen-stat-trend-glyph { inline-size: 1.15em; block-size: 1.15em; }
 .sheen-stat-trend[data-valence="positive"] { color: var(--sheen-color-success); }
 .sheen-stat-trend[data-valence="negative"] { color: var(--sheen-color-danger); }
 .sheen-stat-visual { grid-column: 1 / -1; min-inline-size: 0; margin: 0; }
@@ -36,7 +37,18 @@
 .sheen-chart-data .sheen-table-caption { position: absolute; inline-size: 1px; block-size: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
 .sheen-chart-data-pagination { margin-block-start: var(--sheen-space-block-md); }
 .sheen-chart-visually-hidden { position: absolute; inline-size: 1px; block-size: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
-.sheen-time-series { min-inline-size: 0; margin: 0; color: var(--sheen-color-fg); font-family: var(--sheen-font-sans); }
+.sheen-time-series { display: flex; flex-wrap: wrap; align-items: flex-start; column-gap: var(--sheen-space-inline-lg); min-inline-size: 0; margin: 0; color: var(--sheen-color-fg); font-family: var(--sheen-font-sans); }
+.sheen-time-series > .sheen-chart-caption { flex: 1 1 100%; min-inline-size: 0; gap: 0; margin-block-end: var(--sheen-space-block-sm); }
+.sheen-time-series > .sheen-chart-toolbar { flex: 1 1 100%; justify-content: space-between; }
+.sheen-time-series > :is(.sheen-time-series-plot, .sheen-chart-data) { flex: 1 1 100%; }
+.sheen-chart-toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: var(--sheen-space-block-xs) var(--sheen-space-inline-md); flex: 0 1 auto; min-inline-size: 0; margin-block-end: var(--sheen-space-block-sm); margin-inline-start: auto; }
+.sheen-chart-toolbar > .sheen-chart-legend { margin: 0; }
+.sheen-time-series-live { position: absolute; z-index: 2; inset: 0; display: none; overflow: hidden; pointer-events: none; }
+.sheen-time-series[data-enhanced] .sheen-time-series-live { display: block; }
+/* uPlot reports physical canvas coordinates, so the marker origin is the physical top-left corner in both directions. */
+.sheen-time-series-live-marker { position: absolute; top: 0; left: 0; inline-size: 7px; block-size: 7px; margin: -3.5px 0 0 -3.5px; border-radius: 50%; background: currentColor; box-shadow: 0 0 0 2px var(--sheen-color-bg); color: var(--sheen-chart-1); }
+.sheen-time-series-live-marker::after { content: ""; position: absolute; inset: 0; border-radius: 50%; background: currentColor; opacity: 0; animation: sheen-live-pulse calc(var(--sheen-duration-slow) * 8) var(--sheen-ease-standard) infinite; }
+@keyframes sheen-live-pulse { from { opacity: 0.55; scale: 1; } to { opacity: 0; scale: 3.4; } }
 .sheen-chart-caption { display: grid; gap: var(--sheen-space-block-xs); margin-block-end: var(--sheen-space-block-md); }
 .sheen-chart-title { font-size: var(--sheen-text-ui-size); line-height: var(--sheen-text-ui-leading); font-weight: 600; }
 .sheen-chart-summary { color: var(--sheen-color-fg-muted); font-size: var(--sheen-text-ui-sm-size); line-height: var(--sheen-text-ui-sm-leading); }
@@ -82,8 +94,8 @@
 .sheen-chart-tooltip ul { display: grid; gap: var(--sheen-space-block-xs); margin: 0; padding: 0; list-style: none; }
 .sheen-chart-tooltip li { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: var(--sheen-space-inline-xs); }
 .sheen-chart-tooltip-value { font-variant-numeric: tabular-nums; font-weight: 600; }
-.sheen-chart-zoom-controls { display: flex; justify-content: flex-end; gap: var(--sheen-space-inline-xs); margin-block-start: var(--sheen-space-block-xs); }
-.sheen-chart-zoom-controls button { min-block-size: calc(var(--sheen-control-h-md) + var(--sheen-control-border-width) * 2); margin: 0; padding-inline: var(--sheen-space-inline-sm); border: 1px solid transparent; border-radius: var(--sheen-control-radius); background: transparent; color: var(--sheen-color-fg-muted); font: inherit; font-size: var(--sheen-text-caption-size); cursor: pointer; }
+.sheen-chart-zoom-controls { display: flex; justify-content: flex-end; gap: 2px; padding: 2px; border: 1px solid var(--sheen-color-border); border-radius: var(--sheen-control-radius); }
+.sheen-chart-zoom-controls button { display: grid; place-items: center; inline-size: calc(var(--sheen-control-h-md) + 2px); min-block-size: calc(var(--sheen-control-h-md) + 2px); margin: 0; padding: 0; border: 0; border-radius: max(0px, calc(var(--sheen-control-radius) - 2px)); background: transparent; color: var(--sheen-color-fg-muted); cursor: pointer; transition: background-color var(--sheen-duration-fast) var(--sheen-ease-standard), color var(--sheen-duration-fast) var(--sheen-ease-standard); }
 .sheen-chart-zoom-controls button:hover:not(:disabled) { background: var(--sheen-color-bg-hover); color: var(--sheen-color-fg); }
 .sheen-chart-zoom-controls button:focus-visible { outline: 2px solid var(--sheen-color-focus-ring); outline-offset: 2px; box-shadow: 0 0 0 2px var(--sheen-color-focus-ring-offset); }
 .sheen-chart-zoom-controls button:disabled { color: var(--sheen-color-fg-subtle); cursor: not-allowed; }
@@ -107,20 +119,20 @@
 .sheen-chart-inspection-band { fill: color-mix(in oklch, var(--sheen-color-accent) 10%, transparent); stroke: var(--sheen-chart-crosshair); stroke-width: 1; stroke-dasharray: 3 3; vector-effect: non-scaling-stroke; }
 .sheen-svg-chart :is([data-series] .sheen-chart-series-line, [data-series] .sheen-chart-series-area, .sheen-chart-bars rect)[data-hidden="true"],
 .sheen-svg-chart [data-series][data-hidden="true"] { display: none; }
-:is(.sheen-chart-series-line, .sheen-chart-series-area, .sheen-chart-bars rect, .sheen-chart-legend-marker)[data-color="chart-1"] { color: var(--sheen-chart-1); }
-:is(.sheen-chart-series-line, .sheen-chart-series-area, .sheen-chart-bars rect, .sheen-chart-legend-marker)[data-color="chart-2"] { color: var(--sheen-chart-2); }
-:is(.sheen-chart-series-line, .sheen-chart-series-area, .sheen-chart-bars rect, .sheen-chart-legend-marker)[data-color="chart-3"] { color: var(--sheen-chart-3); }
-:is(.sheen-chart-series-line, .sheen-chart-series-area, .sheen-chart-bars rect, .sheen-chart-legend-marker)[data-color="chart-4"] { color: var(--sheen-chart-4); }
-:is(.sheen-chart-series-line, .sheen-chart-series-area, .sheen-chart-bars rect, .sheen-chart-legend-marker)[data-color="chart-5"] { color: var(--sheen-chart-5); }
-:is(.sheen-chart-series-line, .sheen-chart-series-area, .sheen-chart-bars rect, .sheen-chart-legend-marker)[data-color="chart-6"] { color: var(--sheen-chart-6); }
-:is(.sheen-chart-series-line, .sheen-chart-series-area, .sheen-chart-bars rect, .sheen-chart-legend-marker)[data-color="chart-7"] { color: var(--sheen-chart-7); }
-:is(.sheen-chart-series-line, .sheen-chart-series-area, .sheen-chart-bars rect, .sheen-chart-legend-marker)[data-color="chart-8"] { color: var(--sheen-chart-8); }
-:is(.sheen-chart-series-line, .sheen-chart-series-area, .sheen-chart-bars rect, .sheen-chart-legend-marker)[data-color="market-up"] { color: var(--sheen-color-market-up); }
-:is(.sheen-chart-series-line, .sheen-chart-series-area, .sheen-chart-bars rect, .sheen-chart-legend-marker)[data-color="market-down"] { color: var(--sheen-color-market-down); }
-:is(.sheen-chart-series-line, .sheen-chart-series-area, .sheen-chart-bars rect, .sheen-chart-legend-marker)[data-color="market-flat"] { color: var(--sheen-color-market-flat); }
-:is(.sheen-chart-series-line, .sheen-chart-series-area, .sheen-chart-bars rect, .sheen-chart-legend-marker)[data-color="accent"] { color: var(--sheen-color-accent); }
-:is(.sheen-chart-series-line, .sheen-chart-series-area, .sheen-chart-bars rect, .sheen-chart-legend-marker)[data-color="foreground"] { color: var(--sheen-color-fg); }
-:is(.sheen-chart-series-line, .sheen-chart-series-area, .sheen-chart-bars rect, .sheen-chart-legend-marker)[data-color="muted"] { color: var(--sheen-color-fg-muted); }
+:is(.sheen-chart-series-line, .sheen-chart-series-area, .sheen-chart-bars rect, .sheen-chart-legend-marker, .sheen-time-series-live-marker)[data-color="chart-1"] { color: var(--sheen-chart-1); }
+:is(.sheen-chart-series-line, .sheen-chart-series-area, .sheen-chart-bars rect, .sheen-chart-legend-marker, .sheen-time-series-live-marker)[data-color="chart-2"] { color: var(--sheen-chart-2); }
+:is(.sheen-chart-series-line, .sheen-chart-series-area, .sheen-chart-bars rect, .sheen-chart-legend-marker, .sheen-time-series-live-marker)[data-color="chart-3"] { color: var(--sheen-chart-3); }
+:is(.sheen-chart-series-line, .sheen-chart-series-area, .sheen-chart-bars rect, .sheen-chart-legend-marker, .sheen-time-series-live-marker)[data-color="chart-4"] { color: var(--sheen-chart-4); }
+:is(.sheen-chart-series-line, .sheen-chart-series-area, .sheen-chart-bars rect, .sheen-chart-legend-marker, .sheen-time-series-live-marker)[data-color="chart-5"] { color: var(--sheen-chart-5); }
+:is(.sheen-chart-series-line, .sheen-chart-series-area, .sheen-chart-bars rect, .sheen-chart-legend-marker, .sheen-time-series-live-marker)[data-color="chart-6"] { color: var(--sheen-chart-6); }
+:is(.sheen-chart-series-line, .sheen-chart-series-area, .sheen-chart-bars rect, .sheen-chart-legend-marker, .sheen-time-series-live-marker)[data-color="chart-7"] { color: var(--sheen-chart-7); }
+:is(.sheen-chart-series-line, .sheen-chart-series-area, .sheen-chart-bars rect, .sheen-chart-legend-marker, .sheen-time-series-live-marker)[data-color="chart-8"] { color: var(--sheen-chart-8); }
+:is(.sheen-chart-series-line, .sheen-chart-series-area, .sheen-chart-bars rect, .sheen-chart-legend-marker, .sheen-time-series-live-marker)[data-color="market-up"] { color: var(--sheen-color-market-up); }
+:is(.sheen-chart-series-line, .sheen-chart-series-area, .sheen-chart-bars rect, .sheen-chart-legend-marker, .sheen-time-series-live-marker)[data-color="market-down"] { color: var(--sheen-color-market-down); }
+:is(.sheen-chart-series-line, .sheen-chart-series-area, .sheen-chart-bars rect, .sheen-chart-legend-marker, .sheen-time-series-live-marker)[data-color="market-flat"] { color: var(--sheen-color-market-flat); }
+:is(.sheen-chart-series-line, .sheen-chart-series-area, .sheen-chart-bars rect, .sheen-chart-legend-marker, .sheen-time-series-live-marker)[data-color="accent"] { color: var(--sheen-color-accent); }
+:is(.sheen-chart-series-line, .sheen-chart-series-area, .sheen-chart-bars rect, .sheen-chart-legend-marker, .sheen-time-series-live-marker)[data-color="foreground"] { color: var(--sheen-color-fg); }
+:is(.sheen-chart-series-line, .sheen-chart-series-area, .sheen-chart-bars rect, .sheen-chart-legend-marker, .sheen-time-series-live-marker)[data-color="muted"] { color: var(--sheen-color-fg-muted); }
 .sheen-chart-fallback-line[data-encoding="dashed"], .sheen-chart-series-line[data-encoding="dashed"] { stroke-dasharray: 7 4; }
 .sheen-chart-fallback-line[data-encoding="dotted"], .sheen-chart-series-line[data-encoding="dotted"] { stroke-dasharray: 2 4; }
 .sheen-chart-fallback-line[data-encoding="dash-dot"], .sheen-chart-series-line[data-encoding="dash-dot"] { stroke-dasharray: 9 3 2 3; }
@@ -148,8 +160,77 @@
 .sheen-chart-legend-marker[data-encoding="dashed"] { border: 0; border-radius: 0; background: repeating-linear-gradient(to right, currentColor 0 0.25rem, transparent 0.25rem 0.42rem); }
 .sheen-chart-legend-marker[data-encoding="dotted"] { block-size: 0.5rem; border: 0; border-radius: 0; background: radial-gradient(circle, currentColor 0 0.1rem, transparent 0.11rem) 0 50% / 0.28rem 0.28rem repeat-x; }
 .sheen-chart-legend-marker[data-encoding="dash-dot"] { border: 0; border-radius: 0; background: repeating-linear-gradient(to right, currentColor 0 0.3rem, transparent 0.3rem 0.42rem, currentColor 0.42rem 0.5rem, transparent 0.5rem 0.68rem); }
+.sheen-chart-mark { color: var(--sheen-chart-1); fill: currentColor; }
+.sheen-chart-mark[data-color="chart-1"] { color: var(--sheen-chart-1); }
+.sheen-chart-mark[data-color="chart-2"] { color: var(--sheen-chart-2); }
+.sheen-chart-mark[data-color="chart-3"] { color: var(--sheen-chart-3); }
+.sheen-chart-mark[data-color="chart-4"] { color: var(--sheen-chart-4); }
+.sheen-chart-mark[data-color="chart-5"] { color: var(--sheen-chart-5); }
+.sheen-chart-mark[data-color="chart-6"] { color: var(--sheen-chart-6); }
+.sheen-chart-mark[data-color="chart-7"] { color: var(--sheen-chart-7); }
+.sheen-chart-mark[data-color="chart-8"] { color: var(--sheen-chart-8); }
+.sheen-chart-mark[data-color="market-up"] { color: var(--sheen-color-market-up); }
+.sheen-chart-mark[data-color="market-down"] { color: var(--sheen-color-market-down); }
+.sheen-chart-mark[data-color="market-flat"] { color: var(--sheen-color-market-flat); }
+.sheen-chart-mark[data-color="accent"] { color: var(--sheen-color-accent); }
+.sheen-chart-mark[data-color="foreground"] { color: var(--sheen-color-fg); }
+.sheen-chart-mark[data-color="muted"] { color: var(--sheen-color-fg-muted); }
+.sheen-svg-chart .sheen-chart-mark[data-hidden="true"] { display: none; }
+.sheen-chart-legend-marker[data-shape] { inline-size: 0.625rem; block-size: 0.625rem; border: 0; border-radius: 0; background: currentColor; }
+.sheen-chart-legend-marker[data-shape="square"] { border-radius: 2px; }
+.sheen-chart-legend-marker[data-shape="circle"] { border-radius: 50%; }
+.sheen-chart-legend-marker[data-shape="triangle"] { clip-path: polygon(50% 0, 100% 100%, 0 100%); }
+.sheen-chart-legend-marker[data-shape="diamond"] { clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); }
+.sheen-chart-inspection-ring { fill: none; stroke: var(--sheen-color-fg); stroke-width: 2; vector-effect: non-scaling-stroke; }
+.sheen-chart-inspection-cell { fill: none; stroke: var(--sheen-color-fg); stroke-width: 2; vector-effect: non-scaling-stroke; }
+.sheen-donut-track { fill: none; stroke: var(--sheen-chart-grid); }
+.sheen-donut-slices .sheen-chart-mark[data-inspected] { stroke: var(--sheen-color-fg); stroke-width: 2; vector-effect: non-scaling-stroke; }
+.sheen-donut-center { position: absolute; inset-block-start: 50%; inset-inline-start: 50%; translate: -50% -50%; display: grid; justify-items: center; gap: var(--sheen-space-block-xs); inline-size: max-content; text-align: center; pointer-events: none; }
+.sheen-donut-total { color: var(--sheen-color-fg); font-size: var(--sheen-text-stat-size); line-height: var(--sheen-text-stat-leading); font-weight: var(--sheen-text-stat-weight); letter-spacing: var(--sheen-text-stat-tracking); font-variant-numeric: tabular-nums; }
+.sheen-donut-total-label { color: var(--sheen-color-fg-muted); font-size: var(--sheen-text-caption-size); line-height: var(--sheen-text-caption-leading); }
+.sheen-scatter-points .sheen-chart-mark { fill-opacity: 0.78; stroke: currentColor; stroke-width: 1; vector-effect: non-scaling-stroke; }
+.sheen-heatmap-cell, .sheen-heatmap-swatch { fill: color-mix(in oklch, currentColor var(--sheen-heatmap-mix), transparent); background: color-mix(in oklch, currentColor var(--sheen-heatmap-mix), transparent); }
+:is(.sheen-heatmap-cell, .sheen-heatmap-swatch)[data-step="0"] { --sheen-heatmap-mix: 14%; }
+:is(.sheen-heatmap-cell, .sheen-heatmap-swatch)[data-step="1"] { --sheen-heatmap-mix: 32%; }
+:is(.sheen-heatmap-cell, .sheen-heatmap-swatch)[data-step="2"] { --sheen-heatmap-mix: 52%; }
+:is(.sheen-heatmap-cell, .sheen-heatmap-swatch)[data-step="3"] { --sheen-heatmap-mix: 74%; }
+:is(.sheen-heatmap-cell, .sheen-heatmap-swatch)[data-step="4"] { --sheen-heatmap-mix: 100%; }
+:is(.sheen-heatmap-cell, .sheen-heatmap-swatch)[data-step="missing"] { fill: none; background: repeating-linear-gradient(135deg, var(--sheen-chart-grid) 0 1px, transparent 1px 4px); stroke: var(--sheen-chart-axis); stroke-width: 1; stroke-dasharray: 2 2; vector-effect: non-scaling-stroke; }
+.sheen-heatmap-scale { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sheen-space-block-xs) var(--sheen-space-inline-md); margin-block-start: var(--sheen-space-block-md); color: var(--sheen-color-fg-muted); font-size: var(--sheen-text-caption-size); font-variant-numeric: tabular-nums; }
+.sheen-heatmap-scale-label { color: var(--sheen-color-fg); font-weight: 600; }
+.sheen-heatmap-scale ol { display: flex; align-items: flex-start; margin: 0; padding: 0; list-style: none; }
+.sheen-heatmap-scale li { display: grid; gap: 2px; inline-size: 3rem; }
+.sheen-heatmap-scale li:last-child { inline-size: auto; padding-block-start: calc(0.625rem + 2px); translate: -50% 0; }
+.sheen-heatmap-scale li > span:last-child { translate: -50% 0; inline-size: max-content; }
+.sheen-heatmap-scale li:first-child > span:last-child { translate: none; }
+.sheen-heatmap-swatch { display: block; block-size: 0.625rem; }
+.sheen-heatmap-scale li + li .sheen-heatmap-swatch { margin-inline-start: 2px; }
+.sheen-heatmap-scale-missing { display: inline-flex; align-items: center; gap: var(--sheen-space-inline-xs); }
+.sheen-heatmap-scale-missing .sheen-heatmap-swatch { inline-size: 1rem; border: 1px dashed var(--sheen-chart-axis); }
+.sheen-sparkline[data-variant="bar"] path { fill: currentColor; stroke: none; }
+.sheen-gauge { min-inline-size: 0; margin: 0; color: var(--sheen-color-fg); font-family: var(--sheen-font-sans); }
+.sheen-gauge > .sheen-chart-caption { margin-block-end: var(--sheen-space-block-xs); }
+.sheen-gauge-meter { position: relative; }
+.sheen-gauge-meter > svg { display: block; inline-size: 100%; block-size: auto; overflow: visible; }
+.sheen-gauge-track .sheen-chart-mark { fill-opacity: 0.2; }
+.sheen-gauge-track .sheen-chart-mark[data-tone="success"], .sheen-gauge-fill[data-tone="success"] { color: var(--sheen-color-success); }
+.sheen-gauge-track .sheen-chart-mark[data-tone="warning"], .sheen-gauge-fill[data-tone="warning"] { color: var(--sheen-color-warning); }
+.sheen-gauge-track .sheen-chart-mark[data-tone="danger"], .sheen-gauge-fill[data-tone="danger"] { color: var(--sheen-color-danger); }
+.sheen-gauge-track .sheen-chart-mark[data-tone]:not([data-tone="base"]) { fill-opacity: 0.32; }
+.sheen-gauge-ticks line { stroke: var(--sheen-chart-axis); stroke-width: 2; vector-effect: non-scaling-stroke; }
+/* The arc sweeps clockwise in physical space, so its end labels use physical offsets in every direction. */
+.sheen-gauge-bounds { position: relative; block-size: calc(var(--sheen-text-caption-size) * 1.5); color: var(--sheen-chart-axis); font-size: var(--sheen-text-caption-size); font-variant-numeric: tabular-nums; }
+.sheen-gauge-bounds > span { position: absolute; inset-block-start: 0; translate: -50% 0; white-space: nowrap; }
+.sheen-gauge-bounds > span:first-child { left: 15%; }
+.sheen-gauge-bounds > span:last-child { left: 85%; }
+.sheen-gauge-readout { position: absolute; inset-inline: 0; inset-block-start: 38%; display: grid; justify-items: center; gap: var(--sheen-space-block-xs); text-align: center; }
+.sheen-gauge-value { color: var(--sheen-color-fg); font-size: var(--sheen-text-stat-size); line-height: var(--sheen-text-stat-leading); font-weight: var(--sheen-text-stat-weight); letter-spacing: var(--sheen-text-stat-tracking); font-variant-numeric: tabular-nums; }
+.sheen-gauge-band { color: var(--sheen-color-fg-muted); font-size: var(--sheen-text-caption-size); line-height: var(--sheen-text-caption-leading); font-weight: 600; }
+.sheen-gauge-meter[data-missing] .sheen-gauge-value { color: var(--sheen-color-fg-muted); }
 @media (forced-colors: active) {
   .sheen-sparkline, .sheen-stat-trend, .sheen-chart-fallback-line, .sheen-chart-series-line, .sheen-chart-series-area, .sheen-chart-bars rect, .sheen-chart-legend-marker { color: CanvasText; stroke: CanvasText; }
   .sheen-chart-series-area, .sheen-chart-bars rect, .sheen-chart-legend-marker { fill: Canvas; background: Canvas; }
+  .sheen-chart-mark { color: CanvasText; stroke: CanvasText; stroke-width: 1; }
+  .sheen-heatmap-swatch { forced-color-adjust: none; }
 }
 }

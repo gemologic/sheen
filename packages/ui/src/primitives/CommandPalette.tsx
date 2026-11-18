@@ -161,12 +161,12 @@ export function CommandPalette(props: CommandPaletteProps): JSX.Element {
     onCleanup(() => controller.abort());
   });
 
-  const registeredCommands = createMemo<readonly CommandPaletteCommand[]>(() => shortcuts.bindings().filter(binding => !binding.shadowed).map(binding => Object.freeze({
+  // The palette's own open shortcut is not a command inside the palette.
+  const registeredCommands = createMemo<readonly CommandPaletteCommand[]>(() => shortcuts.bindings().filter(binding => !binding.shadowed && !(binding.keys === "mod+k" && binding.label === theme.messages().openCommandPalette)).map(binding => Object.freeze({
     id: `shortcut:${binding.id}`,
     label: binding.label,
     group: binding.group,
     keywords: [binding.keys, binding.displayKeys, binding.scope],
-    disabled: binding.keys === "mod+k" && binding.label === theme.messages().openCommandPalette,
     run: () => { shortcuts.run(binding.id); },
   })));
   const commands = createMemo(() => {

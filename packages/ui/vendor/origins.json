@@ -17,11 +17,11 @@
   },
   {
     "name": "solid-js",
-    "version": "1.9.15",
+    "version": "1.9.19",
     "directory": "solid-web",
-    "tarball": "https://registry.npmjs.org/solid-js/-/solid-js-1.9.15.tgz",
-    "integrity": "sha512-EeiY2xfpZJqPLjXspVEKjAII4yv8NyG//NxZ3IpOFHdUNnnTyL0uJOeS9LWGvA7cFCz5y94cjFwYlmw5Luncsg==",
-    "patch": "patches/solid-js@1.9.15.patch"
+    "tarball": "https://registry.npmjs.org/solid-js/-/solid-js-1.9.19.tgz",
+    "integrity": "sha512-NIrV/6o1FtmrA9iuAAYvnQJZaHrGcaH3LKSVj4kCiZfwqjCtJNDgIgR9XcqYl6KR/Lb3oRx1HrlyswPWR8SRvw==",
+    "patch": "patches/solid-js@1.9.19.patch"
   },
   {
     "name": "cmdk-solid",

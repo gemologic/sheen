@@ -70,12 +70,20 @@ const forcedColorTokens = {
   "color-market-flat-on": "ButtonFace !important",
 } satisfies Readonly<Record<ColorTokenName, string>>;
 
-export function buildCore(): string {
-  const primitiveTokens = Object.fromEntries(Object.entries(primitives).map(([key, value]) => [key.replaceAll(".", "-"), value]));
-  return `:root {\n${emitTokenDeclarations(primitiveTokens)}\n}
-@supports (color: oklch(50% 0 0)) {
-  :root {\n${emitTokenDeclarations(primitiveTokens, true)}\n  }
+/** Layering primitives still read by component CSS; every other tier-one value ships only in primitives.css. */
+const isRuntimePrimitive = (key: string): boolean => key.startsWith("z.") || key.startsWith("shadow.");
+
+function primitiveDeclarations(include: (key: string) => boolean): string {
+  return emitTokenDeclarations(Object.fromEntries(Object.entries(primitives).filter(([key]) => include(key)).map(([key, value]) => [key.replaceAll(".", "-"), value])));
 }
+
+/** Opt-in tier-one ramps for token tooling. Themes ship resolved values, so applications do not need this. */
+export function buildPrimitives(): string {
+  return `:root {\n${primitiveDeclarations(key => !isRuntimePrimitive(key))}\n}\n`;
+}
+
+export function buildCore(): string {
+  return `:root {\n${primitiveDeclarations(isRuntimePrimitive)}\n}
 [data-sheen-theme] {
   --sheen-button-radius: var(--sheen-control-radius);
   --sheen-density-row-compact: 28px; --sheen-density-row-comfortable: 34px; --sheen-density-row-spacious: 42px;
@@ -126,9 +134,12 @@ ${Object.entries(semanticDefaults).filter(([name]) => name.startsWith("space-") 
 }
 [data-sheen-theme="studio"]:not([data-sheen-density]) { --sheen-table-row-h: 40px; }
 [data-sheen-theme="studio"][data-sheen-radius="soft"] { --sheen-control-radius: 6px; --sheen-surface-radius: 12px; }
-[data-sheen-motion="reduced"] { --sheen-duration-fast: 0ms; --sheen-duration-normal: 0ms; --sheen-duration-slow: 0ms; }
+[data-sheen-motion="reduced"] { --sheen-duration-fast: 0ms; --sheen-duration-normal: 0ms; --sheen-duration-slow: 0ms; --sheen-duration-press: 0ms; --sheen-duration-spin: 0ms; --sheen-motion-stagger: 0ms; --sheen-motion-distance-sm: 0px; --sheen-motion-distance-lg: 0px; }
 @media (prefers-reduced-motion: reduce) {
-  [data-sheen-theme] { --sheen-duration-fast: 0ms; --sheen-duration-normal: 0ms; --sheen-duration-slow: 0ms; }
+  [data-sheen-theme] { --sheen-duration-fast: 0ms; --sheen-duration-normal: 0ms; --sheen-duration-slow: 0ms; --sheen-duration-press: 0ms; --sheen-duration-spin: 0ms; --sheen-motion-stagger: 0ms; --sheen-motion-distance-sm: 0px; --sheen-motion-distance-lg: 0px; }
+}
+@media (pointer: coarse) {
+  :is([data-sheen-theme], [data-sheen-density]) { --sheen-control-h-xs: 32px; --sheen-control-h-sm: 36px; --sheen-control-h-md: 40px; --sheen-control-h-lg: 44px; }
 }
 @media (forced-colors: active) {
   :is([data-sheen-theme], [data-sheen-mode], [data-sheen-accent]) {

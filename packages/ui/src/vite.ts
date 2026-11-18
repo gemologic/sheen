@@ -40,11 +40,11 @@ export function sheenRuntime(): Plugin {
       try {
         filename = application.resolve("solid-js/package.json");
       } catch {
-        throw new Error("sheenRuntime requires solid-js@1.9.15 as an application dependency");
+        throw new Error("sheenRuntime requires solid-js@1.9.19 as an application dependency");
       }
       const metadata: unknown = JSON.parse(await readFile(filename, "utf8"));
-      if (typeof metadata !== "object" || metadata === null || !("version" in metadata) || metadata.version !== "1.9.15") {
-        throw new Error("sheenRuntime is qualified for solid-js@1.9.15; install that version before using its vendored DOM renderer");
+      if (typeof metadata !== "object" || metadata === null || !("version" in metadata) || metadata.version !== "1.9.19") {
+        throw new Error("sheenRuntime is qualified for solid-js@1.9.19; install that version before using its vendored DOM renderer");
       }
     },
   };

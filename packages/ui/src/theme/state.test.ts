@@ -18,6 +18,12 @@ describe("theme state", () => {
     expect(readThemeState(null, defaultThemeState)).toEqual(defaultThemeState);
     expect(readThemeState({ theme: "private" }, defaultThemeState, ["private"])).toMatchObject({ theme: "private" });
   });
+  it("accepts registered custom accents and still rejects unknown ones", () => {
+    const accents = ["jade", "amber", "acme"];
+    expect(readThemeState({ accent: "acme" }, defaultThemeState, undefined, accents)).toMatchObject({ accent: "acme" });
+    expect(readThemeState({ accent: "acme" }, defaultThemeState)).toMatchObject({ accent: defaultThemeState.accent });
+    expect(createThemeScript({ accents: ["acme"] })).toContain('"acme"');
+  });
   it("encodes inline scripts without allowing script termination", () => {
     expect(createThemeScript({ storageKey: "</script><script>alert(1)</script>" })).not.toContain("</script>");
     expect(createScopeScript({ theme: "</script>" }, defaultThemeState)).not.toContain("</script>");

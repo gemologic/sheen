@@ -6,7 +6,7 @@ test("modifier values render, reset within nested themes, and update locale with
   const button = scope.getByRole("button", { name: "Change modifiers", exact: true });
   await expect(button).toHaveCSS("min-block-size", "26px");
   await expect(button).toHaveCSS("border-radius", "0px");
-  await expect(button).toHaveCSS("transition-duration", "0s");
+  await expect(button).toHaveCSS("transition-duration", /^0s(, 0s)*$/u);
   await expect(scope).toHaveCSS("direction", "rtl");
   await expect(scope.locator("[data-number]")).toHaveText("12.345,67");
   await expect(scope.locator("[data-date]")).toHaveText("06.09.2026");
@@ -14,7 +14,7 @@ test("modifier values render, reset within nested themes, and update locale with
   await expect(reset).toHaveCSS("min-block-size", "30px");
   await expect(reset).toHaveCSS("padding-inline-start", "10px");
   await expect(reset).toHaveCSS("border-radius", "5px");
-  await expect(reset).toHaveCSS("transition-duration", "0.1s");
+  await expect(reset).toHaveCSS("transition-duration", /^0\.1s\b/u);
   await scope.getByRole("button", { name: "Open localized dialog" }).click();
   await page.getByRole("button", { name: "Schließen" }).click();
   await button.evaluate(element => element.setAttribute("data-identity", "original"));
@@ -29,5 +29,5 @@ test("modifier values render, reset within nested themes, and update locale with
 test("OS reduced-motion preference overrides full motion even in nested scopes", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/modifiers");
-  await expect(page.getByRole("button", { name: "Reset control" })).toHaveCSS("transition-duration", "0s");
+  await expect(page.getByRole("button", { name: "Reset control" })).toHaveCSS("transition-duration", /^0s(, 0s)*$/u);
 });

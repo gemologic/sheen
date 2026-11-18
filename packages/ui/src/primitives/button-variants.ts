@@ -12,7 +12,7 @@ export interface ButtonVariantProps {
 export function buttonVariants(options: ButtonVariantProps = {}): string {
   return cn(
     "sheen-button",
-    `sheen-button-${options.variant ?? "ghost"}`,
+    `sheen-button-${options.variant ?? "outline"}`,
     `sheen-button-${options.tone ?? "neutral"}`,
     `sheen-button-${options.size ?? "md"}`,
     options.class,

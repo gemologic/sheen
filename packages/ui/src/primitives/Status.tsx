@@ -27,7 +27,7 @@ export function Tag(props: TagProps): JSX.Element {
   return <Badge {...others} class={cn("sheen-tag", local.class)} data-disabled={local.disabled || undefined}>
     <span>{local.children ?? local.label}</span>
     <Show when={local.onRemove}>
-      <Button class="sheen-tag-remove" size="xs" disabled={local.disabled} aria-label={local.removeLabel ?? `${theme.messages().remove} ${local.label}`} onClick={() => local.onRemove?.()}>{theme.messages().remove}</Button>
+      <Button variant="ghost" class="sheen-tag-remove" size="xs" disabled={local.disabled} aria-label={local.removeLabel ?? `${theme.messages().remove} ${local.label}`} onClick={() => local.onRemove?.()}>{theme.messages().remove}</Button>
     </Show>
   </Badge>;
 }

@@ -58,7 +58,7 @@ describe("AdminApp SSR", () => {
     ], commandPalette: { sources: [{ kind: "static", id: "commands", commands: [{ id: "new", label: "New record", group: "Create", run: () => {} }] }] } });
     expect(html).toContain('data-admin-account-target="sidebar-header"');
     expect(html).toContain('data-admin-workspace-target="sidebar-footer"');
-    expect(html).toContain("Command");
+    expect(html).toContain("Search or jump to…");
     expect(html).not.toContain('role="dialog"');
     expect(html.match(/Northstar/g)).toHaveLength(1);
   });

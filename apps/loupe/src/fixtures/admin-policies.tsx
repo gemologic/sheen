@@ -4,6 +4,7 @@ import { useUnsavedChanges } from "@gemologic/sheen-patterns";
 import { For, Show, createSignal, onCleanup } from "solid-js";
 import { AdminPolicyValidationError, parseAdminPolicy, policyScopeGroups } from "./admin-policy-data.ts";
 import type { AdminPolicy } from "./admin-policy-data.ts";
+import "@gemologic/sheen-patterns/admin/styles.css";
 
 export function AdminPolicies() {
   const services = useAdminServices();

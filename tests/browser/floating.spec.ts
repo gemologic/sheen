@@ -123,7 +123,7 @@ test("Popover preserves drafts, unwinds nested layers, and respects controlled r
   await trigger.click();
   const popover = page.getByRole("dialog", { name: "View options", exact: true });
   const input = popover.getByRole("textbox", { name: "View name" });
-  await expect(popover).toHaveCSS("animation-name", "sheen-dialog-enter");
+  await expect(popover).toHaveCSS("animation-name", "sheen-layer-enter");
   await expect(input).toBeFocused();
   await input.fill("Retained view");
   await input.evaluate(element => element.setAttribute("data-original", "retained"));

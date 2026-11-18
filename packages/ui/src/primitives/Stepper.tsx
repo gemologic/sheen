@@ -1,4 +1,5 @@
 import { For, Show, createMemo, splitProps } from "solid-js";
+import { Glyph } from "./Glyph.tsx";
 import type { Accessor, JSX } from "solid-js";
 import { useTheme } from "../theme/ThemeProvider.tsx";
 import { cn } from "../utils/cn.ts";
@@ -53,8 +54,8 @@ function StepLabel(props: { readonly step: Accessor<StepperStep> }): JSX.Element
     if (step.kind === "action" && !step.disabled) step.onSelect();
   };
   return <Show when={props.step().kind === "link"} fallback={<Show when={props.step().kind === "action"} fallback={<strong>{props.step().label}</strong>}>
-    <Button variant="link" disabled={actionDisabled()} onClick={select}>{props.step().label}</Button>
-  </Show>}><Link href={href()}>{props.step().label}</Link></Show>;
+    <Button variant="ghost" class="sheen-stepper-action" disabled={actionDisabled()} onClick={select}>{props.step().label}</Button>
+  </Show>}><Link variant="quiet" href={href()}>{props.step().label}</Link></Show>;
 }
 
 /** A semantic workflow progress list with native link and action variants. */
@@ -83,15 +84,14 @@ export function Stepper(props: StepperProps): JSX.Element {
     if (state === "error") return theme.messages().workflowError;
     return theme.messages().workflowUpcoming;
   };
-  const marker = (state: WorkflowState, index: number): string => {
-    if (state === "completed") return "✓";
-    if (state === "current") return "●";
-    if (state === "error") return "!";
+  const marker = (state: WorkflowState, index: number): JSX.Element => {
+    if (state === "completed") return <Glyph name="check" />;
+    if (state === "error") return <Glyph name="alert" />;
     return String(index + 1);
   };
   return <nav {...others} ref={element => { if (typeof local.ref === "function") local.ref(element); }} class={cn("sheen-stepper", local.class)} aria-label={local["aria-label"] ?? local.label}
     aria-busy={local.refreshing || undefined} data-orientation={local.orientation ?? "horizontal"} data-density={local.density ?? "default"} data-refreshing={local.refreshing || undefined}>
-    <progress class="sheen-stepper-progress" max={Math.max(1, ids().length)} value={completed()} aria-label={theme.messages().stepperProgress.replaceAll("{label}", local.label)} />
+    <progress class="sheen-stepper-progress sheen-sr-only" max={Math.max(1, ids().length)} value={completed()} aria-label={theme.messages().stepperProgress.replaceAll("{label}", local.label)} />
     <ol class="sheen-stepper-list"><For each={ids()}>{(id, index) => {
       const step = () => byId().get(id);
       return <Show when={step()}>{current => <li class="sheen-stepper-step" data-step-id={id} data-state={current().state} aria-current={current().state === "current" ? "step" : undefined}>

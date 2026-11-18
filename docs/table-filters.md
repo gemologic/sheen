@@ -8,7 +8,7 @@ FilterBar is a controlled editor for the same versioned `FilterNode` used by cli
 
 Existing `and`, `or`, and `not` groups are preserved when a leaf is edited. Removing a leaf simplifies empty and single-child groups without changing their truth semantics. A new condition is appended to a root `and`; any other root expression is kept intact and wrapped with the new condition in an `and`. The chip summary identifies direct negation and inherited excluded groups rather than presenting every imported expression as a flat conjunction.
 
-FilterBar reconciles chip identity across the validated AST copies. Editing a condition retains its trigger. Removing a focused chip moves focus to the next surviving removal action, then the previous one, then `+ Filter`. A controlled owner may delay or reject an update; accepted chips remain visible while it decides.
+FilterBar reconciles chip identity across the validated AST copies. Editing a condition retains its trigger. Removing a focused chip moves focus to the next surviving removal action, then the previous one, then `Add filter`. A controlled owner may delay or reject an update; accepted chips remain visible while it decides.
 
 ## Typed editors
 

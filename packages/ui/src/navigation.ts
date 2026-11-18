@@ -1,6 +1,7 @@
 export { createShortcutRegistry } from "./utils/shortcut-registry.ts";
 export type { PendingShortcut, ShortcutAction, ShortcutBinding, ShortcutDefinition, ShortcutInput, ShortcutRegistryOptions } from "./utils/shortcut-registry.ts";
-export { ShortcutProvider, useShortcut, usePendingShortcut, useShortcutBindings, useShortcutCommands } from "./primitives/ShortcutProvider.tsx";
+export { ShortcutProvider, useShortcut, useShortcutLabel, usePendingShortcut, useShortcutBindings, useShortcutCommands } from "./primitives/ShortcutProvider.tsx";
+export { formatShortcut } from "./utils/shortcut-registry.ts";
 export type { ShortcutProviderProps } from "./primitives/ShortcutProvider.tsx";
 export { ShortcutSheet } from "./primitives/ShortcutSheet.tsx";
 export type { ShortcutSheetProps } from "./primitives/ShortcutSheet.tsx";

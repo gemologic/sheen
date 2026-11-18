@@ -43,6 +43,221 @@ import { radixLock, phosphorLock } from "./data/lock.ts";
 import { radixUnlock, phosphorUnlock } from "./data/unlock.ts";
 import { radixVisible, phosphorVisible } from "./data/visible.ts";
 import { radixHidden, phosphorHidden } from "./data/hidden.ts";
+import { radixArrowUpRight, phosphorArrowUpRight } from "./data/arrow-up-right.ts";
+import { radixChevronsUpDown, phosphorChevronsUpDown } from "./data/chevrons-up-down.ts";
+import { radixChevronDoubleLeft, phosphorChevronDoubleLeft } from "./data/chevron-double-left.ts";
+import { radixChevronDoubleRight, phosphorChevronDoubleRight } from "./data/chevron-double-right.ts";
+import { radixLogin, phosphorLogin } from "./data/login.ts";
+import { radixLogout, phosphorLogout } from "./data/logout.ts";
+import { radixExpand, phosphorExpand } from "./data/expand.ts";
+import { radixCollapse, phosphorCollapse } from "./data/collapse.ts";
+import { radixDragHandle, phosphorDragHandle } from "./data/drag-handle.ts";
+import { radixMove, phosphorMove } from "./data/move.ts";
+import { radixSwap, phosphorSwap } from "./data/swap.ts";
+import { radixSort, phosphorSort } from "./data/sort.ts";
+import { radixDashboard, phosphorDashboard } from "./data/dashboard.ts";
+import { radixSidebar, phosphorSidebar } from "./data/sidebar.ts";
+import { radixCompass, phosphorCompass } from "./data/compass.ts";
+import { radixGlobe, phosphorGlobe } from "./data/globe.ts";
+import { radixHelp, phosphorHelp } from "./data/help.ts";
+import { radixCommand, phosphorCommand } from "./data/command.ts";
+import { radixKeyboard, phosphorKeyboard } from "./data/keyboard.ts";
+import { radixAddCircle, phosphorAddCircle } from "./data/add-circle.ts";
+import { radixRemoveCircle, phosphorRemoveCircle } from "./data/remove-circle.ts";
+import { radixUndo, phosphorUndo } from "./data/undo.ts";
+import { radixRedo, phosphorRedo } from "./data/redo.ts";
+import { radixHistory, phosphorHistory } from "./data/history.ts";
+import { radixLink, phosphorLink } from "./data/link.ts";
+import { radixUnlink, phosphorUnlink } from "./data/unlink.ts";
+import { radixShare, phosphorShare } from "./data/share.ts";
+import { radixExport, phosphorExport } from "./data/export.ts";
+import { radixSend, phosphorSend } from "./data/send.ts";
+import { radixSave, phosphorSave } from "./data/save.ts";
+import { radixPrint, phosphorPrint } from "./data/print.ts";
+import { radixCut, phosphorCut } from "./data/cut.ts";
+import { radixClipboard, phosphorClipboard } from "./data/clipboard.ts";
+import { radixCompose, phosphorCompose } from "./data/compose.ts";
+import { radixArchive, phosphorArchive } from "./data/archive.ts";
+import { radixPin, phosphorPin } from "./data/pin.ts";
+import { radixUnpin, phosphorUnpin } from "./data/unpin.ts";
+import { radixBookmark, phosphorBookmark } from "./data/bookmark.ts";
+import { radixBookmarkFilled, phosphorBookmarkFilled } from "./data/bookmark-filled.ts";
+import { radixStar, phosphorStar } from "./data/star.ts";
+import { radixStarFilled, phosphorStarFilled } from "./data/star-filled.ts";
+import { radixHeart, phosphorHeart } from "./data/heart.ts";
+import { radixHeartFilled, phosphorHeartFilled } from "./data/heart-filled.ts";
+import { radixFlag, phosphorFlag } from "./data/flag.ts";
+import { radixTag, phosphorTag } from "./data/tag.ts";
+import { radixZoomIn, phosphorZoomIn } from "./data/zoom-in.ts";
+import { radixZoomOut, phosphorZoomOut } from "./data/zoom-out.ts";
+import { radixSliders, phosphorSliders } from "./data/sliders.ts";
+import { radixBlocked, phosphorBlocked } from "./data/blocked.ts";
+import { radixSparkle, phosphorSparkle } from "./data/sparkle.ts";
+import { radixLightning, phosphorLightning } from "./data/lightning.ts";
+import { radixRocket, phosphorRocket } from "./data/rocket.ts";
+import { radixWrench, phosphorWrench } from "./data/wrench.ts";
+import { radixExtension, phosphorExtension } from "./data/extension.ts";
+import { radixPower, phosphorPower } from "./data/power.ts";
+import { radixQrCode, phosphorQrCode } from "./data/qr-code.ts";
+import { radixFile, phosphorFile } from "./data/file.ts";
+import { radixFileText, phosphorFileText } from "./data/file-text.ts";
+import { radixFileAdd, phosphorFileAdd } from "./data/file-add.ts";
+import { radixFileRemove, phosphorFileRemove } from "./data/file-remove.ts";
+import { radixFileCode, phosphorFileCode } from "./data/file-code.ts";
+import { radixFileImage, phosphorFileImage } from "./data/file-image.ts";
+import { radixFilePdf, phosphorFilePdf } from "./data/file-pdf.ts";
+import { radixFileCsv, phosphorFileCsv } from "./data/file-csv.ts";
+import { radixFileArchive, phosphorFileArchive } from "./data/file-archive.ts";
+import { radixFolder, phosphorFolder } from "./data/folder.ts";
+import { radixFolderOpen, phosphorFolderOpen } from "./data/folder-open.ts";
+import { radixFolderAdd, phosphorFolderAdd } from "./data/folder-add.ts";
+import { radixAttachment, phosphorAttachment } from "./data/attachment.ts";
+import { radixNote, phosphorNote } from "./data/note.ts";
+import { radixBook, phosphorBook } from "./data/book.ts";
+import { radixPackage, phosphorPackage } from "./data/package.ts";
+import { radixMail, phosphorMail } from "./data/mail.ts";
+import { radixMailOpen, phosphorMailOpen } from "./data/mail-open.ts";
+import { radixChat, phosphorChat } from "./data/chat.ts";
+import { radixComment, phosphorComment } from "./data/comment.ts";
+import { radixReply, phosphorReply } from "./data/reply.ts";
+import { radixForward, phosphorForward } from "./data/forward.ts";
+import { radixPhone, phosphorPhone } from "./data/phone.ts";
+import { radixAt, phosphorAt } from "./data/at.ts";
+import { radixHash, phosphorHash } from "./data/hash.ts";
+import { radixQuote, phosphorQuote } from "./data/quote.ts";
+import { radixMegaphone, phosphorMegaphone } from "./data/megaphone.ts";
+import { radixNotificationsOff, phosphorNotificationsOff } from "./data/notifications-off.ts";
+import { radixBot, phosphorBot } from "./data/bot.ts";
+import { radixMicrophone, phosphorMicrophone } from "./data/microphone.ts";
+import { radixMicrophoneOff, phosphorMicrophoneOff } from "./data/microphone-off.ts";
+import { radixHeadset, phosphorHeadset } from "./data/headset.ts";
+import { radixTranslate, phosphorTranslate } from "./data/translate.ts";
+import { radixImage, phosphorImage } from "./data/image.ts";
+import { radixCamera, phosphorCamera } from "./data/camera.ts";
+import { radixVideo, phosphorVideo } from "./data/video.ts";
+import { radixPlay, phosphorPlay } from "./data/play.ts";
+import { radixPause, phosphorPause } from "./data/pause.ts";
+import { radixStop, phosphorStop } from "./data/stop.ts";
+import { radixSkipForward, phosphorSkipForward } from "./data/skip-forward.ts";
+import { radixSkipBack, phosphorSkipBack } from "./data/skip-back.ts";
+import { radixVolume, phosphorVolume } from "./data/volume.ts";
+import { radixVolumeLow, phosphorVolumeLow } from "./data/volume-low.ts";
+import { radixMute, phosphorMute } from "./data/mute.ts";
+import { radixMusic, phosphorMusic } from "./data/music.ts";
+import { radixCart, phosphorCart } from "./data/cart.ts";
+import { radixStore, phosphorStore } from "./data/store.ts";
+import { radixCreditCard, phosphorCreditCard } from "./data/credit-card.ts";
+import { radixWallet, phosphorWallet } from "./data/wallet.ts";
+import { radixReceipt, phosphorReceipt } from "./data/receipt.ts";
+import { radixBank, phosphorBank } from "./data/bank.ts";
+import { radixCurrencyDollar, phosphorCurrencyDollar } from "./data/currency-dollar.ts";
+import { radixCurrencyEuro, phosphorCurrencyEuro } from "./data/currency-euro.ts";
+import { radixPercent, phosphorPercent } from "./data/percent.ts";
+import { radixGift, phosphorGift } from "./data/gift.ts";
+import { radixTruck, phosphorTruck } from "./data/truck.ts";
+import { radixBarChart, phosphorBarChart } from "./data/bar-chart.ts";
+import { radixLineChart, phosphorLineChart } from "./data/line-chart.ts";
+import { radixPieChart, phosphorPieChart } from "./data/pie-chart.ts";
+import { radixDonutChart, phosphorDonutChart } from "./data/donut-chart.ts";
+import { radixTrendUp, phosphorTrendUp } from "./data/trend-up.ts";
+import { radixTrendDown, phosphorTrendDown } from "./data/trend-down.ts";
+import { radixActivity, phosphorActivity } from "./data/activity.ts";
+import { radixGauge, phosphorGauge } from "./data/gauge.ts";
+import { radixTable, phosphorTable } from "./data/table.ts";
+import { radixDesktop, phosphorDesktop } from "./data/desktop.ts";
+import { radixLaptop, phosphorLaptop } from "./data/laptop.ts";
+import { radixMobile, phosphorMobile } from "./data/mobile.ts";
+import { radixTablet, phosphorTablet } from "./data/tablet.ts";
+import { radixCpu, phosphorCpu } from "./data/cpu.ts";
+import { radixWifi, phosphorWifi } from "./data/wifi.ts";
+import { radixWifiOff, phosphorWifiOff } from "./data/wifi-off.ts";
+import { radixCode, phosphorCode } from "./data/code.ts";
+import { radixCodeBlock, phosphorCodeBlock } from "./data/code-block.ts";
+import { radixTerminal, phosphorTerminal } from "./data/terminal.ts";
+import { radixGitBranch, phosphorGitBranch } from "./data/git-branch.ts";
+import { radixGitCommit, phosphorGitCommit } from "./data/git-commit.ts";
+import { radixGitMerge, phosphorGitMerge } from "./data/git-merge.ts";
+import { radixGitPullRequest, phosphorGitPullRequest } from "./data/git-pull-request.ts";
+import { radixGitFork, phosphorGitFork } from "./data/git-fork.ts";
+import { radixGitDiff, phosphorGitDiff } from "./data/git-diff.ts";
+import { radixBug, phosphorBug } from "./data/bug.ts";
+import { radixDatabase, phosphorDatabase } from "./data/database.ts";
+import { radixServer, phosphorServer } from "./data/server.ts";
+import { radixCloud, phosphorCloud } from "./data/cloud.ts";
+import { radixCloudUpload, phosphorCloudUpload } from "./data/cloud-upload.ts";
+import { radixCloudDownload, phosphorCloudDownload } from "./data/cloud-download.ts";
+import { radixCloudOff, phosphorCloudOff } from "./data/cloud-off.ts";
+import { radixKey, phosphorKey } from "./data/key.ts";
+import { radixApi, phosphorApi } from "./data/api.ts";
+import { radixWebhook, phosphorWebhook } from "./data/webhook.ts";
+import { radixHierarchy, phosphorHierarchy } from "./data/hierarchy.ts";
+import { radixWorkflow, phosphorWorkflow } from "./data/workflow.ts";
+import { radixNetwork, phosphorNetwork } from "./data/network.ts";
+import { radixLayers, phosphorLayers } from "./data/layers.ts";
+import { radixLogs, phosphorLogs } from "./data/logs.ts";
+import { radixShield, phosphorShield } from "./data/shield.ts";
+import { radixShieldCheck, phosphorShieldCheck } from "./data/shield-check.ts";
+import { radixAlert, phosphorAlert } from "./data/alert.ts";
+import { radixPending, phosphorPending } from "./data/pending.ts";
+import { radixVerified, phosphorVerified } from "./data/verified.ts";
+import { radixLightbulb, phosphorLightbulb } from "./data/lightbulb.ts";
+import { radixAccount, phosphorAccount } from "./data/account.ts";
+import { radixUserAdd, phosphorUserAdd } from "./data/user-add.ts";
+import { radixUserRemove, phosphorUserRemove } from "./data/user-remove.ts";
+import { radixUserCheck, phosphorUserCheck } from "./data/user-check.ts";
+import { radixContacts, phosphorContacts } from "./data/contacts.ts";
+import { radixIdCard, phosphorIdCard } from "./data/id-card.ts";
+import { radixOrganization, phosphorOrganization } from "./data/organization.ts";
+import { radixLegal, phosphorLegal } from "./data/legal.ts";
+import { radixBriefcase, phosphorBriefcase } from "./data/briefcase.ts";
+import { radixEmoji, phosphorEmoji } from "./data/emoji.ts";
+import { radixThumbsUp, phosphorThumbsUp } from "./data/thumbs-up.ts";
+import { radixThumbsDown, phosphorThumbsDown } from "./data/thumbs-down.ts";
+import { radixAccessibility, phosphorAccessibility } from "./data/accessibility.ts";
+import { radixBold, phosphorBold } from "./data/bold.ts";
+import { radixItalic, phosphorItalic } from "./data/italic.ts";
+import { radixUnderline, phosphorUnderline } from "./data/underline.ts";
+import { radixStrikethrough, phosphorStrikethrough } from "./data/strikethrough.ts";
+import { radixHeading, phosphorHeading } from "./data/heading.ts";
+import { radixText, phosphorText } from "./data/text.ts";
+import { radixClearFormatting, phosphorClearFormatting } from "./data/clear-formatting.ts";
+import { radixAlignLeft, phosphorAlignLeft } from "./data/align-left.ts";
+import { radixAlignCenter, phosphorAlignCenter } from "./data/align-center.ts";
+import { radixAlignRight, phosphorAlignRight } from "./data/align-right.ts";
+import { radixAlignJustify, phosphorAlignJustify } from "./data/align-justify.ts";
+import { radixBulletList, phosphorBulletList } from "./data/bullet-list.ts";
+import { radixNumberedList, phosphorNumberedList } from "./data/numbered-list.ts";
+import { radixChecklist, phosphorChecklist } from "./data/checklist.ts";
+import { radixIndent, phosphorIndent } from "./data/indent.ts";
+import { radixOutdent, phosphorOutdent } from "./data/outdent.ts";
+import { radixHighlight, phosphorHighlight } from "./data/highlight.ts";
+import { radixPalette, phosphorPalette } from "./data/palette.ts";
+import { radixLayout, phosphorLayout } from "./data/layout.ts";
+import { radixGridView, phosphorGridView } from "./data/grid-view.ts";
+import { radixListView, phosphorListView } from "./data/list-view.ts";
+import { radixColumns, phosphorColumns } from "./data/columns.ts";
+import { radixKanban, phosphorKanban } from "./data/kanban.ts";
+import { radixSun, phosphorSun } from "./data/sun.ts";
+import { radixMoon, phosphorMoon } from "./data/moon.ts";
+import { radixCloudRain, phosphorCloudRain } from "./data/cloud-rain.ts";
+import { radixSnowflake, phosphorSnowflake } from "./data/snowflake.ts";
+import { radixTimer, phosphorTimer } from "./data/timer.ts";
+import { radixCalendarAdd, phosphorCalendarAdd } from "./data/calendar-add.ts";
+import { radixCalendarCheck, phosphorCalendarCheck } from "./data/calendar-check.ts";
+import { radixMapPin, phosphorMapPin } from "./data/map-pin.ts";
+import { radixMap, phosphorMap } from "./data/map.ts";
+import { radixNavigate, phosphorNavigate } from "./data/navigate.ts";
+import { radixBuilding, phosphorBuilding } from "./data/building.ts";
+import { radixGithubLogo, phosphorGithubLogo } from "./data/github-logo.ts";
+import { radixGitlabLogo, phosphorGitlabLogo } from "./data/gitlab-logo.ts";
+import { radixGoogleLogo, phosphorGoogleLogo } from "./data/google-logo.ts";
+import { radixAppleLogo, phosphorAppleLogo } from "./data/apple-logo.ts";
+import { radixWindowsLogo, phosphorWindowsLogo } from "./data/windows-logo.ts";
+import { radixLinkedinLogo, phosphorLinkedinLogo } from "./data/linkedin-logo.ts";
+import { radixXLogo, phosphorXLogo } from "./data/x-logo.ts";
+import { radixDiscordLogo, phosphorDiscordLogo } from "./data/discord-logo.ts";
+import { radixSlackLogo, phosphorSlackLogo } from "./data/slack-logo.ts";
+import { radixYoutubeLogo, phosphorYoutubeLogo } from "./data/youtube-logo.ts";
 
 export const iconData = Object.freeze({
   "add": Object.freeze([radixAdd, phosphorAdd]),
@@ -87,4 +302,219 @@ export const iconData = Object.freeze({
   "unlock": Object.freeze([radixUnlock, phosphorUnlock]),
   "visible": Object.freeze([radixVisible, phosphorVisible]),
   "hidden": Object.freeze([radixHidden, phosphorHidden]),
+  "arrowUpRight": Object.freeze([radixArrowUpRight, phosphorArrowUpRight]),
+  "chevronsUpDown": Object.freeze([radixChevronsUpDown, phosphorChevronsUpDown]),
+  "chevronDoubleLeft": Object.freeze([radixChevronDoubleLeft, phosphorChevronDoubleLeft]),
+  "chevronDoubleRight": Object.freeze([radixChevronDoubleRight, phosphorChevronDoubleRight]),
+  "login": Object.freeze([radixLogin, phosphorLogin]),
+  "logout": Object.freeze([radixLogout, phosphorLogout]),
+  "expand": Object.freeze([radixExpand, phosphorExpand]),
+  "collapse": Object.freeze([radixCollapse, phosphorCollapse]),
+  "dragHandle": Object.freeze([radixDragHandle, phosphorDragHandle]),
+  "move": Object.freeze([radixMove, phosphorMove]),
+  "swap": Object.freeze([radixSwap, phosphorSwap]),
+  "sort": Object.freeze([radixSort, phosphorSort]),
+  "dashboard": Object.freeze([radixDashboard, phosphorDashboard]),
+  "sidebar": Object.freeze([radixSidebar, phosphorSidebar]),
+  "compass": Object.freeze([radixCompass, phosphorCompass]),
+  "globe": Object.freeze([radixGlobe, phosphorGlobe]),
+  "help": Object.freeze([radixHelp, phosphorHelp]),
+  "command": Object.freeze([radixCommand, phosphorCommand]),
+  "keyboard": Object.freeze([radixKeyboard, phosphorKeyboard]),
+  "addCircle": Object.freeze([radixAddCircle, phosphorAddCircle]),
+  "removeCircle": Object.freeze([radixRemoveCircle, phosphorRemoveCircle]),
+  "undo": Object.freeze([radixUndo, phosphorUndo]),
+  "redo": Object.freeze([radixRedo, phosphorRedo]),
+  "history": Object.freeze([radixHistory, phosphorHistory]),
+  "link": Object.freeze([radixLink, phosphorLink]),
+  "unlink": Object.freeze([radixUnlink, phosphorUnlink]),
+  "share": Object.freeze([radixShare, phosphorShare]),
+  "export": Object.freeze([radixExport, phosphorExport]),
+  "send": Object.freeze([radixSend, phosphorSend]),
+  "save": Object.freeze([radixSave, phosphorSave]),
+  "print": Object.freeze([radixPrint, phosphorPrint]),
+  "cut": Object.freeze([radixCut, phosphorCut]),
+  "clipboard": Object.freeze([radixClipboard, phosphorClipboard]),
+  "compose": Object.freeze([radixCompose, phosphorCompose]),
+  "archive": Object.freeze([radixArchive, phosphorArchive]),
+  "pin": Object.freeze([radixPin, phosphorPin]),
+  "unpin": Object.freeze([radixUnpin, phosphorUnpin]),
+  "bookmark": Object.freeze([radixBookmark, phosphorBookmark]),
+  "bookmarkFilled": Object.freeze([radixBookmarkFilled, phosphorBookmarkFilled]),
+  "star": Object.freeze([radixStar, phosphorStar]),
+  "starFilled": Object.freeze([radixStarFilled, phosphorStarFilled]),
+  "heart": Object.freeze([radixHeart, phosphorHeart]),
+  "heartFilled": Object.freeze([radixHeartFilled, phosphorHeartFilled]),
+  "flag": Object.freeze([radixFlag, phosphorFlag]),
+  "tag": Object.freeze([radixTag, phosphorTag]),
+  "zoomIn": Object.freeze([radixZoomIn, phosphorZoomIn]),
+  "zoomOut": Object.freeze([radixZoomOut, phosphorZoomOut]),
+  "sliders": Object.freeze([radixSliders, phosphorSliders]),
+  "blocked": Object.freeze([radixBlocked, phosphorBlocked]),
+  "sparkle": Object.freeze([radixSparkle, phosphorSparkle]),
+  "lightning": Object.freeze([radixLightning, phosphorLightning]),
+  "rocket": Object.freeze([radixRocket, phosphorRocket]),
+  "wrench": Object.freeze([radixWrench, phosphorWrench]),
+  "extension": Object.freeze([radixExtension, phosphorExtension]),
+  "power": Object.freeze([radixPower, phosphorPower]),
+  "qrCode": Object.freeze([radixQrCode, phosphorQrCode]),
+  "file": Object.freeze([radixFile, phosphorFile]),
+  "fileText": Object.freeze([radixFileText, phosphorFileText]),
+  "fileAdd": Object.freeze([radixFileAdd, phosphorFileAdd]),
+  "fileRemove": Object.freeze([radixFileRemove, phosphorFileRemove]),
+  "fileCode": Object.freeze([radixFileCode, phosphorFileCode]),
+  "fileImage": Object.freeze([radixFileImage, phosphorFileImage]),
+  "filePdf": Object.freeze([radixFilePdf, phosphorFilePdf]),
+  "fileCsv": Object.freeze([radixFileCsv, phosphorFileCsv]),
+  "fileArchive": Object.freeze([radixFileArchive, phosphorFileArchive]),
+  "folder": Object.freeze([radixFolder, phosphorFolder]),
+  "folderOpen": Object.freeze([radixFolderOpen, phosphorFolderOpen]),
+  "folderAdd": Object.freeze([radixFolderAdd, phosphorFolderAdd]),
+  "attachment": Object.freeze([radixAttachment, phosphorAttachment]),
+  "note": Object.freeze([radixNote, phosphorNote]),
+  "book": Object.freeze([radixBook, phosphorBook]),
+  "package": Object.freeze([radixPackage, phosphorPackage]),
+  "mail": Object.freeze([radixMail, phosphorMail]),
+  "mailOpen": Object.freeze([radixMailOpen, phosphorMailOpen]),
+  "chat": Object.freeze([radixChat, phosphorChat]),
+  "comment": Object.freeze([radixComment, phosphorComment]),
+  "reply": Object.freeze([radixReply, phosphorReply]),
+  "forward": Object.freeze([radixForward, phosphorForward]),
+  "phone": Object.freeze([radixPhone, phosphorPhone]),
+  "at": Object.freeze([radixAt, phosphorAt]),
+  "hash": Object.freeze([radixHash, phosphorHash]),
+  "quote": Object.freeze([radixQuote, phosphorQuote]),
+  "megaphone": Object.freeze([radixMegaphone, phosphorMegaphone]),
+  "notificationsOff": Object.freeze([radixNotificationsOff, phosphorNotificationsOff]),
+  "bot": Object.freeze([radixBot, phosphorBot]),
+  "microphone": Object.freeze([radixMicrophone, phosphorMicrophone]),
+  "microphoneOff": Object.freeze([radixMicrophoneOff, phosphorMicrophoneOff]),
+  "headset": Object.freeze([radixHeadset, phosphorHeadset]),
+  "translate": Object.freeze([radixTranslate, phosphorTranslate]),
+  "image": Object.freeze([radixImage, phosphorImage]),
+  "camera": Object.freeze([radixCamera, phosphorCamera]),
+  "video": Object.freeze([radixVideo, phosphorVideo]),
+  "play": Object.freeze([radixPlay, phosphorPlay]),
+  "pause": Object.freeze([radixPause, phosphorPause]),
+  "stop": Object.freeze([radixStop, phosphorStop]),
+  "skipForward": Object.freeze([radixSkipForward, phosphorSkipForward]),
+  "skipBack": Object.freeze([radixSkipBack, phosphorSkipBack]),
+  "volume": Object.freeze([radixVolume, phosphorVolume]),
+  "volumeLow": Object.freeze([radixVolumeLow, phosphorVolumeLow]),
+  "mute": Object.freeze([radixMute, phosphorMute]),
+  "music": Object.freeze([radixMusic, phosphorMusic]),
+  "cart": Object.freeze([radixCart, phosphorCart]),
+  "store": Object.freeze([radixStore, phosphorStore]),
+  "creditCard": Object.freeze([radixCreditCard, phosphorCreditCard]),
+  "wallet": Object.freeze([radixWallet, phosphorWallet]),
+  "receipt": Object.freeze([radixReceipt, phosphorReceipt]),
+  "bank": Object.freeze([radixBank, phosphorBank]),
+  "currencyDollar": Object.freeze([radixCurrencyDollar, phosphorCurrencyDollar]),
+  "currencyEuro": Object.freeze([radixCurrencyEuro, phosphorCurrencyEuro]),
+  "percent": Object.freeze([radixPercent, phosphorPercent]),
+  "gift": Object.freeze([radixGift, phosphorGift]),
+  "truck": Object.freeze([radixTruck, phosphorTruck]),
+  "barChart": Object.freeze([radixBarChart, phosphorBarChart]),
+  "lineChart": Object.freeze([radixLineChart, phosphorLineChart]),
+  "pieChart": Object.freeze([radixPieChart, phosphorPieChart]),
+  "donutChart": Object.freeze([radixDonutChart, phosphorDonutChart]),
+  "trendUp": Object.freeze([radixTrendUp, phosphorTrendUp]),
+  "trendDown": Object.freeze([radixTrendDown, phosphorTrendDown]),
+  "activity": Object.freeze([radixActivity, phosphorActivity]),
+  "gauge": Object.freeze([radixGauge, phosphorGauge]),
+  "table": Object.freeze([radixTable, phosphorTable]),
+  "desktop": Object.freeze([radixDesktop, phosphorDesktop]),
+  "laptop": Object.freeze([radixLaptop, phosphorLaptop]),
+  "mobile": Object.freeze([radixMobile, phosphorMobile]),
+  "tablet": Object.freeze([radixTablet, phosphorTablet]),
+  "cpu": Object.freeze([radixCpu, phosphorCpu]),
+  "wifi": Object.freeze([radixWifi, phosphorWifi]),
+  "wifiOff": Object.freeze([radixWifiOff, phosphorWifiOff]),
+  "code": Object.freeze([radixCode, phosphorCode]),
+  "codeBlock": Object.freeze([radixCodeBlock, phosphorCodeBlock]),
+  "terminal": Object.freeze([radixTerminal, phosphorTerminal]),
+  "gitBranch": Object.freeze([radixGitBranch, phosphorGitBranch]),
+  "gitCommit": Object.freeze([radixGitCommit, phosphorGitCommit]),
+  "gitMerge": Object.freeze([radixGitMerge, phosphorGitMerge]),
+  "gitPullRequest": Object.freeze([radixGitPullRequest, phosphorGitPullRequest]),
+  "gitFork": Object.freeze([radixGitFork, phosphorGitFork]),
+  "gitDiff": Object.freeze([radixGitDiff, phosphorGitDiff]),
+  "bug": Object.freeze([radixBug, phosphorBug]),
+  "database": Object.freeze([radixDatabase, phosphorDatabase]),
+  "server": Object.freeze([radixServer, phosphorServer]),
+  "cloud": Object.freeze([radixCloud, phosphorCloud]),
+  "cloudUpload": Object.freeze([radixCloudUpload, phosphorCloudUpload]),
+  "cloudDownload": Object.freeze([radixCloudDownload, phosphorCloudDownload]),
+  "cloudOff": Object.freeze([radixCloudOff, phosphorCloudOff]),
+  "key": Object.freeze([radixKey, phosphorKey]),
+  "api": Object.freeze([radixApi, phosphorApi]),
+  "webhook": Object.freeze([radixWebhook, phosphorWebhook]),
+  "hierarchy": Object.freeze([radixHierarchy, phosphorHierarchy]),
+  "workflow": Object.freeze([radixWorkflow, phosphorWorkflow]),
+  "network": Object.freeze([radixNetwork, phosphorNetwork]),
+  "layers": Object.freeze([radixLayers, phosphorLayers]),
+  "logs": Object.freeze([radixLogs, phosphorLogs]),
+  "shield": Object.freeze([radixShield, phosphorShield]),
+  "shieldCheck": Object.freeze([radixShieldCheck, phosphorShieldCheck]),
+  "alert": Object.freeze([radixAlert, phosphorAlert]),
+  "pending": Object.freeze([radixPending, phosphorPending]),
+  "verified": Object.freeze([radixVerified, phosphorVerified]),
+  "lightbulb": Object.freeze([radixLightbulb, phosphorLightbulb]),
+  "account": Object.freeze([radixAccount, phosphorAccount]),
+  "userAdd": Object.freeze([radixUserAdd, phosphorUserAdd]),
+  "userRemove": Object.freeze([radixUserRemove, phosphorUserRemove]),
+  "userCheck": Object.freeze([radixUserCheck, phosphorUserCheck]),
+  "contacts": Object.freeze([radixContacts, phosphorContacts]),
+  "idCard": Object.freeze([radixIdCard, phosphorIdCard]),
+  "organization": Object.freeze([radixOrganization, phosphorOrganization]),
+  "legal": Object.freeze([radixLegal, phosphorLegal]),
+  "briefcase": Object.freeze([radixBriefcase, phosphorBriefcase]),
+  "emoji": Object.freeze([radixEmoji, phosphorEmoji]),
+  "thumbsUp": Object.freeze([radixThumbsUp, phosphorThumbsUp]),
+  "thumbsDown": Object.freeze([radixThumbsDown, phosphorThumbsDown]),
+  "accessibility": Object.freeze([radixAccessibility, phosphorAccessibility]),
+  "bold": Object.freeze([radixBold, phosphorBold]),
+  "italic": Object.freeze([radixItalic, phosphorItalic]),
+  "underline": Object.freeze([radixUnderline, phosphorUnderline]),
+  "strikethrough": Object.freeze([radixStrikethrough, phosphorStrikethrough]),
+  "heading": Object.freeze([radixHeading, phosphorHeading]),
+  "text": Object.freeze([radixText, phosphorText]),
+  "clearFormatting": Object.freeze([radixClearFormatting, phosphorClearFormatting]),
+  "alignLeft": Object.freeze([radixAlignLeft, phosphorAlignLeft]),
+  "alignCenter": Object.freeze([radixAlignCenter, phosphorAlignCenter]),
+  "alignRight": Object.freeze([radixAlignRight, phosphorAlignRight]),
+  "alignJustify": Object.freeze([radixAlignJustify, phosphorAlignJustify]),
+  "bulletList": Object.freeze([radixBulletList, phosphorBulletList]),
+  "numberedList": Object.freeze([radixNumberedList, phosphorNumberedList]),
+  "checklist": Object.freeze([radixChecklist, phosphorChecklist]),
+  "indent": Object.freeze([radixIndent, phosphorIndent]),
+  "outdent": Object.freeze([radixOutdent, phosphorOutdent]),
+  "highlight": Object.freeze([radixHighlight, phosphorHighlight]),
+  "palette": Object.freeze([radixPalette, phosphorPalette]),
+  "layout": Object.freeze([radixLayout, phosphorLayout]),
+  "gridView": Object.freeze([radixGridView, phosphorGridView]),
+  "listView": Object.freeze([radixListView, phosphorListView]),
+  "columns": Object.freeze([radixColumns, phosphorColumns]),
+  "kanban": Object.freeze([radixKanban, phosphorKanban]),
+  "sun": Object.freeze([radixSun, phosphorSun]),
+  "moon": Object.freeze([radixMoon, phosphorMoon]),
+  "cloudRain": Object.freeze([radixCloudRain, phosphorCloudRain]),
+  "snowflake": Object.freeze([radixSnowflake, phosphorSnowflake]),
+  "timer": Object.freeze([radixTimer, phosphorTimer]),
+  "calendarAdd": Object.freeze([radixCalendarAdd, phosphorCalendarAdd]),
+  "calendarCheck": Object.freeze([radixCalendarCheck, phosphorCalendarCheck]),
+  "mapPin": Object.freeze([radixMapPin, phosphorMapPin]),
+  "map": Object.freeze([radixMap, phosphorMap]),
+  "navigate": Object.freeze([radixNavigate, phosphorNavigate]),
+  "building": Object.freeze([radixBuilding, phosphorBuilding]),
+  "githubLogo": Object.freeze([radixGithubLogo, phosphorGithubLogo]),
+  "gitlabLogo": Object.freeze([radixGitlabLogo, phosphorGitlabLogo]),
+  "googleLogo": Object.freeze([radixGoogleLogo, phosphorGoogleLogo]),
+  "appleLogo": Object.freeze([radixAppleLogo, phosphorAppleLogo]),
+  "windowsLogo": Object.freeze([radixWindowsLogo, phosphorWindowsLogo]),
+  "linkedinLogo": Object.freeze([radixLinkedinLogo, phosphorLinkedinLogo]),
+  "xLogo": Object.freeze([radixXLogo, phosphorXLogo]),
+  "discordLogo": Object.freeze([radixDiscordLogo, phosphorDiscordLogo]),
+  "slackLogo": Object.freeze([radixSlackLogo, phosphorSlackLogo]),
+  "youtubeLogo": Object.freeze([radixYoutubeLogo, phosphorYoutubeLogo]),
 }) satisfies Readonly<Record<IconName, readonly IconData[]>>;

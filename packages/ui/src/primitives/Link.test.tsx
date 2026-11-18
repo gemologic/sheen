@@ -16,7 +16,7 @@ describe("Link SSR", () => {
   });
   it("changes appearance without changing native download attributes or role", () => {
     const html = renderToString(() => <Link href="/report.csv" variant="button" download="report.csv" type="text/csv">Download report</Link>);
-    expect(html).toContain('class="sheen-link sheen-button sheen-button-ghost sheen-button-neutral sheen-button-md');
+    expect(html).toContain('class="sheen-link sheen-button sheen-button-outline sheen-button-neutral sheen-button-md');
     expect(html).toContain('data-link-variant="button"');
     expect(html).toContain('download="report.csv"');
     expect(html).toContain('type="text/csv"');

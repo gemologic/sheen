@@ -4,6 +4,9 @@ export interface TableNormalizedBaseline {
   readonly search: number;
   readonly filter: number;
   readonly refresh: number;
+  /** Selection and keyboard workloads are gated only once a reviewed capture for the runner class records them. */
+  readonly selectRow?: number;
+  readonly keyboard?: number;
 }
 
 export interface TableBaselineHistoryEntry {

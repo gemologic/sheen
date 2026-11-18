@@ -2,6 +2,7 @@ import { createSignal, onMount } from "solid-js";
 import { DataTable, defineColumns } from "@gemologic/sheen-table";
 import type { CellCommitResult, ColumnValue, DataTableCellCommitRequest } from "@gemologic/sheen-table";
 import { Button } from "@gemologic/sheen";
+import "@gemologic/sheen-table/styles.css";
 
 interface EditRow {
   readonly id: string;

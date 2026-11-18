@@ -1,6 +1,6 @@
 # ScrollArea implementation boundary
 
-The pinned `@kobalte/core@0.13.13` package has no ScrollArea export. The spec's reference to that primitive cannot be implemented as written. Sheen therefore owns a native scrolling viewport with no new dependency. Its overlay tracks and AppShell's desktop-pane/phone-document integration are implemented and qualified.
+The pinned `@kobalte/core@0.13.13` package has no ScrollArea export. Sheen cannot use that primitive as originally planned. Sheen therefore owns a native scrolling viewport with no new dependency. Its overlay tracks and AppShell's desktop-pane/phone-document integration are implemented and qualified.
 
 Give every viewport a required accessible `label` and constrain its size through the parent grid/flex chain or explicit dimensions. `orientation` permits vertical, horizontal, or both axes. The forwarded native `ref` identifies the actual scrolling element, not a wrapper. Its default region role and Tab stop provide native keyboard scrolling; wheel, touch, and RTL coordinates remain browser-owned. No scroll position is reset on mount, hydration, or ordinary content updates.
 

@@ -171,12 +171,15 @@ export function DataTablePage(props: DataTablePageProps): JSX.Element {
   });
   const groups = createMemo(() => local.toolbarGroups ?? []);
   return <section {...others} class={`sheen-data-table-page ${local.class ?? ""}`} data-state={state()} data-phase={phase()}>
-    <PageHeader title={local.title} headingLevel={local.headingLevel} breadcrumb={local.breadcrumb} actions={local.headerActions} tabs={local.tabs} />
-    <Show when={state() === "ready" && (groups().length > 0 || local.views)}>
-      <Toolbar label={local.toolbarLabel} groups={groups()} filter={<div class="sheen-data-table-page-controls">
-        <Show when={local.views}>{views => <SavedViewControls model={views()} />}</Show>
-      </div>} />
-    </Show>
+    {/* Views and page actions share the title row so the table's own search and filter toolbar is the only toolbar row. */}
+    <PageHeader title={local.title} headingLevel={local.headingLevel} breadcrumb={local.breadcrumb} tabs={local.tabs} actions={<>
+      <Show when={state() === "ready" && (groups().length > 0 || local.views)}>
+        <Toolbar label={local.toolbarLabel} groups={groups()} filter={<div class="sheen-data-table-page-controls">
+          <Show when={local.views}>{views => <SavedViewControls model={views()} />}</Show>
+        </div>} />
+      </Show>
+      {local.headerActions}
+    </>} />
     <div class="sheen-data-table-page-content">
       <Show when={state() === "ready"} fallback={<ErrorState kind={errorKind(state())}
         {...(local.errorTitle === undefined ? {} : { title: local.errorTitle })}

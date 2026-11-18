@@ -1,4 +1,5 @@
 import { createSignal, onCleanup, onMount, splitProps } from "solid-js";
+import { Glyph } from "./Glyph.tsx";
 import type { JSX } from "solid-js";
 import { Button } from "./Button.tsx";
 import { InputGroup } from "./InputGroup.tsx";
@@ -87,12 +88,12 @@ export function SearchInput(props: SearchInputProps): JSX.Element {
     input = element;
     if (typeof local.ref === "function") local.ref(element);
   }} endContent={<>
-    <Button class="sheen-search-input-clear" type="button" disabled={others.disabled || others.readOnly || others.readonly || composition() !== undefined || !value()} onClick={() => {
+    <Button variant="ghost" class="sheen-search-input-clear" type="button" disabled={others.disabled || others.readOnly || others.readonly || composition() !== undefined || !value()} onClick={() => {
       if (others.disabled || others.readOnly || others.readonly || composition() !== undefined || !value()) return;
       update("");
       if (input && input.value !== value()) input.value = value();
       input?.focus();
-    }}>{local.clearLabel ?? theme.messages().clearSearch}</Button>
-    <span class="sheen-search-input-indicator" aria-hidden="true" />
+    }}><Glyph name="close" /><span class="sheen-sr-only">{local.clearLabel ?? theme.messages().clearSearch}</span></Button>
+    <Glyph class="sheen-search-input-indicator" name="search" />
   </>} />;
 }

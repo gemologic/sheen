@@ -16,7 +16,8 @@ export default defineMeta<TextProps>({
           "caption",
           "ui-sm",
           "ui",
-          "body"
+          "body",
+          "lead"
         ]
       }
     },

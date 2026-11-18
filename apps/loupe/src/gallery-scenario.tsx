@@ -4,6 +4,7 @@ import { Button, CommandPalette, EmptyState, Heading, Select, ShortcutProvider, 
 import type { CommandPaletteSource, SelectOption } from "@gemologic/sheen";
 import { ErrorState } from "@gemologic/sheen-patterns";
 import { useSolidRouterAdapter } from "@gemologic/sheen-patterns/solid-router";
+import "@gemologic/sheen-patterns/styles.css";
 
 export type GalleryScenarioState = "ready" | "empty" | "loading" | "error" | "permission";
 

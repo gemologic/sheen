@@ -14,6 +14,7 @@ test("regional retry handles real rejection without replacing drafts or allowing
   await retry.focus();
   await page.keyboard.press("Enter");
   await expect(retry).toBeDisabled();
+  await expect(retry).toBeFocused();
   await expect(region.getByRole("status")).toHaveText("Retrying");
   await page.keyboard.press("Enter");
   await expect(region.getByRole("status")).toHaveText("Retry failed. Try again.");

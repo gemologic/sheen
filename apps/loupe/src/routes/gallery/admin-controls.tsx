@@ -2,6 +2,7 @@ import { Button, Card, Heading, Stack, Text, ThemeScope } from "@gemologic/sheen
 import { AccountMenu, NotificationCenter, WorkspaceSwitcher } from "@gemologic/sheen-patterns/admin";
 import type { AdminAccountModel, AdminNotificationModel, AdminWorkspaceModel } from "@gemologic/sheen-patterns/admin";
 import { createMemo, createSignal } from "solid-js";
+import "@gemologic/sheen-patterns/admin/styles.css";
 
 type Operation = "idle" | "pending" | "accepted" | "failed";
 

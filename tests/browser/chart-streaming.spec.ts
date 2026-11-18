@@ -110,3 +110,14 @@ test("streaming controls and the open native alternative pass axe", async ({ pag
   const axe = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"]).analyze();
   expect(axe.violations).toEqual([]);
 });
+
+test("a producer publishing every frame from hydration still upgrades to the canvas renderer", async ({ page }) => {
+  await page.goto("/chart-streaming-frame");
+  await expect(page.locator('[data-sheen-portal="root"]')).toHaveAttribute("data-sheen-ready", "true", { timeout: 15_000 });
+  const chart = page.locator(".sheen-time-series");
+  await expect(chart).toHaveAttribute("data-enhanced", "true", { timeout: 5_000 });
+  await expect(chart.locator(".uplot canvas").first()).toBeVisible();
+  const published = Number(await page.getByLabel("Frame publications").textContent());
+  await expect.poll(async () => Number(await page.getByLabel("Frame publications").textContent())).toBeGreaterThan(published);
+  await expect(chart.locator(".uplot")).toHaveCount(1);
+});

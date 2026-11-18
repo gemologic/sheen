@@ -149,7 +149,8 @@ test("scope setters preserve root persistence, inherit omitted axes, and reset n
   await page.goto("/scopes");
   await expect(page.locator('[data-sheen-portal="root"]')).toHaveAttribute("data-sheen-ready", "true");
   await page.getByRole("button", { name: "Change read only" }).click();
-  await expect(page.getByRole("group", { name: "read only" }).locator("output")).toContainText("controllable=true");
+  await expect(page.getByRole("group", { name: "read only" }).locator("output")).toHaveText("ThemeScope pins theme; changing a pinned axis requires controllable=true");
+  await expect(page.locator("html")).toHaveAttribute("data-sheen-accent", "jade");
   await page.getByRole("button", { name: "Change local" }).click();
   await expect(page.locator(".controllable-scope")).toHaveAttribute("data-sheen-accent", "violet");
   await expect(page.locator("html")).toHaveAttribute("data-sheen-accent", "jade");
@@ -162,6 +163,10 @@ test("scope setters preserve root persistence, inherit omitted axes, and reset n
   await expect(page.locator(".read-only-scope")).toHaveAttribute("data-sheen-mode", "light");
   await expect(page.locator(".read-only-scope")).toHaveAttribute("data-sheen-theme", "paper");
   expect(await page.evaluate(() => JSON.parse(localStorage.getItem("sheen") ?? "null"))).toMatchObject({ accent: "violet", density: "compact", mode: "light" });
+  await page.getByRole("button", { name: "Change forwarding", exact: true }).click();
+  await expect(page.locator("html")).toHaveAttribute("data-sheen-accent", "amber");
+  await expect(page.locator(".read-only-scope")).toHaveAttribute("data-sheen-accent", "amber");
+  await expect(page.locator(".read-only-scope")).toHaveAttribute("data-sheen-theme", "paper");
 });
 
 test("prepaint bootstrap works with denied storage and nonce-only CSP", async ({ page }) => {

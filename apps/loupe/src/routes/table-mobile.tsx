@@ -2,6 +2,7 @@ import { DataTable, defineColumns } from "@gemologic/sheen-table";
 import { Link } from "@gemologic/sheen";
 import type { DataTableAction, DataTableActionContext, DataTableResult, TableState } from "@gemologic/sheen-table";
 import { createSignal, onMount } from "solid-js";
+import "@gemologic/sheen-table/styles.css";
 
 interface MobileRow {
   readonly id: string;

@@ -1,4 +1,4 @@
-import { Button, CommandPalette, Kbd, Link, Popover, ShortcutProvider, ThemeScope, Toaster, createConfirm, createToaster } from "@gemologic/sheen";
+import { breakpointQuery, Button, CommandPalette, createConfirm, createToaster, Kbd, Link, Popover, ShortcutProvider, ThemeScope, Toaster, useShortcutLabel } from "@gemologic/sheen";
 import { For, Show, children, createContext, createMemo, createSignal, onCleanup, onMount, useContext } from "solid-js";
 import type { Accessor, JSX } from "solid-js";
 import type { CommandPaletteRecents, CommandPaletteSource, ConfirmController, ThemeOverrides, ToastController } from "@gemologic/sheen";
@@ -108,7 +108,7 @@ const targetOrder: Readonly<Record<AdminChromeTarget, readonly AdminChromeZone[]
 function useNarrowDetails(): Accessor<boolean> {
   const [narrow, setNarrow] = createSignal(false);
   onMount(() => {
-    const media = window.matchMedia("(max-width: 1023px)");
+    const media = window.matchMedia(breakpointQuery("lg", "down"));
     const update = () => setNarrow(media.matches);
     update();
     media.addEventListener("change", update);
@@ -147,6 +147,7 @@ function AdminRuntime(props: AdminAppProps & { readonly services: AdminServices 
   const notifications = createMemo(() => props.notifications);
   const account = createMemo(() => props.account);
   const commandPalette = createMemo(() => props.commandPalette);
+  const commandShortcut = useShortcutLabel(() => "mod+k");
   const details = createMemo(() => props.details);
   const initialCollapsed = props.defaultSidebarCollapsed ?? props.sidebarPersistence?.initialCollapsed ?? false;
   const [collapsedDraft, setCollapsedDraft] = createSignal(initialCollapsed);
@@ -218,7 +219,7 @@ function AdminRuntime(props: AdminAppProps & { readonly services: AdminServices 
         return model && target === "topbar-center" ? <TopNav navigation={model} pathname={props.pathname} /> : null;
       }
       case "current-view": return currentView();
-      case "command-trigger": return commandPalette() ? <Button class="sheen-admin-command-trigger" onClick={() => setCommandOpen(true)}><span>{commandPalette()?.label ?? "Command"}</span><Kbd>⌘K</Kbd></Button> : null;
+      case "command-trigger": return commandPalette() ? <Button variant="ghost" class="sheen-admin-command-trigger" onClick={() => setCommandOpen(true)}><span>{commandPalette()?.label ?? "Search or jump to…"}</span><Kbd>{commandShortcut()}</Kbd></Button> : null;
       case "global-search": return search();
       case "primary-actions": return <AdminActions groups={groups().filter(group => group.role === "primary")} appearance={appearance().actions} target={target} />;
       case "utility-actions": return <AdminActions groups={groups().filter(group => group.role === "utility")} appearance={appearance().actions} target={target} />;
@@ -310,10 +311,12 @@ function AdminActionControl(props: { readonly action: AdminAction; readonly role
   const content = <><Show when={icon()}>{resolved => <span class="sheen-admin-action-icon" aria-hidden="true">{resolved()}</span>}</Show><span class="sheen-admin-action-label">{props.action.label}</span></>;
   const link = createMemo(() => { const action = props.action; return action.kind === "link" ? action : undefined; });
   const button = createMemo(() => { const action = props.action; return action.kind === "action" ? action : undefined; });
+  const variant = (): "solid" | "soft" | "outline" | "ghost" => props.appearance === "accent" && props.role === "primary" ? "solid" : props.appearance === "outlined" ? "outline" : props.appearance === "accent" ? "soft" : "ghost";
+  const tone = (): "accent" | "neutral" => props.appearance !== "quiet" && props.role === "primary" ? "accent" : "neutral";
   return <>
-    <Show when={link()}>{action => <Link variant="button" href={action().href} onClick={() => props.onSelect()}>{content}</Link>}</Show>
-    <Show when={button()}>{action => <Button variant={props.appearance === "accent" && props.role === "primary" ? "solid" : props.appearance === "outlined" ? "outline" : props.appearance === "accent" ? "soft" : "ghost"}
-      tone={props.appearance !== "quiet" && props.role === "primary" ? "accent" : "neutral"} disabled={action().disabled} onClick={() => { action().onSelect(); props.onSelect(); }}>{content}</Button>}</Show>
+    <Show when={link()}>{action => <Link variant="button" appearance={variant()} tone={tone()} href={action().href} onClick={() => props.onSelect()}>{content}</Link>}</Show>
+    <Show when={button()}>{action => <Button variant={variant()}
+      tone={tone()} disabled={action().disabled} onClick={() => { action().onSelect(); props.onSelect(); }}>{content}</Button>}</Show>
   </>;
 }
 

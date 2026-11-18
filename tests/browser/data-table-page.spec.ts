@@ -18,7 +18,7 @@ test("page composes real table query controls, selection actions, views, and sta
   await expect(page.getByRole("toolbar", { name: "Account page actions" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Saved views", exact: true })).toBeVisible();
   await expect(page.getByRole("toolbar")).toHaveCount(2);
-  await expect(page.getByRole("button", { name: "+ Filter", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Add filter", exact: true })).toBeVisible();
   await expect(page.getByRole("table", { name: "Accounts", exact: true })).toBeVisible();
   const tableRoot = page.locator(".sheen-data-table");
   await expect(tableRoot).not.toHaveAttribute("data-variant");

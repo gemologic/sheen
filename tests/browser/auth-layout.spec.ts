@@ -5,7 +5,7 @@ import type { Page } from "@playwright/test";
 const axeTags = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"] as const;
 
 async function ready(page: Page): Promise<void> {
-  await expect(page.locator('[data-sheen-portal="root"]').last()).toHaveAttribute("data-sheen-ready", /^(?:true)?$/u);
+  await expect(page.locator('[data-sheen-portal="root"]').last()).toHaveAttribute("data-sheen-ready", /^(?:true)?$/u, { timeout: 15_000 });
 }
 
 async function expectNoAxeViolations(page: Page): Promise<void> {

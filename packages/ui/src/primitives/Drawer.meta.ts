@@ -6,7 +6,7 @@ export default defineMeta<DrawerProps>({
   props: {
     title: { description: "Accessible panel title." }, contentId: { description: "Optional stable content element ID." }, trigger: { description: "Visible label for the opening button." },
     description: { description: "Optional explanatory text associated with the panel." }, open: { description: "Controlled open state." }, defaultOpen: { description: "Uncontrolled initial open state.", default: false },
-    onOpenChange: { description: "Requests an open-state change." }, dismissible: { description: "Allows Escape, outside press, and the close action.", default: true }, closeLabel: { description: "Visible and accessible close label." },
+    onOpenChange: { description: "Requests an open-state change." }, dismissible: { description: "Allows Escape, outside press, and the close action.", default: true }, closeLabel: { description: "Labelled footer close action. Without it, a corner close icon (named by the scoped close message) comes last in tab order; with it, or for alert dialogs, a labelled close action leads the footer." },
     initialFocus: { description: "Resolves an enabled focus target inside the panel." }, returnFocus: { description: "Resolves a surviving focus target after close." }, shortcutScope: { description: "Unique modal shortcut scope ID." },
     class: { description: "Additional classes on panel content." }, footer: { description: "App-owned footer actions beside close." }, side: { description: "Logical viewport edge from which the panel enters.", default: "end", control: { kind: "select", values: ["start", "end"] } },
   },

@@ -4,6 +4,7 @@ import { JSONViewer } from "@gemologic/sheen-code/json-viewer";
 import { LogViewer } from "@gemologic/sheen-code/log-viewer";
 import type { LogEntry } from "@gemologic/sheen-code/log-viewer";
 import { createSignal } from "solid-js";
+import "@gemologic/sheen-code/styles.css";
 
 const initialLogs: readonly LogEntry[] = Object.freeze(Array.from({ length: 5_000 }, (_, index): LogEntry => Object.freeze({
   id: `log-${index}`,

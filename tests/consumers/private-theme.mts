@@ -17,12 +17,14 @@ assert.equal(theme.dark["surface-radius"], "9px");
 const css = buildTheme(theme);
 assert.match(css, /data-sheen-theme="private-example"/);
 assert.match(css, /--sheen-surface-radius: 9px/);
-assert.match(css, /@supports/);
+assert.doesNotMatch(css, /@supports/);
 assert.doesNotMatch(css, /\{gray\./);
+const wideGamutCss = buildTheme(defineTheme({ ...definition, dark: { ...definition.dark, "chart-8": "oklch(70% 0.25 145)" } }));
+assert.match(wideGamutCss, /@supports[^{]*\{[^@]*--sheen-chart-8: oklch\(70% 0\.25 145\)/);
 assert.throws(() => defineTheme({ ...definition, schemaVersion: 999 }), ThemeValidationError);
 assert.throws(() => defineTheme({ ...definition, dark: {} }), /missing token/);
 assert.throws(() => defineTheme({ ...definition, dark: { ...definition.dark, "chart-8": "not-a-color" } }), /chart-8/);
-for (const entry of ["core.css", "fonts.css", "preset.css", "themes.css", "themes/obsidian.css", "accents/jade.css"]) {
+for (const entry of ["core.css", "primitives.css", "fonts.css", "preset.css", "themes.css", "themes/obsidian.css", "accents/jade.css"]) {
   const url = import.meta.resolve(`@gemologic/sheen-tokens/${entry}`);
   assert.ok((await readFile(new URL(url), "utf8")).length > 0);
 }

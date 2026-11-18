@@ -2,7 +2,8 @@ import type { AccentName } from "./catalog.ts";
 import { parseColor, toHex } from "./color.ts";
 import type { Mode, Tokens } from "./schema.ts";
 
-interface Accent { readonly light: string; readonly dark: string; readonly lightSubtle: string; readonly darkSubtle: string }
+/** The four authored colors behind every accent; hover, active, fg, and the focus ring are derived from them. */
+export interface AccentColors { readonly light: string; readonly dark: string; readonly lightSubtle: string; readonly darkSubtle: string }
 export const accents = {
   jade: { light: "#065f46", dark: "#6ee7b7", lightSubtle: "#d1fae5", darkSubtle: "#022c22" },
   teal: { light: "#115e59", dark: "#5eead4", lightSubtle: "#ccfbf1", darkSubtle: "#042f2e" },
@@ -16,16 +17,22 @@ export const accents = {
   red: { light: "#991b1b", dark: "#fca5a5", lightSubtle: "#fee2e2", darkSubtle: "#450a0a" },
   orange: { light: "#9a3412", dark: "#fdba74", lightSubtle: "#ffedd5", darkSubtle: "#431407" },
   amber: { light: "#92400e", dark: "#fde68a", lightSubtle: "#fef3c7", darkSubtle: "#451a03" },
-} satisfies Record<AccentName, Accent>;
+} satisfies Record<AccentName, AccentColors>;
 
-export function accentTokens(name: AccentName, mode: Mode, themeId?: string): Partial<Tokens> {
-  const accent = accents[name], color = accent[mode];
+export function accentModeTokens(color: string, subtle: string, mode: Mode, themeId?: string): Partial<Tokens> {
   const extreme = mode === "dark" ? "#ffffff" : "#000000";
   return {
     "color-accent": color,
     "color-accent-hover": toHex(parseColor(`color-mix(in oklab, ${color} 92%, ${extreme})`)),
     "color-accent-active": toHex(parseColor(`color-mix(in oklab, ${color} 84%, ${extreme})`)),
-    "color-accent-fg": color, "color-accent-subtle": themeId === "contrast" ? (mode === "dark" ? "#000000" : "#ffffff") : mode === "dark" ? accent.darkSubtle : accent.lightSubtle,
+    "color-accent-fg": color, "color-accent-subtle": themeId === "contrast" ? (mode === "dark" ? "#000000" : "#ffffff") : subtle,
     "color-fg-on-accent": mode === "dark" ? "#050505" : "#ffffff",
+    // The focus ring follows the accent; Contrast keeps its maximum-contrast ring.
+    "color-focus-ring": themeId === "contrast" ? extreme : color,
   };
+}
+
+export function accentTokens(accent: AccentName | AccentColors, mode: Mode, themeId?: string): Partial<Tokens> {
+  const colors = typeof accent === "string" ? accents[accent] : accent;
+  return accentModeTokens(colors[mode], mode === "dark" ? colors.darkSubtle : colors.lightSubtle, mode, themeId);
 }

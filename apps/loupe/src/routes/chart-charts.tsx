@@ -2,6 +2,7 @@ import { createMemo, createSignal } from "solid-js";
 import { Button, Checkbox, ThemeScope } from "@gemologic/sheen";
 import { defineSeries } from "@gemologic/sheen-charts/core";
 import { AreaChart, BarChart, LineChart } from "@gemologic/sheen-charts/charts-svg";
+import "@gemologic/sheen-charts/styles.css";
 
 const t = new Float64Array([1, 2, 3, 4, 5, 6, 7, 8]);
 const initialPrimary = new Float64Array([18, 22, 20, 25, 27, 24, 29, 31]);

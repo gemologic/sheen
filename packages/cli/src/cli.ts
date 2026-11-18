@@ -4,7 +4,7 @@ import { pathToFileURL } from "node:url";
 import { applyPlan } from "./files.js";
 import { doctor, formatDoctorResult } from "./doctor.js";
 import { runManifest } from "./manifest.js";
-import { appScaffold, componentScaffold, themeScaffold } from "./scaffolds.js";
+import { accentScaffold, appScaffold, componentScaffold, themeScaffold } from "./scaffolds.js";
 import { syncSkill } from "./sync-skill.js";
 
 interface CliStreams {
@@ -22,7 +22,7 @@ interface ParsedArguments {
 }
 
 function usage(): string {
-  return "Usage:\n  sheen new <app|theme|component> <name> [--root <path>] [--dry-run] [--force]\n  sheen manifest [--root <path>]\n  sheen sync-skill [--root <path>] [--target <relative-path>] [--dry-run]\n  sheen doctor [--root <path>] [--shortcut-snapshot <relative-path>]\n";
+  return "Usage:\n  sheen new <app|theme|accent|component> <name> [--root <path>] [--dry-run] [--force]\n  sheen manifest [--root <path>]\n  sheen sync-skill [--root <path>] [--target <relative-path>] [--dry-run]\n  sheen doctor [--root <path>] [--shortcut-snapshot <relative-path>]\n";
 }
 
 function parseArguments(args: readonly string[], cwd: string): ParsedArguments {
@@ -96,7 +96,7 @@ export async function runCli(args: readonly string[], cwd: string, streams: CliS
     }
     if (command !== "new" || !kind || !name || extra.length > 0) throw new Error(usage().trim());
     if (parsed.target || parsed.shortcutSnapshot) throw new Error("--target and --shortcut-snapshot are not scaffold options");
-    const plan = kind === "app" ? await appScaffold(name) : kind === "theme" ? themeScaffold(name) : kind === "component" ? componentScaffold(name) : undefined;
+    const plan = kind === "app" ? await appScaffold(name) : kind === "theme" ? themeScaffold(name) : kind === "accent" ? accentScaffold(name) : kind === "component" ? componentScaffold(name) : undefined;
     if (!plan) throw new Error(`Unknown scaffold: ${kind}`);
     const result = await applyPlan(plan, {
       root: parsed.root,

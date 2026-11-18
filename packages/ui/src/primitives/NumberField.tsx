@@ -1,4 +1,5 @@
 import { createSignal, createUniqueId, onMount, splitProps } from "solid-js";
+import { Glyph } from "./Glyph.tsx";
 import type { JSX } from "solid-js";
 import { useTheme } from "../theme/ThemeProvider.tsx";
 import { cn } from "../utils/cn.ts";
@@ -157,8 +158,8 @@ export function NumberField(props: NumberFieldProps): JSX.Element {
           else if (event.key === "End" && !local.readOnly) { event.preventDefault(); publish(maximum(), true); }
         }} />
       <div class="sheen-number-field-steps">
-        <button type="button" class="sheen-number-field-step" aria-label={message(theme.messages().decreaseValue, local.label)} disabled={local.disabled || local.readOnly} onClick={() => vary(-increment())}><span aria-hidden="true">−</span></button>
-        <button type="button" class="sheen-number-field-step" aria-label={message(theme.messages().increaseValue, local.label)} disabled={local.disabled || local.readOnly} onClick={() => vary(increment())}><span aria-hidden="true">+</span></button>
+        <button type="button" class="sheen-number-field-step" aria-label={message(theme.messages().decreaseValue, local.label)} disabled={local.disabled || local.readOnly} onClick={() => vary(-increment())}><Glyph name="minus" /></button>
+        <button type="button" class="sheen-number-field-step" aria-label={message(theme.messages().increaseValue, local.label)} disabled={local.disabled || local.readOnly} onClick={() => vary(increment())}><Glyph name="plus" /></button>
       </div>
     </div>
     {local.name ? <input type="hidden" name={local.name} form={local.form} value={current() ?? ""} /> : null}

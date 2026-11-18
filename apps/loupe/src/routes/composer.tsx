@@ -34,6 +34,7 @@ import { composerRegion, composerRegionIds, readComposerDocument, serializeCompo
 import type { ComposerComponentName, ComposerComponentNode, ComposerDocument, ComposerRegionId, ComposerScalar } from "../composer/model.ts";
 import { readComposerPreviewMessage } from "../composer/protocol.ts";
 import type { ComposerPreviewState, ComposerStateMessage } from "../composer/protocol.ts";
+import "@gemologic/sheen-code/styles.css";
 
 const ComposerPalette = lazy(() => import("../composer/ComposerPalette.tsx"));
 const draftKey = "sheen-loupe-composer-v1";

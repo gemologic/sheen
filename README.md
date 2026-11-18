@@ -52,6 +52,7 @@ Run the calibrated production DataTable workload with `sheen-benchmark` or `pnpm
 - Real SSR preview and browser checks for scoped overlays, persisted preferences, delayed hydration, and input identity across accent changes.
 - Cookie-mode SSR and persistence via a real endpoint, including offline failure without changing accepted state.
 - Serializable [date and time controls](docs/date-time.md) with scoped overlays, explicit IANA zones and DST resolution, native form projection, retained async options, table-filter injection, isolated package budgets, and a calibrated production benchmark.
+- [Chat components](docs/ai-chat.md): a send/stop PromptInput, a keyed stick-to-bottom Conversation log of Messages, and append-only StreamingText, from `@gemologic/sheen/ai` with the `styles/ai.css` island.
 - An [Application Composer](docs/composer.md) that starts from the branded compact AdminApp, edits a constrained private layout document, and emits deterministic copyable public-API TSX. Its pointer engine is lazy and Loupe-only; every edit also has a keyboard-operable control.
 
 The package implementation is ready for a `0.1.0-rc` qualification cycle. Release qualification includes hosted CI for the exact commit, registry-installed npm/pnpm/Bun consumers, manual NVDA/Firefox and VoiceOver/Safari passes, and later viz/metron dogfood. Sheen ships its corrected overlay backend and DOM renderer, retaining the app's shared Solid core. Assay remains deliberately paused and is not a 0.1 release-candidate blocker. Passing local checks is not publication authorization or the v1 release gate.
@@ -60,7 +61,7 @@ Component authors should follow the [metadata/demo contract](docs/component-auth
 
 The dependency-free CLI package provides guarded app/theme/component scaffolds and fail-closed vendored-skill synchronization. The app scaffold carries dark-default hydration/keyboard bootstraps, public router/shell seams, recommended lint, vendored context, and `sheenRuntime()` setup. It needs no consumer patches. See the [CLI contract](docs/cli.md) for paths, previews, overwrite refusal, and qualification boundaries.
 
-The [ESLint plugin](docs/lint.md) enforces all specified JavaScript/TypeScript rule families, including token/directionality, dependency wrappers, Solid reactivity, fixed-shell scrolling, motion, icon semantics, explicit unsafe seams, and layout composition. Standalone CSS enforcement remains tracked in `TODO.md`.
+The [ESLint plugin](docs/lint.md) enforces all specified JavaScript/TypeScript rule families, including token/directionality, dependency wrappers, Solid reactivity, fixed-shell scrolling, motion, icon semantics, explicit unsafe seams, and layout composition. Standalone CSS enforcement remains open.
 
 Release versioning, package-content checks, deprecation windows, codemod requirements, public-repository setup, and the protected npm bootstrap/OIDC process are documented in [the release policy](docs/releases.md). The automatic release workflow only maintains a version pull request. The separate publication workflow is manual, main-only, artifact-bound, and gated by the protected `npm` environment.
 
@@ -70,6 +71,6 @@ Security reports should follow [the security policy](SECURITY.md), not a public 
 
 ## Dependency decisions
 
-The audited spec selected Solid, SolidStart, Kobalte, Tailwind, Vite, Vitest, Playwright, and the class/variant helpers. Solid is pinned to 1.9.15. SolidStart 2.0.4 remains compatible with Solid 1.9 and uses Vite 8; its version is independent of the deferred Solid 2 migration. TypeScript 6.0.3 satisfies typescript-eslint 8.69's `<6.1` peer range; TypeScript 7 does not.
+The dependency set is Solid, SolidStart, Kobalte, Tailwind, Vite, Vitest, Playwright, and the class/variant helpers. Solid is pinned to 1.9.19. SolidStart 2.0.4 remains compatible with Solid 1.9 and uses Vite 8; its version is independent of the deferred Solid 2 migration. TypeScript 6.0.3 satisfies typescript-eslint 8.69's `<6.1` peer range; TypeScript 7 does not.
 
 See the [SolidStart configuration guide](https://docs.solidjs.com/solid-start/v2/getting-started), [Vite library build options](https://vite.dev/config/build-options.html), and installed package peer metadata when refreshing these pins.

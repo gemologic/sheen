@@ -1,0 +1,5 @@
+---
+"@gemologic/sheen": minor
+---
+
+New `@gemologic/sheen/sortable` entry with `SortableList` and `Board`, styled by the opt-in `@gemologic/sheen/styles/sortable.css`. Both are controlled and keyed by stable ids: pointer drags (via the Pragmatic drag and drop engine, kept behind this entry) show an accent drop indicator and auto-scroll their scroll containers, and the keyboard model is Space/Enter to lift, arrows/Home/End to move (mirrored in RTL), Space/Enter to drop, and Escape to cancel, with localized live-region announcements. `SortableList` reports `onReorder({ id, fromIndex, toIndex, ids })` in vertical or horizontal orientation with an optional grip handle and disabled items. `Board` moves cards within and between columns with `onMove({ id, fromColumn, fromIndex, toColumn, index })`, keeps empty columns as drop zones, accepts a column header slot with the live count, optionally reorders columns, and snaps columns on phones. Applications that never import the entry pay nothing for it.

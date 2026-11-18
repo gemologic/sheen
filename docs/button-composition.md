@@ -13,4 +13,4 @@ Use the components for normal application controls. The class recipe is for wrap
 
 Four targeted unit/SSR tests pass. A consumer fixture typechecks against the built declaration entry, with negative cases for button href and unknown variants. UI build, lint/typechecks, and manifest validation pass (76 components / 79 examples). The final native Chromium run passes 28 executions across composition, ButtonGroup, IconButton, and Link. It verifies equivalent computed appearance without private attributes, utility overrides, and Dialog trigger outline/focus restoration, alongside existing native activation and hydration checks.
 
-This is not an isolated published-package consumer build or a complete visual/contrast/bundle audit. Those gates and shortcut association remain unfinished; the grouped button-family TODO stays open.
+This is not an isolated published-package consumer build or a complete visual/contrast/bundle audit. Those gates and shortcut association remain unfinished; the button family remains open.

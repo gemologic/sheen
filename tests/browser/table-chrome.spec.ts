@@ -31,11 +31,13 @@ test("one action model drives the selection bar and row context menu", async ({ 
   await expect.poll(() => alpha.evaluate(element => getComputedStyle(element).getPropertyValue("-webkit-touch-callout"))).not.toBe("none");
   const restingFill = await alpha.evaluate(element => getComputedStyle(element).backgroundColor);
   await beta.hover();
-  const hoverFill = await beta.evaluate(element => getComputedStyle(element).backgroundColor);
-  expect(hoverFill).not.toBe(restingFill);
+  await expect.poll(() => beta.evaluate(element => getComputedStyle(element).backgroundColor)).not.toBe(restingFill);
 
   await section.getByRole("checkbox", { name: "Select row alpha" }).press("Space");
   await expect(alpha).toHaveAttribute("data-selected", "");
+  await expect.poll(() => alpha.evaluate(element => getComputedStyle(element).backgroundColor)).not.toBe(restingFill);
+  // Row and cell fills transition together; compare the settled values.
+  await alpha.evaluate(element => Promise.all(element.getAnimations({ subtree: true }).map(animation => animation.finished)));
   const selectedFill = await alpha.evaluate(element => {
     const selectionCell = element.querySelector(".sheen-data-table-selection-cell");
     if (!selectionCell) throw new Error("Expected a selection cell");
@@ -58,7 +60,7 @@ test("one action model drives the selection bar and row context menu", async ({ 
   await alpha.press("ArrowDown");
   await beta.press("ArrowUp");
   await expect(alpha).toBeFocused();
-  expect(await alpha.evaluate(element => getComputedStyle(element).backgroundColor)).not.toBe(restingFill);
+  await expect.poll(() => alpha.evaluate(element => getComputedStyle(element).backgroundColor)).not.toBe(restingFill);
   await alpha.press("Shift+F10");
   await expect(page.getByRole("menuitem", { name: "Review" })).toBeVisible();
   await page.keyboard.press("Escape");
@@ -217,6 +219,8 @@ test("table actions, footers, and zero-result states have bounded dark and light
     element.setAttribute("data-sheen-density", "compact");
   });
   await expect(action.getByRole("table", { name: "Action accounts" }).locator('tr[data-row-id="alpha"]')).toHaveCSS("height", "28px");
+  // Control colors ease across the theme switch; sample the settled values.
+  await action.evaluate(element => Promise.all(element.getAnimations({ subtree: true }).map(animation => animation.finished)));
   const selectionColors = await action.locator(".sheen-data-table-selection-actions").evaluate(element => {
     const context = document.createElement("canvas").getContext("2d", { willReadFrequently: true });
     if (!context) throw new Error("Canvas unavailable");

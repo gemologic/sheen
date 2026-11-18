@@ -2,11 +2,11 @@ import { expect, test } from "@playwright/test";
 import type { Locator, Page } from "@playwright/test";
 
 async function chooseColumn(page: Page, section: Locator, name: string): Promise<Locator> {
-  await section.getByRole("button", { name: "+ Filter", exact: true }).click();
+  await section.getByRole("button", { name: "Add filter", exact: true }).click();
   const picker = page.getByRole("dialog", { name: "Filter columns" });
   await picker.getByRole("searchbox", { name: "Search filter columns" }).fill(name.slice(0, 4));
   await picker.getByRole("button", { name, exact: true }).click();
-  return page.getByRole("dialog", { name: `+ Filter: ${name}` });
+  return page.getByRole("dialog", { name: `Add filter: ${name}` });
 }
 
 async function chooseOperator(page: Page, editor: Locator, name: string): Promise<void> {
@@ -121,7 +121,7 @@ test("a queued pre-hydration filter trigger opens once on the retained server bu
   try {
     await page.goto("/filter-bar", { waitUntil: "commit" });
     const section = page.getByRole("region", { name: "Typed client filters" });
-    const trigger = section.getByRole("button", { name: "+ Filter", exact: true });
+    const trigger = section.getByRole("button", { name: "Add filter", exact: true });
     await trigger.evaluate(element => element.setAttribute("data-filter-hydration-identity", "retained"));
     await trigger.click();
     release();

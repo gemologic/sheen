@@ -1,18 +1,24 @@
 import { expect, test } from "@playwright/test";
-import { componentDocs } from "../../apps/loupe/src/generated/component-docs.ts";
+import { componentIndex } from "../../apps/loupe/src/generated/component-index.ts";
+
+// The inventory folds the per-name static icon components into the Icon card.
+const inventory = componentIndex.filter(component => component.package !== "@gemologic/sheen-icons" || component.name === "Icon" || component.name === "DynamicIcon");
 
 test("generated component inventory exposes every validated public component", async ({ page }) => {
   await page.goto("/components");
   await expect(page.getByRole("heading", { name: "Component laboratory", level: 1 })).toBeVisible();
-  await expect(page.locator("[data-component]")).toHaveCount(componentDocs.length);
-  await expect(page.locator("[data-component-preview]")).toHaveCount(componentDocs.length);
+  await expect(page.locator("[data-component]:visible")).toHaveCount(inventory.length);
+  await expect(page.locator("[data-component-preview]")).toHaveCount(inventory.length);
   await expect(page.getByRole("link", { name: "Button", exact: true })).toHaveAttribute("href", "/components/Button");
+  await page.locator('[data-component="Button"] [data-component-preview]').evaluate(element => element.setAttribute("data-retained", "true"));
   const search = page.getByRole("searchbox", { name: "Find a component", exact: true });
   await search.fill("CommandPalette");
-  await expect(page.locator("[data-component]")).toHaveCount(1);
+  await expect(page.locator("[data-component]:visible")).toHaveCount(1);
   await expect(page.locator('[data-component="CommandPalette"] [data-component-preview]')).toHaveCount(1);
+  await expect(page.locator("[data-component-preview]")).toHaveCount(inventory.length);
   await search.fill("");
-  await expect(page.locator("[data-component]")).toHaveCount(componentDocs.length);
+  await expect(page.locator("[data-component]:visible")).toHaveCount(inventory.length);
+  await expect(page.locator('[data-component="Button"] [data-component-preview]')).toHaveAttribute("data-retained", "true");
   const scroll = await page.locator("#app").evaluate(element => {
     const before = element.scrollTop;
     element.scrollTo({ top: 640, behavior: "instant" });
@@ -33,7 +39,7 @@ test("component pages derive live controls, code, variants, anatomy, props, and 
   await expect(page.locator('[data-sheen-portal="root"]')).toHaveAttribute("data-sheen-ready", "true");
   const preview = page.locator("[data-playground-preview]");
   const button = preview.getByRole("button", { name: "Cancel", exact: true });
-  await expect(button).toHaveAttribute("data-variant", "ghost");
+  await expect(button).toHaveAttribute("data-variant", "outline");
   await page.getByRole("combobox", { name: "variant", exact: true }).selectOption({ label: "solid" });
   await expect(page.getByLabel("Generated example code")).toContainText('variant="solid"');
   await expect(button).toHaveAttribute("data-variant", "solid");

@@ -3,6 +3,7 @@ import { Button, ThemeScope } from "@gemologic/sheen";
 import { defineSeries } from "@gemologic/sheen-charts/core";
 import { useStreamingSeries } from "@gemologic/sheen-charts/streaming";
 import { TimeSeries } from "@gemologic/sheen-charts/time-series";
+import "@gemologic/sheen-charts/styles.css";
 
 const base = Date.UTC(2026, 8, 9, 12, 0, 0);
 const series = defineSeries([

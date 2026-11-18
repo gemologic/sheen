@@ -102,7 +102,7 @@ export function SidebarNav(props: SidebarNavProps): JSX.Element {
   return <div {...others} ref={element => { root = element; if (typeof local.ref === "function") local.ref(element); }} tabIndex={others.tabIndex ?? -1} data-collapsed={local.collapsed ?? false} class={`sheen-sidebar-nav ${local.class ?? ""}`}>
     <Show when={header()}>{content => <header class="sheen-sidebar-header">{content()}</header>}</Show>
     <div class="sheen-sidebar-navigation"><For each={[...sections().keys()]}>{id => <Show when={sections().get(id)}>{section => <section>
-      <Heading level={local.headingLevel ?? 3} size="h4">{section().label}</Heading>
+      <Heading level={local.headingLevel ?? 3} size="h4" data-sole-section={sections().size === 1 || undefined}>{section().label}</Heading>
       <NavList label={section().label}><Entries items={section().items} activeId={active()?.id} ancestors={active()?.ancestors ?? []} collapsed={local.collapsed ?? false} /></NavList>
     </section>}</Show>}</For></div>
     <Show when={footer()}>{content => <footer class="sheen-sidebar-footer">{content()}</footer>}</Show>

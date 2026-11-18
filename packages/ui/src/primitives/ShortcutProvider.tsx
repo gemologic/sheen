@@ -1,6 +1,6 @@
 import { createContext, createEffect, createMemo, createSignal, getOwner, onCleanup, onMount, useContext } from "solid-js";
 import type { Accessor, JSX } from "solid-js";
-import { createShortcutRegistry } from "../utils/shortcut-registry.ts";
+import { createShortcutRegistry, formatShortcut } from "../utils/shortcut-registry.ts";
 import { resolveShortcutPlatform } from "../utils/shortcut-platform.ts";
 import type { PendingShortcut, ShortcutAction, ShortcutBinding, ShortcutDefinition } from "../utils/shortcut-registry.ts";
 
@@ -95,6 +95,19 @@ export function ShortcutProvider(props: ShortcutProviderProps): JSX.Element {
     });
   });
   return <ShortcutContext.Provider value={{ registry, pending, bindings, characterShortcuts, acquireModal, acquireFocusScope, acquireKeyboardOwner }}>{props.children}</ShortcutContext.Provider>;
+}
+
+/**
+ * Platform display text for a shortcut definition (`mod+k` → `Ctrl+K`, or `⌘+K` on Apple platforms).
+ * Server markup and the first client frame use the non-Apple form; the platform resolves after mount.
+ */
+export function useShortcutLabel(keys: Accessor<string | undefined>): Accessor<string | undefined> {
+  const [platform, setPlatform] = createSignal<"mac" | "other">("other");
+  onMount(() => setPlatform(resolveShortcutPlatform(navigator.platform)));
+  return () => {
+    const value = keys();
+    return value === undefined ? undefined : formatShortcut(value, platform());
+  };
 }
 
 /** Register in the nearest provider and release the binding with its Solid owner. */

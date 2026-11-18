@@ -1,16 +1,19 @@
 import { ThemeScope } from "@gemologic/sheen";
 import type { ThemeOverrides } from "@gemologic/sheen";
 import { DataTable, createClientView, defineColumns } from "@gemologic/sheen-table";
-import type { ClientViewOptions, ClientViewState, ColumnValue, FilterNode, SheenColumns, SortColumn } from "@gemologic/sheen-table";
+import type { ClientViewOptions, ClientViewState, ColumnValue, DataTableSelectionOptions, FilterNode, SheenColumns, SortColumn } from "@gemologic/sheen-table";
 import { Show, createSignal, onMount } from "solid-js";
 import type { JSX } from "solid-js";
 import { createTableBenchmarkRows, refreshTableBenchmarkRows, tableBenchmarkFixture } from "../../../../bench/fixtures/table.ts";
 import type { TableBenchmarkRow } from "../../../../bench/fixtures/table.ts";
+import "@gemologic/sheen-table/styles.css";
 
 const rows = createTableBenchmarkRows();
 const refreshedRows = refreshTableBenchmarkRows(rows);
 const amountFormatter = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
 const dateFormatter = new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeStyle: "short", timeZone: "UTC" });
+// `?selection=true` mounts the same fixture with row selection for the selection and keyboard workloads.
+const benchmarkSelection: DataTableSelectionOptions<TableBenchmarkRow> = { mode: "multiple", onChange: () => {} };
 
 interface BenchmarkCounts {
   readonly accessorReads: number;
@@ -143,6 +146,7 @@ function profileCore(): CoreProfile {
 
 export default function TableBenchmarkFixture() {
   const [mounted, setMounted] = createSignal(false);
+  const [selectable, setSelectable] = createSignal(false);
   const [ready, setReady] = createSignal(false);
   const [data, setData] = createSignal(rows);
   const [scopeOverrides, setScopeOverrides] = createSignal<ThemeOverrides>({});
@@ -153,7 +157,9 @@ export default function TableBenchmarkFixture() {
   let columns = createColumns(false, counts);
   let getRowId = (row: TableBenchmarkRow): string => row.id;
   onMount(() => {
-    profile = new URL(window.location.href).searchParams.get("profile") === "true";
+    const search = new URL(window.location.href).searchParams;
+    profile = search.get("profile") === "true";
+    setSelectable(search.get("selection") === "true");
     setReady(true);
   });
   function mount(): void {
@@ -181,7 +187,8 @@ export default function TableBenchmarkFixture() {
     <section class="loupe-table-benchmark-surface" aria-label="Table benchmark surface">
       <ThemeScope {...scopeOverrides()} density="compact" class="loupe-table-benchmark-scope">
         <Show when={mounted()}><DataTable data={data()} columns={columns} getRowId={getRowId} caption="Benchmark accounts" pagination={false} variant="integrated" search={{ debounce: 0 }}
-          initialViewportHeight={tableBenchmarkFixture.viewport.tableHeight} export={false} columnControls={false} onRowActivate={() => {}} /></Show>
+          initialViewportHeight={tableBenchmarkFixture.viewport.tableHeight} export={false} columnControls={false} onRowActivate={() => {}}
+          {...(selectable() ? { selection: benchmarkSelection } : {})} /></Show>
       </ThemeScope>
     </section>
   </main>;

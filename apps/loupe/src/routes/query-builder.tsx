@@ -3,6 +3,7 @@ import { DataTable, QueryBuilder, defineColumns, deserializeFilter, queryBuilder
 import type { FilterNode, QueryBuilderColumn } from "@gemologic/sheen-table";
 import { useSolidRouterAdapter } from "@gemologic/sheen-patterns/solid-router";
 import { Show, createEffect, createSignal } from "solid-js";
+import "@gemologic/sheen-table/styles.css";
 
 interface AccountRow {
   readonly id: string;

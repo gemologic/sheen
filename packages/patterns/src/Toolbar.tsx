@@ -19,7 +19,7 @@ export interface ToolbarProps extends Omit<JSX.HTMLAttributes<HTMLDivElement>, "
 function GroupButtons(props: { group: ToolbarGroup }): JSX.Element {
   const items = createMemo(() => new Map(props.group.items.map(item => [item.id, item])));
   return <For each={[...items().keys()]}>{id => <Show when={items().get(id)}>{item =>
-    <Button tabIndex={-1} disabled={item().disabled} aria-pressed={checked(item())}
+    <Button variant="ghost" tabIndex={-1} disabled={item().disabled} aria-pressed={checked(item())}
       onClick={() => { const current = item(); if (current.disabled) return; if (current.kind === "action") current.onSelect(); else current.onCheckedChange(!current.checked); }}>{item().label}</Button>
   }</Show>}</For>;
 }

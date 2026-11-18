@@ -6,4 +6,4 @@ This follows the [WAI link pattern](https://www.w3.org/WAI/ARIA/apg/patterns/lin
 
 Two SSR tests pass without ThemeProvider. Four Chromium cases pass twice each, covering JavaScript-disabled navigation/new tabs, native keyboard behavior, focus styling, reactive destination/appearance with retained identity, app cancellation, modified-click new tabs, noopener, successful downloads, and server DOM reuse through delayed hydration with single handler execution. UI build, lint/typechecks, and manifest/example validation pass, now at 76 components and 79 examples.
 
-The WebKit selection includes these cases; discovery is not runtime qualification. Reviewed visual matrices, density/RTL coverage, broader router/unsaved-change integration, and the shared public variant/polymorphic seam remain unfinished. This does not close the grouped button-family TODO.
+The WebKit selection includes these cases; discovery is not runtime qualification. Reviewed visual matrices, density/RTL coverage, broader router/unsaved-change integration, and the shared public variant/polymorphic seam remain unfinished. This does not complete the button family.

@@ -1,4 +1,4 @@
-import { Button, Checkbox, CheckboxGroup, Input, Popover, Select, cn, useTheme } from "@gemologic/sheen";
+import { Button, Checkbox, CheckboxGroup, Glyph, Input, Popover, Select, cn, useTheme } from "@gemologic/sheen";
 import { For, Show, createEffect, createMemo, createSignal, untrack } from "solid-js";
 import type { Accessor, JSX } from "solid-js";
 import { Dynamic } from "solid-js/web";
@@ -10,6 +10,7 @@ import { appendFilterCondition, listFilterConditions, removeFilterCondition, rep
 import type { FilterCondition, FilterConditionEntry } from "./filter-bar-state.ts";
 import { resolveTableMessages } from "./messages.ts";
 import type { TableMessages } from "./messages.ts";
+import type { DataTableFeatureContext, DataTableFeatureInstance } from "./data-table-features.tsx";
 
 export interface FilterBarProps<Row extends object> {
   readonly columns: SheenColumns<Row>;
@@ -292,7 +293,7 @@ function ConditionChip(props: {
         onApply={(condition, negated) => { setOpen(false); props.onApply(props.record.key, props.record.entry(), condition, negated); }} /></Show>
     </Popover>
     <button ref={element => props.removeRef(props.record.key, element)} type="button" class="sheen-filter-remove" disabled={props.disabled}
-      aria-label={`${messages().filterRemove}: ${summary()}`} onClick={() => props.onRemove(props.record.key, props.record.entry())}><span aria-hidden="true">×</span></button>
+      aria-label={`${messages().filterRemove}: ${summary()}`} onClick={() => props.onRemove(props.record.key, props.record.entry())}><Glyph name="close" /></button>
   </li>;
 }
 
@@ -379,7 +380,7 @@ export function FilterBar<Row extends object>(props: FilterBarProps<Row>): JSX.E
         removeRef={(key, element) => { element.dataset.filterKey = key; }} />;
     }}</For></ul>
     <div ref={addRoot} class="sheen-filter-add">
-      <Popover trigger={messages().filterAdd} title={chosen() ? `${messages().filterAdd}: ${chosen()?.header}` : messages().filterColumns}
+      <Popover trigger={<><Glyph name="plus" />{messages().filterAdd}</>} title={chosen() ? `${messages().filterAdd}: ${chosen()?.header}` : messages().filterColumns}
         open={addOpen()} onOpenChange={changeAddOpen} class="sheen-filter-picker">
         <Show when={chosen()} fallback={<>
           <Input type="search" label={messages().filterSearchColumns} value={search()} onInput={event => setSearch(event.currentTarget.value)} disabled={props.disabled} />
@@ -393,4 +394,17 @@ export function FilterBar<Row extends object>(props: FilterBarProps<Row>): JSX.E
       </Popover>
     </div>
   </div>;
+}
+
+/** DataTable toolbar integration for the filters declared by its column definitions. */
+export function filterBarFeature<Row extends object>(context: DataTableFeatureContext<Row>): DataTableFeatureInstance<Row> | undefined {
+  if (context.filterColumns.length === 0) return undefined;
+  const props = context.props;
+  return {
+    query: {
+      visible: () => props.filterBar !== false,
+      render: () => <FilterBar columns={props.columns} value={context.acceptedFilter()} facets={context.result().facets} disabled={context.pending()} onChange={context.requestFilter}
+        {...(typeof props.filterBar === "object" && props.filterBar.dateEditor ? { dateEditor: props.filterBar.dateEditor } : {})} />,
+    },
+  };
 }

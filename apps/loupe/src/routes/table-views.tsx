@@ -3,6 +3,7 @@ import { createSavedViews } from "@gemologic/sheen-table";
 import type { SavedViewOutcome, SavedViewRecord, SavedViewsAdapter, SavedViewsSnapshot, TableState } from "@gemologic/sheen-table";
 import { Button, Checkbox, Input } from "@gemologic/sheen";
 import { exportSchema, exportState } from "../fixtures/table-export";
+import "@gemologic/sheen-table/styles.css";
 
 function view(value: unknown): SavedViewRecord {
   if (typeof value !== "object" || value === null || !("id" in value) || typeof value.id !== "string" || !("name" in value) || typeof value.name !== "string" || !("state" in value) || typeof value.state !== "string") throw new Error("Invalid saved view response");

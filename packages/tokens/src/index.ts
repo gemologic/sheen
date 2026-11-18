@@ -9,6 +9,11 @@ export type { ThemeDefinition, Theme, Tokens, TokenName, Mode, PrimitiveMap } fr
 export { bundledThemeMetadata, accentNames, isAccentName, iconSetForTheme } from "./catalog.ts";
 export type { AccentName, ThemeMetadata, IconSetName } from "./catalog.ts";
 export { accents, accentTokens } from "./accents.ts";
-export { themes, obsidian, paper, vellum, contrast, slate, graphite, studio, buildAccent, buildAccents } from "./themes.ts";
-export { buildCore, buildPreset } from "./css.ts";
+export type { AccentColors } from "./accents.ts";
+export { buildAccent, buildAccents, defineAccent, validateAccent } from "./accent-compiler.ts";
+export type { Accent, AccentDefinition, AccentValidationOptions, ExplicitAccentDefinition, SeedAccentDefinition } from "./accent-compiler.ts";
+export { breakpointNames, breakpointQuery, breakpoints } from "./breakpoints.ts";
+export type { BreakpointName } from "./breakpoints.ts";
+export { themes, obsidian, paper, vellum, contrast, slate, graphite, studio } from "./themes.ts";
+export { buildCore, buildPreset, buildPrimitives } from "./css.ts";
 export { primitives, colorRamp } from "./primitives.ts";

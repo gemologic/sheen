@@ -56,11 +56,11 @@ test("color-only theme updates avoid rescans and read-only cells retain refresh 
   if (!accountOwner) throw new Error("Expected a read-only account cell");
   try {
     const name = await account.locator("strong").innerText();
-    await page.getByRole("region", { name: "Table benchmark surface", exact: true }).getByRole("button", { name: "+ Filter", exact: true }).click();
+    await page.getByRole("region", { name: "Table benchmark surface", exact: true }).getByRole("button", { name: "Add filter", exact: true }).click();
     const picker = page.getByRole("dialog", { name: "Filter columns", exact: true });
     await picker.getByRole("searchbox", { name: "Search filter columns", exact: true }).fill("Name");
     await picker.getByRole("button", { name: "Name", exact: true }).click();
-    const editor = page.getByRole("dialog", { name: "+ Filter: Name", exact: true });
+    const editor = page.getByRole("dialog", { name: "Add filter: Name", exact: true });
     await editor.getByRole("button", { name: /Operator/u }).click();
     await page.getByRole("option", { name: "contains", exact: true }).click();
     await editor.getByRole("textbox", { name: "Value", exact: true }).fill(name);

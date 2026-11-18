@@ -30,4 +30,4 @@ The fixture now additionally prepares Blob-backed CSV/JSON download links throug
 
 This is local Chromium download evidence from the Loupe development server. Generic DataTable export affordances, cross-engine downloads, large-file memory behavior, and spreadsheet interoperability remain unqualified.
 
-Six focused tests cover CSV quoting/Unicode, formula-looking strings and headers, numeric negatives, snapshot isolation, hidden-column exclusion, JSON scalar/property safety, invalid values, errors, and empty views. Isolated built-package consumers exercise the client serializer and server-controller availability. The grouped export TODO remains open for generic DataTable state/selection integration and its component API.
+Six focused tests cover CSV quoting/Unicode, formula-looking strings and headers, numeric negatives, snapshot isolation, hidden-column exclusion, JSON scalar/property safety, invalid values, errors, and empty views. Isolated built-package consumers exercise the client serializer and server-controller availability. Export remains open for generic DataTable state/selection integration and its component API.

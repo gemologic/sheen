@@ -2,6 +2,7 @@ import { For, Show, createMemo, createSignal, onCleanup, onMount } from "solid-j
 import { changeClientViewState, createClientView, createDebouncedSearch, parseClientViewState } from "@gemologic/sheen-table";
 import type { ClientStateChange, ClientView, ClientViewOptions } from "@gemologic/sheen-table";
 import { Button, Input, Pagination, SearchInput, Table, TableBody, TableCaption, TableCell, TableRow } from "@gemologic/sheen";
+import "@gemologic/sheen-table/styles.css";
 
 interface Row { id: string; name: string; status: string }
 

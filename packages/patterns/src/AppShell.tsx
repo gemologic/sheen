@@ -1,4 +1,4 @@
-import { Dialog, ScrollArea, ShortcutPending, ShortcutSheet, Tooltip, useShortcut, useShortcutBindings, useTheme } from "@gemologic/sheen";
+import { breakpointQuery, Dialog, ScrollArea, ShortcutPending, ShortcutSheet, Tooltip, useShortcut, useShortcutBindings, useTheme } from "@gemologic/sheen";
 import { Title } from "@solidjs/meta";
 import { Show, children, createEffect, createMemo, createSignal, createUniqueId, onCleanup, onMount, splitProps } from "solid-js";
 import type { JSX } from "solid-js";
@@ -49,7 +49,7 @@ export function AppShell(props: AppShellProps): JSX.Element {
   let beforeLayoutChange: ((phone: boolean) => void) | undefined;
   let media: MediaQueryList | undefined;
   onMount(() => {
-    media = window.matchMedia("(max-width: 767px)");
+    media = window.matchMedia(breakpointQuery("md", "down"));
     const update = () => { const next = media?.matches ?? false; if (next !== phone()) beforeLayoutChange?.(next); setPhone(next); };
     update();
     media.addEventListener("change", update);

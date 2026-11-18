@@ -1,7 +1,7 @@
 import { createContext, createEffect, createMemo, createSignal, createUniqueId, onCleanup, onMount, useContext } from "solid-js";
 import type { Accessor, JSX, ParentProps } from "solid-js";
 import { I18nProvider } from "#sheen-kobalte/i18n";
-import { bundledThemeMetadata, iconSetForTheme } from "@gemologic/sheen-tokens/catalog";
+import { accentNames, bundledThemeMetadata, iconSetForTheme } from "@gemologic/sheen-tokens/catalog";
 import type { ThemeMetadata } from "@gemologic/sheen-tokens/catalog";
 import type { Mode } from "@gemologic/sheen-tokens";
 import { defaultThemeState, readThemeState, resolveThemeState } from "./state.ts";
@@ -21,19 +21,22 @@ interface ThemeRuntime {
   portal: Accessor<HTMLElement | undefined>;
   tokenTarget: Accessor<HTMLElement | undefined>;
   themes: readonly ThemeMetadata[];
+  /** Every selectable accent ID: the bundled accents plus registered custom accents. */
+  accents: readonly string[];
   nonce: string | undefined;
   layers: OverlayStack;
   messages: Accessor<Messages>;
   set: (next: Partial<ThemeState>) => Promise<void>;
 }
 
-export interface ThemeContextValue extends Omit<ThemeRuntime, "themes"> {
+export interface ThemeContextValue extends Omit<ThemeRuntime, "themes" | "accents"> {
   theme: Accessor<string>;
   mode: Accessor<ThemeState["mode"]>;
   accent: Accessor<ThemeState["accent"]>;
   density: Accessor<ThemeState["density"]>;
   radius: Accessor<ThemeState["radius"]>;
   themes: Accessor<readonly ThemeMetadata[]>;
+  accents: Accessor<readonly string[]>;
   setTheme: (value: string) => Promise<void>;
   setMode: (value: ThemeState["mode"]) => Promise<void>;
   setAccent: (value: ThemeState["accent"]) => Promise<void>;
@@ -52,6 +55,7 @@ function exposeTheme(runtime: ThemeRuntime): ThemeContextValue {
     density: () => runtime.state().density,
     radius: () => runtime.state().radius,
     themes: () => runtime.themes,
+    accents: () => runtime.accents,
     setTheme: theme => runtime.set({ theme }),
     setMode: mode => runtime.set({ mode }),
     setAccent: accent => runtime.set({ accent }),
@@ -104,6 +108,8 @@ export interface ThemeProviderProps extends ParentProps {
   direction?: ThemeState["direction"];
   locale?: string;
   themes?: readonly ThemeMetadata[];
+  /** Custom accent IDs built with `defineAccent`/`buildAccent`; their CSS must be loaded by the app. */
+  accents?: readonly string[];
   storageKey?: string;
   hydration?: "client" | "cookie";
   persist?: (state: ThemeState) => Promise<void>;
@@ -115,6 +121,7 @@ export interface ThemeProviderProps extends ParentProps {
 export function ThemeProvider(props: ThemeProviderProps): JSX.Element {
   const numberFormat = createNumberFormatCache();
   const themes = () => props.themes ?? bundledThemeMetadata;
+  const accents = createMemo<readonly string[]>(() => [...accentNames, ...(props.accents ?? []).filter(id => !accentNames.some(name => name === id))]);
   const defaults: ThemeState = {
     ...defaultThemeState,
     theme: props.defaultTheme ?? defaultThemeState.theme, mode: props.defaultMode ?? "dark", accent: props.defaultAccent ?? "jade",
@@ -139,17 +146,17 @@ export function ThemeProvider(props: ThemeProviderProps): JSX.Element {
     if (props.hydration !== "cookie") {
       const root = document.documentElement;
       const snapshot = Object.fromEntries(Object.keys(defaults).map(name => [name, root.getAttribute(`data-sheen-${name}`)]));
-      setState(readThemeState({ ...snapshot, mode: root.getAttribute("data-sheen-preference") ?? snapshot.mode }, defaults, themes().map(theme => theme.id)));
+      setState(readThemeState({ ...snapshot, mode: root.getAttribute("data-sheen-preference") ?? snapshot.mode }, defaults, themes().map(theme => theme.id), accents()));
     }
     setReady(true);
     updateDocument();
   });
   createEffect(() => { if (ready()) updateDocument(); });
   const context = exposeTheme({
-    state, defaults, resolvedMode: mode, ready, portal, tokenTarget: () => document.documentElement, themes: themes(), nonce: props.nonce, layers: createOverlayStack(),
+    state, defaults, resolvedMode: mode, ready, portal, tokenTarget: () => document.documentElement, themes: themes(), accents: accents(), nonce: props.nonce, layers: createOverlayStack(),
     messages: createMemo(() => resolveMessages(englishMessages, props.messages)),
     async set(next) {
-      const candidate = readThemeState({ ...state(), ...next }, defaults, context.themes().map(theme => theme.id));
+      const candidate = readThemeState({ ...state(), ...next }, defaults, context.themes().map(theme => theme.id), context.accents());
       const token = ++revision;
       if (props.hydration === "cookie") {
         if (!props.persist) throw new Error("Cookie hydration requires an app persistence callback");
@@ -193,11 +200,16 @@ export function ThemeScope(props: ThemeScopeProps): JSX.Element {
   const system = modeSignal();
   const mode = createMemo<Mode>(() => state().mode === "system" ? system() : state().mode === "light" ? "light" : "dark");
   const themes = () => parent.themes();
-  const context = exposeTheme({ ...parent, themes: parent.themes(), state, portal, tokenTarget: () => portal()?.parentElement ?? undefined, resolvedMode: mode,
+  const context = exposeTheme({ ...parent, themes: parent.themes(), accents: parent.accents(), state, portal, tokenTarget: () => portal()?.parentElement ?? undefined, resolvedMode: mode,
     messages: createMemo(() => resolveMessages(parent.messages(), props.messages)),
     async set(next) {
-    if (!props.controllable) throw new Error("ThemeScope setters require controllable=true");
-    setLocal(previous => ({ ...previous, ...next }));
+    if (props.controllable) {
+      setLocal(previous => ({ ...previous, ...next }));
+      return;
+    }
+    const pinned = Object.keys(next).filter(axis => Object.hasOwn(overrides(), axis));
+    if (pinned.length) throw new Error(`ThemeScope pins ${pinned.join(", ")}; changing a pinned axis requires controllable=true`);
+    await parent.set(next);
   } });
   const id = createUniqueId();
   const overrides = (): ThemeOverrides => {

@@ -33,7 +33,7 @@ export function Collapsible(props: CollapsibleProps): JSX.Element {
   };
   createEffect(() => { if (!open()) restoreFocus(); });
   return <Primitive.Root {...others} id={id()} class={cn("sheen-collapsible", local.class)} open={open()} onOpenChange={change} disabled={local.disabled ?? false}>
-    <Primitive.Trigger as={Button} ref={trigger} id={`${id()}-trigger`} aria-controls={`${id()}-content`} class="sheen-collapsible-trigger">
+    <Primitive.Trigger as={Button} variant="ghost" ref={trigger} id={`${id()}-trigger`} aria-controls={`${id()}-content`} class="sheen-collapsible-trigger">
       <span class="sheen-collapsible-indicator" aria-hidden="true" />{local.label}
     </Primitive.Trigger>
     <div ref={content} id={`${id()}-content`} class="sheen-collapsible-content" data-open={open()} aria-hidden={!open() || undefined} inert={!open()}>

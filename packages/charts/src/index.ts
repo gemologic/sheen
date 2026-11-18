@@ -1,6 +1,6 @@
 export * from "./core.ts";
-export { Sparkline, sparklinePath, Stat, StatGroup } from "./svg.ts";
-export { AreaChart, BarChart, LineChart } from "./charts-svg.ts";
+export { BarSparkline, barSparklinePath, Sparkline, sparklinePath, Stat, StatGroup } from "./svg.ts";
+export { AreaChart, BarChart, binValues, DonutChart, Gauge, Heatmap, Histogram, LineChart, ScatterChart } from "./charts-svg.ts";
 export { ChartDataTable, createChartAxisFormatter, createChartTableFormatters, englishChartMessages, resolveChartMessages } from "./table.ts";
 export { TimeSeries } from "./TimeSeries.tsx";
 export { useThemeTokens } from "./theme-tokens.ts";

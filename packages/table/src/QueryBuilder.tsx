@@ -173,12 +173,12 @@ function StructuralActions(props: NodeEditorProps): JSX.Element {
   if (!props.structural) return null;
   const update = (next: FilterNode, announcement: string): void => props.publish(next, announcement);
   return <div class="sheen-query-node-actions">
-    <Button size="xs" aria-label={props.messages.queryMoveBefore} disabled={props.disabled || props.index === 0}
+    <Button variant="ghost" size="xs" aria-label={props.messages.queryMoveBefore} disabled={props.disabled || props.index === 0}
       onClick={() => update(moveQueryNode(props.root(), props.path, -1, props.schema), props.messages.queryChanged)}>{props.messages.queryMoveBefore}</Button>
-    <Button size="xs" aria-label={props.messages.queryMoveAfter} disabled={props.disabled || props.index >= props.siblingCount - 1}
+    <Button variant="ghost" size="xs" aria-label={props.messages.queryMoveAfter} disabled={props.disabled || props.index >= props.siblingCount - 1}
       onClick={() => update(moveQueryNode(props.root(), props.path, 1, props.schema), props.messages.queryChanged)}>{props.messages.queryMoveAfter}</Button>
-    <Button size="xs" disabled={props.disabled} onClick={() => update(toggleQueryNegation(props.root(), props.path, props.schema), props.messages.queryChanged)}>{props.messages.queryNegate}</Button>
-    <Button size="xs" tone="danger" disabled={props.disabled} onClick={() => update(removeQueryNode(props.root(), props.path, props.schema), props.messages.queryChanged)}>{props.messages.queryRemove}</Button>
+    <Button variant="ghost" size="xs" disabled={props.disabled} onClick={() => update(toggleQueryNegation(props.root(), props.path, props.schema), props.messages.queryChanged)}>{props.messages.queryNegate}</Button>
+    <Button variant="ghost" size="xs" tone="danger" disabled={props.disabled} onClick={() => update(removeQueryNode(props.root(), props.path, props.schema), props.messages.queryChanged)}>{props.messages.queryRemove}</Button>
   </div>;
 }
 
@@ -244,7 +244,7 @@ function QueryNodeEditor(props: NodeEditorProps): JSX.Element {
   return <MatchSwitch>
     <Match when={props.node.kind === "not"}><section class="sheen-query-not" aria-label={props.messages.queryNegate} data-query-path={pathKey(props.path)}>
       <div class="sheen-query-not-toolbar"><strong>{props.messages.queryNegate}</strong>
-        <Button size="xs" disabled={props.disabled} onClick={() => props.publish(toggleQueryNegation(props.root(), props.path, props.schema), props.messages.queryChanged)}>{props.messages.queryRemoveNegation}</Button>
+        <Button variant="ghost" size="xs" disabled={props.disabled} onClick={() => props.publish(toggleQueryNegation(props.root(), props.path, props.schema), props.messages.queryChanged)}>{props.messages.queryRemoveNegation}</Button>
         <StructuralActions {...props} />
       </div>
       <QueryNodeEditor {...props} node={notNode(props.node).child} path={[...props.path, 0]} structural={false} index={0} siblingCount={1} />

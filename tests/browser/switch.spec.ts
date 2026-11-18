@@ -46,12 +46,13 @@ test("switch pre-hydration changes update the thumb and hydrate without losing f
     const live = page.getByRole("switch", { name: "Live updates", exact: true });
     const track = live.locator("xpath=..").locator(".sheen-switch-control");
     await expect(live).toBeChecked();
-    await expect(track).toHaveCSS("justify-content", "end");
+    const thumbTranslate = track.locator(".sheen-switch-thumb");
+    await expect(thumbTranslate).not.toHaveCSS("translate", "none");
     await live.evaluate(element => element.setAttribute("data-server-control", "retained"));
     await live.focus();
     await page.keyboard.press("Space");
     await expect(live).not.toBeChecked();
-    await expect(track).not.toHaveCSS("justify-content", "end");
+    await expect(thumbTranslate).toHaveCSS("translate", "none");
     const controlled = page.getByRole("switch", { name: "Controlled setting", exact: true });
     await controlled.focus();
     await page.keyboard.press("Space");
@@ -74,9 +75,11 @@ test("switch pre-hydration changes update the thumb and hydrate without losing f
     await expect(live).toHaveAttribute("aria-invalid", "true");
     await expect(live).toHaveAccessibleDescription("Automatic refresh Connection unavailable");
     const thumb = track.locator(".sheen-switch-thumb");
+    await thumb.evaluate(element => Promise.all(element.getAnimations().map(animation => animation.finished)));
     const ltrTrack = await track.boundingBox(), ltrThumb = await thumb.boundingBox();
     expect(ltrThumb!.x).toBeGreaterThan(ltrTrack!.x + ltrTrack!.width / 3);
     await page.getByRole("button", { name: "Toggle direction" }).click();
+    await thumb.evaluate(element => Promise.all(element.getAnimations().map(animation => animation.finished)));
     const rtlTrack = await track.boundingBox(), rtlThumb = await thumb.boundingBox();
     expect(rtlThumb!.x).toBeLessThan(rtlTrack!.x + rtlTrack!.width / 3);
     await expect(live).toHaveAttribute("data-server-control", "retained");

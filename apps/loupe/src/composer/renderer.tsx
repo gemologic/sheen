@@ -12,6 +12,9 @@ import type { JSX } from "solid-js";
 import type { ComposerRecordFixture, ComposerFixtureCatalog } from "./fixtures.ts";
 import type { ComposerComponentNode, ComposerDocument, ComposerRegionId, ComposerScalar } from "./model.ts";
 import { composerPlacements, composerRegion } from "./model.ts";
+import "@gemologic/sheen-table/styles.css";
+import "@gemologic/sheen-charts/styles.css";
+import "@gemologic/sheen-patterns/admin/styles.css";
 
 const recordColumns = defineColumns<ComposerRecordFixture>([
   { id: "account", header: "Account", accessor: row => row.account, search: true, filter: { type: "text" }, sort: "text", width: "fill" },

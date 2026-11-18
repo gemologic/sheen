@@ -13,7 +13,7 @@ Do not edit any of those files by hand. Change the component metadata, example, 
 
 The compact signatures omit inherited native DOM props and defaults. The full context retains authored defaults, and the manifest remains the exhaustive machine-readable source for inherited platform props. Common primitive types use the aliases declared at the top of `llms.txt`; quoted literal types are never rewritten.
 
-The deterministic gate is 45,000 UTF-8 bytes. It is a model-independent proxy for the specification's under-15k-token target, chosen so a normal code-oriented tokenizer should remain below that target without coupling generation to a tokenizer package. It is not an exact token count for every model. Pinning a model and tokenizer for an exact measurement belongs with the M5 assay baseline; until that runs, report the byte result as the proven gate and the token target as pending qualification.
+The deterministic gate is 45,000 UTF-8 bytes. It is a model-independent proxy for the under-15k-token target, chosen so a normal code-oriented tokenizer should remain below that target without coupling generation to a tokenizer package. It is not an exact token count for every model. Pinning a model and tokenizer for an exact measurement belongs with the assay baseline; until that runs, report the byte result as the proven gate and the token target as pending qualification.
 
 ## Consumer use
 

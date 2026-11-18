@@ -1,6 +1,7 @@
 import { ThemeScope } from "@gemologic/sheen";
 import { defineSeries } from "@gemologic/sheen-charts/core";
 import { TimeSeries } from "@gemologic/sheen-charts/time-series";
+import "@gemologic/sheen-charts/styles.css";
 
 const base = Date.UTC(2026, 8, 9, 12, 0, 0);
 const timestamps = new Float64Array(Array.from({ length: 24 }, (_, index) => base + index * 60_000));

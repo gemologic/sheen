@@ -4,7 +4,7 @@ import { For, Show, createEffect, createMemo, createSignal, createUniqueId, onCl
 import type { JSX } from "solid-js";
 import type { DateValue } from "@internationalized/date";
 import { Portal } from "solid-js/web";
-import { cn, useTheme } from "@gemologic/sheen";
+import { Glyph, cn, useTheme } from "@gemologic/sheen";
 import { createDateRange, serializeDateRange } from "./date-range.ts";
 import { serializeCalendarDate } from "./calendar-date.ts";
 import { CalendarViews } from "./CalendarView.tsx";
@@ -95,13 +95,13 @@ export function DatePicker(props: DatePickerProps): JSX.Element {
     <ArkDatePicker.Label class="sheen-field-label">{local.label}<Show when={local.required}><span aria-hidden="true"> *</span></Show></ArkDatePicker.Label>
     <ArkDatePicker.Control class="sheen-date-picker-control">
       <ArkDatePicker.Input class="sheen-input sheen-date-picker-input" aria-describedby={pickerDescription(id(), local.description, local.error)} />
-      <ArkDatePicker.Trigger ref={trigger} class="sheen-date-picker-trigger"><span aria-hidden="true">▦</span><span class="sheen-sr-only">Open calendar</span></ArkDatePicker.Trigger>
+      <ArkDatePicker.Trigger ref={trigger} class="sheen-date-picker-trigger"><Glyph name="calendar" /><span class="sheen-sr-only">Open calendar</span></ArkDatePicker.Trigger>
       <ArkDatePicker.ClearTrigger class="sheen-date-picker-clear">Clear</ArkDatePicker.ClearTrigger>
     </ArkDatePicker.Control>
     <Show when={local.name !== undefined}><input type="hidden" name={local.name} form={local.form} value={formValue()} disabled={local.disabled} /></Show>
     <PickerText id={id()} description={local.description} error={local.error} />
     <Show when={theme.portal()}>{target => <Portal mount={target()}>
-      <ArkDatePicker.Positioner class="sheen-date-positioner" style={{ "z-index": theme.layers.zIndex(generatedId) }}>
+      <ArkDatePicker.Positioner class="sheen-date-positioner" data-kb-top-layer="true" style={{ "z-index": theme.layers.zIndex(generatedId) }}>
         <ArkDatePicker.Content class="sheen-date-content" data-sheen-date-layer="" onKeyDown={event => {
           if (event.key === "Escape") queueMicrotask(() => trigger?.focus());
         }}>
@@ -180,13 +180,13 @@ export function DateRangePicker(props: DateRangePickerProps): JSX.Element {
       <ArkDatePicker.Input index={0} class="sheen-input sheen-date-picker-input" aria-describedby={pickerDescription(id(), local.description, local.error)} />
       <span aria-hidden="true" class="sheen-date-range-separator">–</span>
       <ArkDatePicker.Input index={1} class="sheen-input sheen-date-picker-input" aria-label={local.endLabel ?? `${local.label}, end`} aria-describedby={pickerDescription(id(), local.description, local.error)} />
-      <ArkDatePicker.Trigger ref={trigger} class="sheen-date-picker-trigger"><span aria-hidden="true">▦</span><span class="sheen-sr-only">Open calendar</span></ArkDatePicker.Trigger>
+      <ArkDatePicker.Trigger ref={trigger} class="sheen-date-picker-trigger"><Glyph name="calendar" /><span class="sheen-sr-only">Open calendar</span></ArkDatePicker.Trigger>
       <ArkDatePicker.ClearTrigger class="sheen-date-picker-clear">Clear</ArkDatePicker.ClearTrigger>
     </ArkDatePicker.Control>
     <Show when={local.name !== undefined}><input type="hidden" name={local.name} form={local.form} value={formValue()} disabled={local.disabled} /></Show>
     <PickerText id={id()} description={local.description} error={local.error} />
     <Show when={theme.portal()}>{target => <Portal mount={target()}>
-      <ArkDatePicker.Positioner class="sheen-date-positioner" style={{ "z-index": theme.layers.zIndex(generatedId) }}>
+      <ArkDatePicker.Positioner class="sheen-date-positioner" data-kb-top-layer="true" style={{ "z-index": theme.layers.zIndex(generatedId) }}>
         <ArkDatePicker.Content class="sheen-date-content" data-sheen-date-layer="" onKeyDown={event => {
           if (event.key === "Escape") queueMicrotask(() => trigger?.focus());
         }}>

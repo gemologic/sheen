@@ -26,6 +26,8 @@ export default defineMeta<HeadingProps>({
       "control": {
         "kind": "select",
         "values": [
+          "display-1",
+          "display-2",
           "h1",
           "h2",
           "h3",

@@ -4,6 +4,7 @@ import type { SelectOption } from "@gemologic/sheen";
 import { useThemeTokens } from "@gemologic/sheen-charts";
 import { accentNames, isAccentName, simulateColorVision } from "@gemologic/sheen-tokens";
 import type { ColorVisionSimulation, Mode, TokenName } from "@gemologic/sheen-tokens";
+import "@gemologic/sheen-tokens/primitives.css";
 import {
   apcaMatrixScore,
   backgroundTokenNames,
@@ -13,6 +14,7 @@ import {
   tokenPreviewKind,
   wcagMatrixScore,
 } from "../token-explorer-state.ts";
+import "@gemologic/sheen-charts/styles.css";
 
 const modes: readonly SelectOption[] = [{ value: "dark", label: "Dark" }, { value: "light", label: "Light" }, { value: "system", label: "System" }];
 const simulations: readonly (ColorVisionSimulation | "normal")[] = ["normal", "protanopia", "deuteranopia", "tritanopia", "achromatopsia"];

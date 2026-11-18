@@ -1,4 +1,4 @@
-import { composite, contrastRatio, parseColor, toHex, toOklch } from "./color.ts";
+import { composite, contrastRatio, isExactHex, parseColor, toHex } from "./color.ts";
 import { validateChartPalette } from "./palette.ts";
 import { currentSchemaVersion, isTokenName, semanticDefaults, versionedDefaults } from "./schema.ts";
 import type { Mode, Theme, ThemeDefinition, TokenName, Tokens } from "./schema.ts";
@@ -121,27 +121,30 @@ export function defineTheme(input: ThemeDefinition): Theme {
   return Object.freeze({ ...input, primitives: Object.freeze({ ...input.primitives }), dark, light });
 }
 
-export function emitTokenDeclarations(tokens: Readonly<Record<string, string>>, modern = false): string {
-  return Object.entries(tokens).map(([name, value]) => {
-    let emitted = value;
-    if (/^(#|oklch\(|color-mix\(|transparent$)/.test(value) && !value.includes("px")) {
-      const color = parseColor(value);
-      emitted = modern ? (value.startsWith("oklch(") || value.startsWith("color-mix(") ? value : toOklch(value)) : toHex(color);
-    }
-    return `  --sheen-${name}: ${emitted};`;
-  }).join("\n");
+const isColorValue = (value: string): boolean => /^(#|oklch\(|color-mix\(|transparent$)/.test(value) && !value.includes("px");
+
+export function emitTokenDeclarations(tokens: Readonly<Record<string, string>>): string {
+  return Object.entries(tokens).map(([name, value]) => `  --sheen-${name}: ${isColorValue(value) ? toHex(parseColor(value)) : value};`).join("\n");
+}
+
+/** Color tokens whose source the sRGB hex fallback cannot reproduce, such as wide-gamut OKLCH. */
+function emitModernColorDeclarations(tokens: Readonly<Record<string, string>>): string {
+  return Object.entries(tokens).filter(([, value]) => isColorValue(value) && !isExactHex(value)).map(([name, value]) => `  --sheen-${name}: ${value};`).join("\n");
 }
 
 export function buildTheme(input: ThemeDefinition): string {
   const theme = defineTheme(input);
-  function emit(modern: boolean): string {
-    return (["dark", "light"] satisfies Mode[]).map(mode => {
-      const selector = `:where([data-sheen-theme="${theme.id}"][data-sheen-mode="${mode}"])`;
-      const comfortableSpacing = Object.fromEntries(Object.entries(theme[mode])
-        .filter(([name]) => name.startsWith("space-") || name.startsWith("control-px-"))
-        .map(([name, value]) => [`density-comfortable-${name}`, value]));
-      return `${selector} {\n  color-scheme: ${mode};\n${emitTokenDeclarations(theme[mode], modern)}\n${emitTokenDeclarations(comfortableSpacing)}\n}`;
-    }).join("\n");
-  }
-  return `${emit(false)}\n@supports (color: oklch(50% 0 0)) {\n${emit(true)}\n}\n`;
+  const selector = (mode: Mode): string => `:where([data-sheen-theme="${theme.id}"][data-sheen-mode="${mode}"])`;
+  const modes = ["dark", "light"] satisfies Mode[];
+  const fallback = modes.map(mode => {
+    const comfortableSpacing = Object.fromEntries(Object.entries(theme[mode])
+      .filter(([name]) => name.startsWith("space-") || name.startsWith("control-px-"))
+      .map(([name, value]) => [`density-comfortable-${name}`, value]));
+    return `${selector(mode)} {\n  color-scheme: ${mode};\n${emitTokenDeclarations(theme[mode])}\n${emitTokenDeclarations(comfortableSpacing)}\n}`;
+  }).join("\n");
+  const modern = modes.flatMap(mode => {
+    const declarations = emitModernColorDeclarations(theme[mode]);
+    return declarations ? [`${selector(mode)} {\n${declarations}\n}`] : [];
+  }).join("\n");
+  return modern ? `${fallback}\n@supports (color: oklch(50% 0 0)) {\n${modern}\n}\n` : `${fallback}\n`;
 }

@@ -6,6 +6,7 @@ import type { DataTablePageState, DataTablePageViews, ToolbarGroup } from "@gemo
 import { useSolidRouterAdapter } from "@gemologic/sheen-patterns/solid-router";
 import { For, batch, createMemo, createSignal, onCleanup, onMount } from "solid-js";
 import "@gemologic/sheen-patterns/styles.css";
+import "@gemologic/sheen-table/styles.css";
 
 interface Account {
   readonly id: string;

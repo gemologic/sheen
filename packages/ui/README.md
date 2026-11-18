@@ -5,7 +5,7 @@ Accessible, themeable SolidJS components for application interfaces. Import the 
 ## Install
 
 ```sh
-pnpm add @gemologic/sheen @gemologic/sheen-tokens solid-js@1.9.15
+pnpm add @gemologic/sheen @gemologic/sheen-tokens solid-js@1.9.19
 ```
 
 Add the runtime setup plugin to Vite 8 or SolidStart's Vite configuration:

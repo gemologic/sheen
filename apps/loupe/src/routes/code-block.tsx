@@ -2,6 +2,7 @@ import { Button, Row, Stack, useTheme } from "@gemologic/sheen";
 import { CodeBlock } from "@gemologic/sheen-code";
 import type { HighlightedCode } from "@gemologic/sheen-code";
 import { createMemo, createSignal } from "solid-js";
+import "@gemologic/sheen-code/styles.css";
 
 const sources: readonly string[] = [
   "const stable = true;\nconsole.log(stable);",

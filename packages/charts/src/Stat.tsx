@@ -1,6 +1,6 @@
 import { Index, Show, children, createMemo } from "solid-js";
 import type { JSX } from "solid-js";
-import { NumberText } from "@gemologic/sheen";
+import { Glyph, NumberText } from "@gemologic/sheen";
 import type { StatGroupProps, StatProps, StatTrend } from "./chart-types.ts";
 
 function className(base: string, extra: string | undefined): string {
@@ -17,13 +17,14 @@ function validateStat(stat: StatProps): StatProps {
   if (stat.trend === undefined && stat.trendLabel !== undefined) throw new Error("Stat trendLabel requires a trend");
   if (stat.valence !== undefined && stat.valence !== "positive" && stat.valence !== "negative" && stat.valence !== "neutral") throw new Error("Stat valence is invalid");
   if (stat.trend === undefined && stat.valence !== undefined) throw new Error("Stat valence requires a trend");
+  if (stat.tween !== undefined && typeof stat.tween !== "boolean") throw new Error("Stat tween must be boolean");
   return stat;
 }
 
-function trendSymbol(trend: StatTrend): string {
-  if (trend === "up") return "↗";
-  if (trend === "down") return "↘";
-  return "→";
+function trendGlyph(trend: StatTrend): "trend-up" | "trend-down" | "trend-flat" {
+  if (trend === "up") return "trend-up";
+  if (trend === "down") return "trend-down";
+  return "trend-flat";
 }
 
 function StatContent(props: { readonly stat: StatProps }): JSX.Element {
@@ -36,10 +37,10 @@ function StatContent(props: { readonly stat: StatProps }): JSX.Element {
   return <>
     <dt class="sheen-stat-label">{stat().label}</dt>
     <dd class="sheen-stat-value"><Show when={typeof stat().value === "number" && stat().format !== undefined} fallback={stat().value}>
-      <NumberText value={Number(stat().value)} {...numberFormat()} />
+      <NumberText value={Number(stat().value)} tween={stat().tween ?? true} {...numberFormat()} />
     </Show></dd>
     <Show when={stat().trend}>{trend => <dd class="sheen-stat-trend" data-trend={trend()} data-valence={stat().valence ?? "neutral"}>
-      <span aria-hidden="true">{trendSymbol(trend())}</span><span>{stat().trendLabel}</span>
+      <Glyph class="sheen-stat-trend-glyph" name={trendGlyph(trend())} /><span>{stat().trendLabel}</span>
     </dd>}</Show>
     <Show when={visual()}>{content => <dd class="sheen-stat-visual">{content()}</dd>}</Show>
   </>;

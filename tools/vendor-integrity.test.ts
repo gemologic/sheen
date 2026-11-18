@@ -44,7 +44,7 @@ describe("vendored runtime integrity", () => {
   });
   it("rejects changed patch inputs", async () => {
     const root = await copyRuntime();
-    await writeFile(join(root, "patches/solid-js@1.9.15.patch"), "changed\n");
-    await expect(verifyVendorIntegrity(root)).rejects.toThrow("patches/solid-js@1.9.15.patch");
+    await writeFile(join(root, "patches/solid-js@1.9.19.patch"), "changed\n");
+    await expect(verifyVendorIntegrity(root)).rejects.toThrow("patches/solid-js@1.9.19.patch");
   });
 });

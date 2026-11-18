@@ -2,6 +2,7 @@ import { Button, ThemeScope } from "@gemologic/sheen";
 import { DataTable, defineColumns } from "@gemologic/sheen-table";
 import type { DataTableResult, ServerRowGroup, TableState } from "@gemologic/sheen-table";
 import { createSignal } from "solid-js";
+import "@gemologic/sheen-table/styles.css";
 
 interface FixtureRow { readonly id: string; readonly name: string; readonly amount: number; readonly children?: readonly FixtureRow[]; readonly remote?: boolean }
 interface GroupedRow { readonly id: string; readonly desk: string | null; readonly amount: number | null }

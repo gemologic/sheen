@@ -1,4 +1,5 @@
 import * as Primitive from "#sheen-kobalte/dropdown-menu";
+import { Glyph } from "./Glyph.tsx";
 import { useMenuContext } from "#sheen-kobalte/menu";
 import { For, Show, createEffect, createMemo, createSignal, createUniqueId, onCleanup } from "solid-js";
 import type { JSX } from "solid-js";
@@ -7,7 +8,7 @@ import { Kbd } from "./Typography.tsx";
 import { useTheme } from "../theme/ThemeProvider.tsx";
 import { cn } from "../utils/cn.ts";
 import { createMenuFocusRecovery } from "./menu-focus.ts";
-import { useShortcutKeyboardOwner } from "./ShortcutProvider.tsx";
+import { useShortcutKeyboardOwner, useShortcutLabel } from "./ShortcutProvider.tsx";
 
 interface MenuLabel {
   readonly id: string;
@@ -62,6 +63,11 @@ export interface DropdownMenuProps {
   class?: string;
 }
 
+
+function MenuShortcut(props: { readonly keys: string }): JSX.Element {
+  const label = useShortcutLabel(() => props.keys);
+  return <Kbd class="sheen-menu-shortcut" aria-hidden="true">{label()}</Kbd>;
+}
 function indexItems<T extends { readonly id: string }>(items: readonly T[]): Map<string, T> {
   const result = new Map<string, T>();
   for (const item of items) {
@@ -98,7 +104,7 @@ function RadioItems(props: { group: MenuRadioGroup }): JSX.Element {
     <For each={[...options().keys()]}>{id => <Show when={options().get(id)}>{option =>
       <Primitive.RadioItem class="sheen-menu-item" value={id} textValue={option().label} disabled={option().disabled ?? false} closeOnSelect={false}
         aria-label={option().description ? `${option().label}, ${option().description}` : undefined}>
-        <span class="sheen-menu-indicator" aria-hidden="true"><Primitive.ItemIndicator>●</Primitive.ItemIndicator></span>
+        <span class="sheen-menu-indicator" aria-hidden="true"><Primitive.ItemIndicator><Glyph name="dot" /></Primitive.ItemIndicator></span>
         <MenuItemIcon icon={option().icon} />
         <Primitive.ItemLabel><span class="sheen-menu-item-copy"><span>{option().label}</span><Show when={option().description}>{description => <small>{description()}</small>}</Show></span></Primitive.ItemLabel>
       </Primitive.RadioItem>
@@ -122,7 +128,7 @@ function Submenu(props: { item: MenuSubmenu }): JSX.Element {
   const layer = createMemo<number>(previous => open() ? theme.layers.zIndex(id) : previous ?? 100);
   return <Primitive.Sub open={open()} onOpenChange={setOpen} gutter={4}>
     <Primitive.SubTrigger ref={trigger} class="sheen-menu-item" disabled={props.item.disabled ?? false} textValue={props.item.label}>
-      <span class="sheen-menu-indicator" aria-hidden="true"><MenuItemIcon icon={props.item.icon} /></span>{props.item.label}<span class="sheen-menu-sub-arrow" dir="ltr" data-direction={theme.state().direction} aria-hidden="true">›</span>
+      <span class="sheen-menu-indicator" aria-hidden="true"><MenuItemIcon icon={props.item.icon} /></span>{props.item.label}<Glyph class="sheen-menu-sub-arrow" name="chevron-right" />
     </Primitive.SubTrigger>
     <Show when={theme.portal()}>{target => <Primitive.Portal mount={target()}>
       <Primitive.SubContent ref={setContent} class="sheen-menu" data-kb-top-layer="true" aria-hidden={!open() || undefined} inert={!open()} style={{ "z-index": layer() }}
@@ -155,11 +161,11 @@ export function MenuItems(props: { items: readonly MenuItem[] }): JSX.Element {
     return <>
       <Show when={action()}>{item => <Primitive.Item class="sheen-menu-item" textValue={item().label} disabled={item().disabled ?? false} onSelect={() => item().onSelect()}>
         <span class="sheen-menu-indicator" aria-hidden="true"><MenuItemIcon icon={item().icon} /></span><Primitive.ItemLabel>{item().label}</Primitive.ItemLabel>
-        <Show when={item().shortcut}>{shortcut => <Kbd class="sheen-menu-shortcut" aria-hidden="true">{shortcut()}</Kbd>}</Show>
+        <Show when={item().shortcut}>{shortcut => <MenuShortcut keys={shortcut()} />}</Show>
       </Primitive.Item>}</Show>
       <Show when={checkbox()}>{item => <Primitive.CheckboxItem class="sheen-menu-item" textValue={item().label} disabled={item().disabled ?? false} checked={item().checked} onChange={checked => item().onCheckedChange(checked)} closeOnSelect={false}>
-        <span class="sheen-menu-indicator" aria-hidden="true"><Primitive.ItemIndicator>✓</Primitive.ItemIndicator></span><MenuItemIcon icon={item().icon} /><Primitive.ItemLabel>{item().label}</Primitive.ItemLabel>
-        <Show when={item().shortcut}>{shortcut => <Kbd class="sheen-menu-shortcut" aria-hidden="true">{shortcut()}</Kbd>}</Show>
+        <span class="sheen-menu-indicator" aria-hidden="true"><Primitive.ItemIndicator><Glyph name="check" /></Primitive.ItemIndicator></span><MenuItemIcon icon={item().icon} /><Primitive.ItemLabel>{item().label}</Primitive.ItemLabel>
+        <Show when={item().shortcut}>{shortcut => <MenuShortcut keys={shortcut()} />}</Show>
       </Primitive.CheckboxItem>}</Show>
       <Show when={radio()}>{item => <RadioItems group={item()} />}</Show>
       <Show when={submenu()}>{item => <Submenu item={item()} />}</Show>

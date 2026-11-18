@@ -25,9 +25,19 @@ export function createSeriesVisibility(series: Accessor<readonly ChartSeries[]>)
   });
 }
 
+export type ChartMarkerShape = "circle" | "square" | "triangle" | "diamond";
+const markerShapes: readonly ChartMarkerShape[] = Object.freeze(["circle", "square", "triangle", "diamond"]);
+
+/** Non-color point-shape encoding for a series position. */
+export function chartMarkerShape(index: number): ChartMarkerShape {
+  return markerShapes[index % markerShapes.length] ?? "circle";
+}
+
 export function ChartLegend(props: {
   readonly series: readonly ChartSeries[];
   readonly layout: ChartLegendLayout | undefined;
+  /** Line encodings for strokes and bars, point shapes for scatter series, or plain swatches for parts of a whole. */
+  readonly marker?: "line" | "shape" | "swatch";
   readonly visible: readonly boolean[];
   readonly onToggle: (index: number) => void;
 }): JSX.Element {
@@ -38,7 +48,9 @@ export function ChartLegend(props: {
       const shown = () => props.visible[index] ?? false;
       return <li data-hidden={!shown() || undefined}><button type="button" class="sheen-chart-legend-toggle" aria-pressed={shown()}
         aria-label={formatChartMessage(shown() ? messages().hideSeries : messages().showSeries, { series: series().label })} onClick={() => props.onToggle(index)}>
-        <span class="sheen-chart-legend-marker" data-color={series().color} data-encoding={resolveChartSeriesEncoding(series(), index)} data-series-index={index} aria-hidden="true" />
+        <span class="sheen-chart-legend-marker" data-color={series().color} data-series-index={index} aria-hidden="true"
+          data-encoding={(props.marker ?? "line") === "line" ? resolveChartSeriesEncoding(series(), index) : undefined}
+          data-shape={props.marker === "shape" ? chartMarkerShape(index) : props.marker === "swatch" ? "square" : undefined} />
         <span>{series().label}</span>
       </button></li>;
     }}</Index>

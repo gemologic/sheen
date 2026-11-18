@@ -61,7 +61,7 @@ test("alerts do not steal focus, separators preserve semantics, and surface chan
   await expect(input).toHaveValue("Retained card draft");
   await expect(input).toHaveAttribute("data-identity", "original");
   await page.getByRole("button", { name: "Toggle direction" }).click();
-  await expect(sample.getByRole("note").first()).toHaveCSS("border-right-width", "4px");
+  await expect(sample.getByRole("note").first()).toHaveCSS("box-shadow", /-2px 0px 0px 0px inset/u);
   await expect(sample.getByRole("note").first()).toHaveCSS("border-left-width", "1px");
 });
 

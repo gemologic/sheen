@@ -61,7 +61,7 @@ test("real refresh retains chart and table nodes throughout atomic acceptance", 
   const beforePath = await linePath.getAttribute("d");
   const beforeBar = await firstBar.getAttribute("height");
   await line.evaluate(element => element.setAttribute("data-retained-line", "yes"));
-  await line.locator("svg").evaluate(element => element.setAttribute("data-retained-svg", "yes"));
+  await line.locator(".sheen-svg-chart-plot > svg").evaluate(element => element.setAttribute("data-retained-svg", "yes"));
   await linePath.evaluate(element => element.setAttribute("data-retained-path", "yes"));
   await firstBar.evaluate(element => element.setAttribute("data-retained-bar", "yes"));
   await firstRow.evaluate(element => element.setAttribute("data-retained-row", "yes"));
@@ -172,7 +172,7 @@ test("server chart roots and native disclosures survive delayed hydration", asyn
     await path.evaluate(element => element.setAttribute("data-server-path", "yes"));
     await bar.evaluate(element => element.setAttribute("data-server-bar", "yes"));
     await table.evaluate(element => element.setAttribute("data-server-table", "yes"));
-    await expect(line.locator("svg")).toHaveAttribute("viewBox", "0 0 640 240");
+    await expect(line.locator(".sheen-svg-chart-plot > svg")).toHaveAttribute("viewBox", "0 0 640 240");
     const before = await line.locator(".sheen-svg-chart-plot").boundingBox();
     release();
     await ready(page);
@@ -195,9 +195,9 @@ test("responsive SVG coordinates track their viewport without document overflow"
   await path.evaluate(element => element.setAttribute("data-retained-resize", "yes"));
   await expect(page.locator(".loupe-chart-gallery-grid")).toHaveCSS("grid-template-columns", /\d+px/u);
   expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
-  const narrow = await page.locator(".sheen-line-chart svg").getAttribute("viewBox");
+  const narrow = await page.locator(".sheen-line-chart .sheen-svg-chart-plot > svg").getAttribute("viewBox");
   await page.setViewportSize({ width: 1200, height: 900 });
-  await expect.poll(() => page.locator(".sheen-line-chart svg").getAttribute("viewBox")).not.toBe(narrow);
+  await expect.poll(() => page.locator(".sheen-line-chart .sheen-svg-chart-plot > svg").getAttribute("viewBox")).not.toBe(narrow);
   await expect(path).toHaveAttribute("data-retained-resize", "yes");
   expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
   const labelBox = await page.locator(".sheen-line-chart .sheen-chart-axis-label").boundingBox();

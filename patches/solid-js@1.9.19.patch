@@ -1,0 +1,52 @@
+diff --git a/web/dist/web.js b/web/dist/web.js
+--- a/web/dist/web.js
++++ b/web/dist/web.js
+@@ -508,6 +508,6 @@
+   });
+-  if (sharedConfig.registry && !sharedConfig.done) sharedConfig.done = _$HY.done = true;
++  if (sharedConfig.registry && !sharedConfig.done && !sharedConfig.count) sharedConfig.done = _$HY.done = true;
+   try {
+-    if (e.composedPath) {
+-      const path = e.composedPath();
++    const path = e.composedPath && e.composedPath();
++    if (path && path.length) {
+       retarget(path[0]);
+diff --git a/web/dist/web.cjs b/web/dist/web.cjs
+--- a/web/dist/web.cjs
++++ b/web/dist/web.cjs
+@@ -509,6 +509,6 @@
+   });
+-  if (solidJs.sharedConfig.registry && !solidJs.sharedConfig.done) solidJs.sharedConfig.done = _$HY.done = true;
++  if (solidJs.sharedConfig.registry && !solidJs.sharedConfig.done && !solidJs.sharedConfig.count) solidJs.sharedConfig.done = _$HY.done = true;
+   try {
+-    if (e.composedPath) {
+-      const path = e.composedPath();
++    const path = e.composedPath && e.composedPath();
++    if (path && path.length) {
+       retarget(path[0]);
+diff --git a/web/dist/dev.js b/web/dist/dev.js
+--- a/web/dist/dev.js
++++ b/web/dist/dev.js
+@@ -516,6 +516,6 @@
+   });
+-  if (sharedConfig.registry && !sharedConfig.done) sharedConfig.done = _$HY.done = true;
++  if (sharedConfig.registry && !sharedConfig.done && !sharedConfig.count) sharedConfig.done = _$HY.done = true;
+   try {
+-    if (e.composedPath) {
+-      const path = e.composedPath();
++    const path = e.composedPath && e.composedPath();
++    if (path && path.length) {
+       retarget(path[0]);
+diff --git a/web/dist/dev.cjs b/web/dist/dev.cjs
+--- a/web/dist/dev.cjs
++++ b/web/dist/dev.cjs
+@@ -517,6 +517,6 @@
+   });
+-  if (solidJs.sharedConfig.registry && !solidJs.sharedConfig.done) solidJs.sharedConfig.done = _$HY.done = true;
++  if (solidJs.sharedConfig.registry && !solidJs.sharedConfig.done && !solidJs.sharedConfig.count) solidJs.sharedConfig.done = _$HY.done = true;
+   try {
+-    if (e.composedPath) {
+-      const path = e.composedPath();
++    const path = e.composedPath && e.composedPath();
++    if (path && path.length) {
+       retarget(path[0]);

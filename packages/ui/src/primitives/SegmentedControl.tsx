@@ -1,4 +1,4 @@
-import { For, Show, createMemo, createSignal, createUniqueId, onCleanup, onMount, splitProps, untrack } from "solid-js";
+import { For, Show, createEffect, createMemo, createSignal, createUniqueId, onCleanup, onMount, splitProps, untrack } from "solid-js";
 import type { JSX } from "solid-js";
 import { cn } from "../utils/cn.ts";
 import { createChoiceOptions } from "./choice-options.ts";
@@ -25,12 +25,14 @@ export interface SegmentedControlProps extends Omit<JSX.FieldsetHTMLAttributes<H
   orientation?: "horizontal" | "vertical";
   size?: "sm" | "md";
   overflowBehavior?: "scroll" | "wrap";
+  /** Stretch segments to share the container width equally, for short exclusive choices such as Buy/Sell. */
+  fullWidth?: boolean;
 }
 
 /** A compact, native-radio single-selection control with roving focus. */
 export function SegmentedControl(props: SegmentedControlProps): JSX.Element {
   const generatedId = createUniqueId();
-  const [local, others] = splitProps(props, ["id", "ref", "class", "name", "label", "options", "value", "defaultValue", "onValueChange", "description", "error", "disabled", "readOnly", "required", "orientation", "size", "overflowBehavior", "form", "aria-label", "aria-labelledby", "aria-describedby"]);
+  const [local, others] = splitProps(props, ["id", "ref", "class", "name", "label", "options", "value", "defaultValue", "onValueChange", "description", "error", "disabled", "readOnly", "required", "orientation", "size", "overflowBehavior", "fullWidth", "form", "aria-label", "aria-labelledby", "aria-describedby"]);
   const initialValue = local.defaultValue ?? null;
   const [uncontrolled, setUncontrolled] = createSignal<string | null>(initialValue);
   const value = () => local.value === undefined ? uncontrolled() : local.value;
@@ -107,9 +109,32 @@ export function SegmentedControl(props: SegmentedControlProps): JSX.Element {
       pending.add(task);
     };
     element.ownerDocument.addEventListener("reset", reset, true);
+    const track = element.querySelector<HTMLElement>(".sheen-segmented-options");
+    const indicator = track?.querySelector<HTMLElement>(".sheen-segmented-indicator");
+    let frame = 0;
+    // The indicator follows the checked label; the static checked fill stays in server markup until the first placement.
+    const place = (): void => {
+      if (!track || !indicator) return;
+      const label = track.querySelector<HTMLElement>(".sheen-segmented-input:checked + .sheen-segmented-item-label");
+      indicator.hidden = !label;
+      if (!label) return;
+      // Each item is positioned, so the label's offsets are item-relative; add the item's offset within the track.
+      const item = label.parentElement;
+      const x = label.offsetLeft + (item?.offsetLeft ?? 0);
+      const y = label.offsetTop + (item?.offsetTop ?? 0);
+      indicator.style.translate = `${x}px ${y}px`;
+      indicator.style.inlineSize = `${label.offsetWidth}px`;
+      indicator.style.blockSize = `${label.offsetHeight}px`;
+      if (track.dataset.indicatorReady === undefined) frame = view.requestAnimationFrame(() => { track.dataset.indicatorReady = ""; });
+    };
+    createEffect(() => { value(); place(); });
+    const observer = new view.ResizeObserver(place);
+    if (track) observer.observe(track);
     onCleanup(() => {
       element.ownerDocument.removeEventListener("reset", reset, true);
       for (const task of pending) view.clearTimeout(task);
+      observer.disconnect();
+      view.cancelAnimationFrame(frame);
     });
   });
   const describedBy = () => [local.description ? `${generatedId}-description` : "", local.error ? `${generatedId}-error` : "", local["aria-describedby"]].filter(Boolean).join(" ") || undefined;
@@ -118,10 +143,10 @@ export function SegmentedControl(props: SegmentedControlProps): JSX.Element {
     class={cn("sheen-segmented-control", local.class)} aria-labelledby={local["aria-labelledby"] ?? `${generatedId}-label`} aria-describedby={describedBy()}
     aria-invalid={local.error ? "true" : undefined} aria-readonly={local.readOnly || undefined} aria-orientation={local.orientation ?? "horizontal"}
     data-invalid={local.error ? "" : undefined} data-readonly={local.readOnly || undefined} data-size={local.size ?? "sm"}
-    data-overflow={local.overflowBehavior ?? "scroll"} disabled={local.disabled ?? false}>
+    data-overflow={local.overflowBehavior ?? "scroll"} data-full-width={local.fullWidth || undefined} disabled={local.disabled ?? false}>
     <legend id={`${generatedId}-label`} class="sheen-segmented-label">{local.label}<Show when={local.required}><span aria-hidden="true"> *</span></Show></legend>
     <Show when={local.description}><p id={`${generatedId}-description`} class="sheen-segmented-description">{local.description}</p></Show>
-    <div class="sheen-segmented-options"><For each={keys()}>{key => {
+    <div class="sheen-segmented-options"><span class="sheen-segmented-indicator" aria-hidden="true" hidden /><For each={keys()}>{key => {
       const initialOption = untrack(() => byValue().get(key));
       if (!initialOption) throw new Error("SegmentedControl: missing option during creation");
       const option = () => byValue().get(key) ?? initialOption;

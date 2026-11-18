@@ -16,10 +16,10 @@
     "./styles.css": "./src/styles.css"
   },
   "scripts": { "build": "vite build && tsc -p tsconfig.build.json" },
-  "peerDependencies": { "@gemologic/sheen": "workspace:*", "solid-js": "1.9.15" },
+  "peerDependencies": { "@gemologic/sheen": "workspace:*", "solid-js": "1.9.19" },
   "dependencies": {
     "@ark-ui/solid": "5.39.1",
     "@internationalized/date": "3.12.3"
   },
-  "devDependencies": { "@gemologic/sheen": "workspace:*", "solid-js": "1.9.15", "vite-plugin-solid": "2.11.14" }
+  "devDependencies": { "@gemologic/sheen": "workspace:*", "solid-js": "1.9.19", "vite-plugin-solid": "2.11.14" }
 }

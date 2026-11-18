@@ -1,10 +1,11 @@
-import { Button, Stack, Surface, ThemeScope } from "@gemologic/sheen";
+import { Button, Dialog, Drawer, Stack, Surface, ThemeScope } from "@gemologic/sheen";
 import {
   Calendar, DateField, DatePicker, DateRangePicker, DateTimePicker, TimeField, TimePicker, TimeZoneSelect,
   createCalendarDate, createDateRange, createDateTime, createTime, createTimeZone,
 } from "@gemologic/sheen-date";
 import type { CalendarDate, DateRange, DateTime, Time, TimeZone, TimeZoneOption } from "@gemologic/sheen-date";
 import { createSignal } from "solid-js";
+import "@gemologic/sheen-date/styles.css";
 
 const initialDate = createCalendarDate(2026, 11, 1);
 const initialDeploymentDate = createCalendarDate(2026, 11, 5);
@@ -90,6 +91,14 @@ export default function DateTimeFixture() {
           <h2>Scoped RTL picker</h2>
           <DatePicker label="تاريخ التسوية" defaultValue={createCalendarDate(2026, 11, 4)} defaultVisibleDate={initialDate} />
         </ThemeScope>
+        <Surface padding="md" class="loupe-date-modals"><h2>Pickers inside modal layers</h2><Stack>
+          <Dialog title="Schedule review" trigger="Open schedule dialog">
+            <DatePicker label="Review date" defaultValue={initialDate} defaultVisibleDate={initialDate} />
+          </Dialog>
+          <Drawer title="Schedule rollout" trigger="Open schedule drawer">
+            <DatePicker label="Rollout date" defaultValue={initialDate} defaultVisibleDate={initialDate} />
+          </Drawer>
+        </Stack></Surface>
       </div>
       <div class="loupe-date-actions"><Button type="submit" variant="solid" tone="accent">Inspect form</Button><output aria-label="Date form values">{formValue()}</output></div>
     </form>

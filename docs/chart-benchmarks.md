@@ -4,7 +4,7 @@
 
 The measured operations are:
 
-- Initial draw starts immediately before the real Solid mount trigger and ends on the animation frame after the retained uPlot canvas is ready. The deterministic SVG fallback paints before canvas enhancement. The artifact records the complete wrapper time, while the 16ms number in `SPEC.md` is a reference rather than an absolute gate.
+- Initial draw starts immediately before the real Solid mount trigger and ends on the animation frame after the retained uPlot canvas is ready. The deterministic SVG fallback paints before canvas enhancement. The artifact records the complete wrapper time, while the 16ms number is a reference rather than an absolute gate.
 - Tooltip inspection drives 120 real pointer positions at 60Hz over the 100k-point chart. One tooltip and canvas must remain connected, and every run must publish at least 100 updates.
 - Pan/zoom drives the real uPlot drag surface through 120 positions over two seconds and requires an accepted zoom without replacing the canvas.
 - Streaming starts with 1,024 points and publishes 120 scheduled samples at 60Hz through `useStreamingSeries`. Every sample must appear and the canvas must survive.

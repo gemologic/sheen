@@ -32,7 +32,7 @@ test("menus render checked values, shortcuts, scoped RTL, and reduced motion", a
     const focused = element.querySelector("[data-highlighted]");
     if (!focused) throw new Error("Missing focused menu item");
     const style = getComputedStyle(focused);
-    return { fill: color(style.backgroundColor), text: color(style.color), focus: color(style.outlineColor) };
+    return { fill: color(style.backgroundColor), text: color(style.color), focus: color(style.boxShadow.match(/rgba?\([^)]*\)/)?.[0] ?? "transparent") };
   });
   expect(contrastRatio(colors.text, colors.fill)).toBeGreaterThanOrEqual(4.5);
   expect(contrastRatio(colors.focus, colors.fill)).toBeGreaterThanOrEqual(3);

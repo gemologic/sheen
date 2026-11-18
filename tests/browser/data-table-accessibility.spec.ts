@@ -66,7 +66,7 @@ test("keyboard search, filter, and sort publish atomic assistive state", async (
   await expect(accountHeader).toHaveAttribute("aria-sort", "ascending");
   await expect(accountSort).toHaveAccessibleDescription("ascending");
 
-  const addFilter = root.getByRole("button", { name: "+ Filter", exact: true });
+  const addFilter = root.getByRole("button", { name: "Add filter", exact: true });
   await addFilter.focus();
   await addFilter.press("Enter");
   const picker = page.getByRole("dialog", { name: "Filter columns", exact: true });
@@ -76,7 +76,7 @@ test("keyboard search, filter, and sort publish atomic assistive state", async (
   const accountColumn = picker.getByRole("button", { name: "Account", exact: true });
   await accountColumn.focus();
   await accountColumn.press("Enter");
-  const editor = page.getByRole("dialog", { name: "+ Filter: Account", exact: true });
+  const editor = page.getByRole("dialog", { name: "Add filter: Account", exact: true });
   const value = editor.getByRole("textbox", { name: "Value", exact: true });
   await value.focus();
   await page.keyboard.type("Acme 01");

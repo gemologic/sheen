@@ -1,11 +1,11 @@
-import { accentNames, bundledThemeMetadata, isAccentName } from "@gemologic/sheen-tokens/catalog";
-import type { AccentName } from "@gemologic/sheen-tokens/catalog";
+import { accentNames, bundledThemeMetadata } from "@gemologic/sheen-tokens/catalog";
 import type { Mode } from "@gemologic/sheen-tokens";
 
 export interface ThemeState {
   theme: string;
   mode: Mode | "system";
-  accent: AccentName;
+  /** A bundled accent name or a custom accent ID registered with ThemeProvider `accents`. */
+  accent: string;
   density: "compact" | "comfortable" | "spacious";
   radius: "sharp" | "soft" | "round";
   motion: "full" | "reduced";
@@ -29,12 +29,12 @@ export function resolveThemeState(parent: ThemeState, overrides: ThemeOverrides,
   };
 }
 
-export function readThemeState(value: unknown, fallback: ThemeState, themeIds: readonly string[] = bundledThemeMetadata.map(theme => theme.id)): ThemeState {
+export function readThemeState(value: unknown, fallback: ThemeState, themeIds: readonly string[] = bundledThemeMetadata.map(theme => theme.id), accentIds: readonly string[] = accentNames): ThemeState {
   if (typeof value !== "object" || value === null) return { ...fallback };
   const result = { ...fallback };
   if ("theme" in value && typeof value.theme === "string" && themeIds.includes(value.theme)) result.theme = value.theme;
   if ("mode" in value && (value.mode === "dark" || value.mode === "light" || value.mode === "system")) result.mode = value.mode;
-  if ("accent" in value && typeof value.accent === "string" && isAccentName(value.accent)) result.accent = value.accent;
+  if ("accent" in value && typeof value.accent === "string" && accentIds.includes(value.accent)) result.accent = value.accent;
   if ("density" in value && (value.density === "compact" || value.density === "comfortable" || value.density === "spacious")) result.density = value.density;
   if ("radius" in value && (value.radius === "sharp" || value.radius === "soft" || value.radius === "round")) result.radius = value.radius;
   if ("motion" in value && (value.motion === "full" || value.motion === "reduced")) result.motion = value.motion;

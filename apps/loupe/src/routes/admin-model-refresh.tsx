@@ -4,6 +4,8 @@ import { StatusBar } from "@gemologic/sheen-patterns";
 import { AdminApp } from "@gemologic/sheen-patterns/admin";
 import type { AdminAction, AdminActionGroup } from "@gemologic/sheen-patterns/admin";
 import { createMemo, createSignal } from "solid-js";
+import "@gemologic/sheen-charts/styles.css";
+import "@gemologic/sheen-patterns/admin/styles.css";
 
 export default function AdminModelRefreshFixture() {
   const [revision, setRevision] = createSignal(1);

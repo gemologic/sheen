@@ -42,7 +42,10 @@ for (const width of [375, 768, 1440]) {
     await expect(page.locator('[data-sheen-portal="root"]')).toHaveAttribute("data-sheen-ready", "true");
     await page.evaluate(() => document.fonts.ready);
     expect(blocked.some(url => url.includes("InterVariable"))).toBe(true);
-    expect(await page.evaluate(() => document.fonts.check('510 30px "Inter Variable"'))).toBe(false);
+    // `document.fonts.check()` reports true for an errored face in WebKit, so assert the face status directly.
+    const interStatuses = await page.evaluate(() => [...document.fonts].filter(face => face.family.replaceAll('"', "") === "Inter Variable").map(face => face.status));
+    expect(interStatuses.length).toBeGreaterThan(0);
+    expect(interStatuses).not.toContain("loaded");
     const metrics = page.locator(".loupe-admin-stat-group .sheen-stat-value");
     await expect(metrics).toHaveCount(6);
     const geometry = await metrics.evaluateAll(elements => elements.map(element => {

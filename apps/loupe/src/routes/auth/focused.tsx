@@ -2,6 +2,7 @@ import { Title } from "@solidjs/meta";
 import { Button, Link } from "@gemologic/sheen";
 import { FocusedAuthLayout } from "@gemologic/sheen-patterns/auth";
 import { createSignal } from "solid-js";
+import "@gemologic/sheen-patterns/styles.css";
 
 export default function FocusedAuthPage() {
   const [status, setStatus] = createSignal("");

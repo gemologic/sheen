@@ -174,6 +174,8 @@ test("search, help, workspace, and sidebar row actions behave as application con
   const workspaceTrigger = page.getByRole("button", { name: "Workspace: Production", exact: true });
   await workspaceTrigger.click();
   const workspaceMenu = page.getByRole("menu");
+  // Menus scale in from their anchor; measure the settled geometry.
+  await workspaceMenu.evaluate(element => Promise.all(element.getAnimations().map(animation => animation.finished)));
   const workspaceTriggerBox = await workspaceTrigger.boundingBox();
   const workspaceMenuBox = await workspaceMenu.boundingBox();
   if (!workspaceTriggerBox || !workspaceMenuBox) throw new Error("Expected workspace trigger and menu geometry");
@@ -622,7 +624,7 @@ test("keyboard traversal reaches shell, navigation, table, pagination, and detai
       if (active.matches("input") && active.closest(".sheen-data-table")) return "table-search";
       if (active.matches(".sheen-data-table-sort")) return "table-sort";
       if (active.matches('tbody tr[data-row-id="account-0001"]')) return "table-row";
-      if (active.textContent?.trim() === "Next page") return "pagination";
+      if (active.getAttribute("aria-label") === "Next page") return "pagination";
       if (active.matches("a") && active.textContent?.trim() === "Create policy") return "create-policy";
       return "other";
     });

@@ -2,6 +2,7 @@ import { Button } from "@gemologic/sheen";
 import { DataTable, defineColumns } from "@gemologic/sheen-table";
 import type { DataTableAction, DataTableActionContext, DataTableResult, TableState } from "@gemologic/sheen-table";
 import { createSignal, onMount } from "solid-js";
+import "@gemologic/sheen-table/styles.css";
 
 interface ChromeRow { readonly id: string; readonly name: string; readonly amount: number }
 

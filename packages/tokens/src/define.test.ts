@@ -2,11 +2,12 @@ import { describe, expect, it } from "vitest";
 import { buildTheme, defineTheme, resolveTokens, ThemeValidationError, validateContrast } from "./define.ts";
 import { accents, accentTokens } from "./accents.ts";
 import { accentNames, isAccentName } from "./catalog.ts";
-import { buildAccent, buildAccents, contrast, obsidian, studio, themes, vellum } from "./themes.ts";
+import { buildAccent, buildAccents } from "./accent-compiler.ts";
+import { contrast, obsidian, studio, themes, vellum } from "./themes.ts";
 import { primitives } from "./primitives.ts";
 import { currentSchemaVersion, semanticDefaults } from "./schema.ts";
 import type { Mode, ThemeDefinition, TokenName } from "./schema.ts";
-import { buildCore, buildPreset } from "./css.ts";
+import { buildCore, buildPreset, buildPrimitives } from "./css.ts";
 import { bundledThemeMetadata } from "./catalog.ts";
 
 function definition(overrides: Partial<ThemeDefinition> = {}): ThemeDefinition {
@@ -35,7 +36,7 @@ describe("theme compiler", () => {
     const legacy: Partial<typeof dark> = { ...dark };
     delete legacy["color-border-control"];
     delete legacy["color-focus-ring-offset"];
-    expect(resolveTokens(definition({ schemaVersion: 1, dark: legacy }), "dark")["color-focus-ring-offset"]).toBe("#141419");
+    expect(resolveTokens(definition({ schemaVersion: 1, dark: legacy }), "dark")["color-focus-ring-offset"]).toBe("#111115");
     expect(() => resolveTokens(definition({ schemaVersion: 2, dark: legacy }), "dark")).toThrow("missing token color-border-control");
     delete legacy["font-sans"];
     expect(() => resolveTokens(definition({ schemaVersion: 1, dark: legacy }), "dark")).toThrow("missing token font-sans");
@@ -55,6 +56,14 @@ describe("theme compiler", () => {
     expect(migrated["text-stat-size"]).toBe("30px");
     expect(migrated["text-stat-weight"]).toBe("400");
     expect(() => resolveTokens(definition({ dark: legacy }), "dark")).toThrow("missing token text-stat-size");
+  });
+  it("migrates v5 motion roles through the private theme's own easing", () => {
+    const legacy: Partial<typeof semanticDefaults> = { ...semanticDefaults, "ease-entrance": "linear" };
+    for (const key of ["duration-press", "ease-spring", "motion-distance-sm", "motion-distance-lg", "motion-stagger"] satisfies TokenName[]) delete legacy[key];
+    const migrated = resolveTokens(definition({ schemaVersion: 4, dark: legacy }), "dark");
+    expect(migrated["ease-spring"]).toBe("linear");
+    expect(migrated["duration-press"]).toBe("80ms");
+    expect(() => resolveTokens(definition({ dark: legacy }), "dark")).toThrow("missing token ease-spring");
   });
   it("validates colors even when their role has no contrast gate", () => {
     try {
@@ -79,13 +88,27 @@ describe("theme compiler", () => {
     expect(migrated["color-market-up-border"]).toBe(migrated["color-market-up"]);
     expect(() => resolveTokens(definition({ schemaVersion: currentSchemaVersion, dark: legacy }), "dark")).toThrow("missing token color-neutral-on");
   });
-  it("emits scoped fallback CSS before modern color overrides", () => {
+  it("emits sRGB-exact themes without a modern override block", () => {
     const css = buildTheme(definition());
     expect(css).toContain('[data-sheen-theme="test"][data-sheen-mode="dark"]');
+    expect(css).toContain("--sheen-color-bg: #111115;");
     expect(css).not.toContain(":root");
     expect(css).not.toContain("{gray.");
-    expect(css.indexOf("#141419")).toBeLessThan(css.indexOf("@supports"));
-    expect(css).toContain("oklch(");
+    expect(css).not.toContain("@supports");
+    for (const theme of themes) expect(buildTheme(theme), theme.id).not.toContain("@supports");
+  });
+  it("overrides only colors the sRGB fallback cannot reproduce, after the fallback", () => {
+    const wide = "oklch(70% 0.25 145)";
+    const css = buildTheme(definition({ dark: { ...semanticDefaults, "chart-8": wide, "color-bg": "#141419" } }));
+    const modern = css.slice(css.indexOf("@supports (color: oklch(50% 0 0))"));
+    expect(css.indexOf("--sheen-chart-8: #")).toBeGreaterThan(-1);
+    expect(css.indexOf("--sheen-chart-8: #")).toBeLessThan(css.indexOf("@supports"));
+    expect(modern).toContain(`--sheen-chart-8: ${wide};`);
+    expect(modern).toContain('[data-sheen-mode="dark"]');
+    expect(modern).not.toContain('[data-sheen-mode="light"]');
+    expect(modern).not.toContain("--sheen-color-bg:");
+    expect(modern).not.toContain("px;");
+    expect(modern).not.toContain("color-scheme");
   });
   it("preserves private theme spacing for nested comfortable density", () => {
     const css = buildTheme(definition({ dark: { ...semanticDefaults, "space-block-sm": "11px", "control-px-md": "14px" } }));
@@ -193,5 +216,12 @@ describe("theme compiler", () => {
     expect(buildCore()).toContain("--sheen-color-bg: Canvas !important");
     expect(buildCore()).toContain("--sheen-color-fg: CanvasText !important");
     expect(buildCore()).toContain("--sheen-color-focus-ring: Highlight !important");
+  });
+  it("ships tier-one ramps only in the opt-in primitives stylesheet", () => {
+    expect(buildCore()).not.toContain("--sheen-gray-980");
+    expect(buildCore()).toContain("--sheen-z-chrome: 10;");
+    expect(buildPrimitives()).toContain("--sheen-gray-980: #141419;");
+    expect(buildPrimitives()).not.toContain("--sheen-z-chrome");
+    expect(buildPrimitives()).not.toContain("@supports");
   });
 });

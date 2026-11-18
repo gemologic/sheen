@@ -8,10 +8,19 @@ test("logical-side panels use scoped portals, trap focus, dismiss, and restore t
   const scopedPortal = page.locator('[data-sheen-portal="scope"][data-sheen-theme="paper"]');
   const drawer = scopedPortal.getByRole("dialog", { name: "Start panel" });
   await expect(drawer).toBeVisible();
+  expect(await drawer.evaluate(element => getComputedStyle(element).animationName)).toBe("sheen-drawer-enter");
+  await drawer.evaluate(element => Promise.all(element.getAnimations().map(animation => animation.finished)));
   const startBox = await drawer.boundingBox();
   if (!startBox) throw new Error("Expected start drawer geometry");
   expect(startBox.x).toBeLessThanOrEqual(1);
   expect(Math.abs(startBox.height - await page.evaluate(() => innerHeight))).toBeLessThanOrEqual(1);
+  const closeBox = await drawer.getByRole("button", { name: "Close" }).boundingBox();
+  const fieldBox = await page.getByRole("textbox", { name: "Drawer field" }).boundingBox();
+  if (!closeBox || !fieldBox) throw new Error("Expected drawer close and field geometry");
+  expect(closeBox.height).toBeLessThan(48);
+  expect(closeBox.y - startBox.y).toBeLessThan(48);
+  // Body rows pack toward the header instead of stretching to fill the viewport.
+  expect(fieldBox.y - startBox.y).toBeLessThan(200);
   await page.getByRole("textbox", { name: "Drawer field" }).fill("retained draft");
   await page.keyboard.press("Escape");
   await expect(drawer).toBeHidden();
@@ -20,6 +29,7 @@ test("logical-side panels use scoped portals, trap focus, dismiss, and restore t
   const endTrigger = page.getByRole("button", { name: "Open end sheet" });
   await endTrigger.click();
   const sheet = scopedPortal.getByRole("dialog", { name: "End panel" });
+  await sheet.evaluate(element => Promise.all(element.getAnimations().map(animation => animation.finished)));
   const endBox = await sheet.boundingBox();
   if (!endBox) throw new Error("Expected end sheet geometry");
   const width = await page.evaluate(() => innerWidth);
@@ -29,6 +39,7 @@ test("logical-side panels use scoped portals, trap focus, dismiss, and restore t
 
   await page.getByRole("button", { name: "Toggle panel direction" }).click();
   await startTrigger.click();
+  await drawer.evaluate(element => Promise.all(element.getAnimations().map(animation => animation.finished)));
   const rtlStartBox = await drawer.boundingBox();
   if (!rtlStartBox) throw new Error("Expected RTL start drawer geometry");
   expect(Math.abs(rtlStartBox.x + rtlStartBox.width - width)).toBeLessThanOrEqual(1);

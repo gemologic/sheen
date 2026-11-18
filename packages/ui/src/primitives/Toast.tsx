@@ -4,6 +4,7 @@ import type { ToastNotification } from "./create-toaster.ts";
 import { Button } from "./Button.tsx";
 import { useTheme } from "../theme/ThemeProvider.tsx";
 import { cn } from "../utils/cn.ts";
+import { Glyph } from "./Glyph.tsx";
 
 export interface ToastProps {
   notification: ToastNotification;
@@ -23,7 +24,7 @@ export function Toast(props: ToastProps): JSX.Element {
   return <div class={cn("sheen-toast", props.class)} role="group" aria-labelledby={`${id}-title`} aria-describedby={description()}
     aria-busy={pending() || undefined} data-pending={pending() || undefined} data-invalid={failed() || undefined} data-tone={failed() ? "danger" : options().tone}>
     <strong class="sheen-toast-title" id={`${id}-title`}>{options().title}</strong>
-    <Button class="sheen-toast-close" size="sm" aria-label={theme.messages().close} onClick={() => props.onDismiss()}>{theme.messages().close}</Button>
+    <Button variant="ghost" class="sheen-toast-close" size="sm" aria-label={theme.messages().close} onClick={() => props.onDismiss()}><Glyph name="close" /></Button>
     <Show when={options().description}><p class="sheen-toast-description" id={`${id}-description`}>{options().description}</p></Show>
     <Show when={failed() && options().action}><p class="sheen-toast-error" id={`${id}-error`}>{options().action?.errorMessage}</p></Show>
     <Show when={options().action}>{action => <div class="sheen-toast-actions">

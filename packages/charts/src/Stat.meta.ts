@@ -10,6 +10,7 @@ export default defineMeta<StatProps>({
     trend: { description: "Optional directional state; requires trendLabel." },
     trendLabel: { description: "Required visible non-color description when trend is supplied." },
     valence: { description: "Meaning of the change, independent of direction; positive, negative, or neutral. Requires a trend and defaults to neutral." },
+    tween: { description: "Counts a formatted numeric value from its previous value on update. Defaults to true. The server and first render show the final value, and reduced motion jumps straight to it." },
     visual: { description: "Optional supplementary JSX, such as a labeled Sparkline or Meter based on actual data. The text value remains complete. Preserve the visual node when refreshing its data." },
     class: { description: "Optional class appended to the component root." },
   },

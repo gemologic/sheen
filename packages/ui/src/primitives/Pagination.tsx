@@ -4,6 +4,7 @@ import { Button } from "./Button.tsx";
 import { useTheme } from "../theme/ThemeProvider.tsx";
 import { useNumberFormatter } from "../theme/intl.ts";
 import { cn } from "../utils/cn.ts";
+import { Glyph } from "./Glyph.tsx";
 
 export interface PaginationProps extends Omit<JSX.HTMLAttributes<HTMLElement>, "children" | "onChange"> {
   pageIndex: number;
@@ -54,11 +55,11 @@ export function Pagination(props: PaginationProps): JSX.Element {
     .replaceAll("{page}", format().format(state().count ? state().index + 1 : 0))
     .replaceAll("{pages}", format().format(state().count));
   return <nav {...others} ref={element => { root = element; if (typeof local.ref === "function") local.ref(element); }} class={cn("sheen-pagination", local.class)} aria-label={local.label ?? theme.messages().pagination} aria-busy={local.pending || undefined} aria-disabled={local.disabled || undefined} data-pending={local.pending ? "" : undefined}>
-    <Button aria-disabled={unavailable(0) || undefined} onClick={() => request(0)}>{theme.messages().firstPage}</Button>
-    <Button aria-disabled={unavailable(state().index - 1) || undefined} onClick={() => request(state().index - 1)}>{theme.messages().previousPage}</Button>
-    <For each={pages()}>{index => <Button aria-label={pageLabel(index)} aria-current={index === state().index ? "page" : undefined} aria-disabled={unavailable(index) || undefined} onClick={() => request(index)}>{format().format(index + 1)}</Button>}</For>
-    <Button aria-disabled={unavailable(state().index + 1) || undefined} onClick={() => request(state().index + 1)}>{theme.messages().nextPage}</Button>
-    <Button aria-disabled={unavailable(state().count - 1) || undefined} onClick={() => request(state().count - 1)}>{theme.messages().lastPage}</Button>
+    <Button variant="ghost" class="sheen-pagination-step" aria-label={theme.messages().firstPage} aria-disabled={unavailable(0) || undefined} onClick={() => request(0)}><Glyph name="chevrons-left" /></Button>
+    <Button variant="ghost" class="sheen-pagination-step" aria-label={theme.messages().previousPage} aria-disabled={unavailable(state().index - 1) || undefined} onClick={() => request(state().index - 1)}><Glyph name="chevron-left" /></Button>
+    <For each={pages()}>{index => <Button variant="ghost" aria-label={pageLabel(index)} aria-current={index === state().index ? "page" : undefined} aria-disabled={unavailable(index) || undefined} onClick={() => request(index)}>{format().format(index + 1)}</Button>}</For>
+    <Button variant="ghost" class="sheen-pagination-step" aria-label={theme.messages().nextPage} aria-disabled={unavailable(state().index + 1) || undefined} onClick={() => request(state().index + 1)}><Glyph name="chevron-right" /></Button>
+    <Button variant="ghost" class="sheen-pagination-step" aria-label={theme.messages().lastPage} aria-disabled={unavailable(state().count - 1) || undefined} onClick={() => request(state().count - 1)}><Glyph name="chevrons-right" /></Button>
     <output aria-live="polite" aria-atomic="true">{summary()}</output>
   </nav>;
 }

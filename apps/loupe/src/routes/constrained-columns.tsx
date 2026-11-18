@@ -4,6 +4,7 @@ import type { DataTableResult, FilterNode, TableState } from "@gemologic/sheen-t
 import { createSignal } from "solid-js";
 import { constrainedInitialState, constrainedSchema, constrainedView } from "../fixtures/constrained-table-data.ts";
 import type { ConstrainedRow } from "../fixtures/constrained-table-data.ts";
+import "@gemologic/sheen-table/styles.css";
 
 const columns = defineColumns<ConstrainedRow>([
   { id: "name", header: "Name", accessor: row => row.name, width: "fill" },

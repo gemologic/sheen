@@ -1,45 +1,41 @@
-import { Button, Checkbox, ContextMenu, DropdownMenu, EmptyState, Pagination, SearchInput, Skeleton, Toaster, createToaster, useTheme } from "@gemologic/sheen";
+import { Button, Checkbox, ContextMenu, DropdownMenu, EmptyState, Glyph, Pagination, SearchInput, Skeleton, flashChange, useTheme } from "@gemologic/sheen";
 import type { MenuItem, ShortcutAction } from "@gemologic/sheen";
 import { createVirtualizer } from "@tanstack/solid-virtual";
 import type { VirtualItem } from "@tanstack/solid-virtual";
-import { For, Index, Show, createEffect, createMemo, createSignal, createUniqueId, on, onCleanup, onMount } from "solid-js";
-import type { Accessor, JSX } from "solid-js";
+import { For, Index, Show, createComputed, createEffect, createMemo, createSignal, createUniqueId, on, onCleanup, onMount, untrack } from "solid-js";
+import type { JSX } from "solid-js";
 import { changeTableState } from "./table-state-changes.ts";
 import { canMoveColumn, moveColumn, orderColumnStates, placeColumn } from "./column-layout.ts";
 import { constrainedColumnValues, summarizedColumns } from "./constrained-columns.ts";
 import type { ColumnDropPlacement, ColumnMoveDirection } from "./column-layout.ts";
 import { columnStateSchema, readColumnDefinitions } from "./columns.ts";
-import type { ColumnEditor, ColumnValue, SheenColumns } from "./columns.ts";
+import type { ColumnValue, SheenColumns } from "./columns.ts";
 import { createClientView } from "./client-view.ts";
 import type { ClientView } from "./client-view.ts";
 import { formatSearchQuery, parseSearchQuery } from "./search.ts";
 import type { SearchMode } from "./search.ts";
 import { getPageRange, resolvePagination } from "./pagination.ts";
 import type { PageResult, TablePagination } from "./pagination.ts";
-import { createRowIdentity } from "./row-identity.ts";
-import { groupClientRows, normalizeServerGroups } from "./grouping.ts";
-import type { ClientRowGroup, ServerRowGroup } from "./grouping.ts";
-import { createRowHierarchy } from "./row-hierarchy.ts";
-import type { HierarchyRow } from "./row-hierarchy.ts";
+import type { ServerRowGroup } from "./grouping.ts";
 import { createTableRequests } from "./requests.ts";
-import type { TableRequestOutcome, TableRequestSnapshot } from "./requests.ts";
+import type { TableRequestOutcome } from "./requests.ts";
 import { createTableSelection } from "./selection.ts";
 import type { BulkSelection } from "./selection.ts";
 import { parseTableState, serializeState } from "./table-state.ts";
 import type { ColumnState, TableState } from "./table-state.ts";
-import { FilterBar } from "./FilterBar.tsx";
+import { filterBarFeature } from "./FilterBar.tsx";
 import { DataTableToolbar } from "./DataTableToolbar.tsx";
 import type { DataTableToolbarAction } from "./DataTableToolbar.tsx";
 import { parseFilter, serializeFilter } from "./filter.ts";
 import type { FilterNode } from "./filter.ts";
 import type { FilterDateEditor } from "./FilterBar.tsx";
-import { createClientExport } from "./export.ts";
 import { selectClientRows } from "./selection-client.ts";
 import { createServerExport } from "./server-export.ts";
-import type { ServerExportOutcome, ServerExportSnapshot, TableExportRequest } from "./server-export.ts";
-import { createCellEdit } from "./cell-edit.ts";
-import type { CellCommitOutcome, CellCommitRequest, CellCommitResult, CellEditSnapshot } from "./cell-edit.ts";
+import type { ServerExportOutcome, TableExportRequest } from "./server-export.ts";
+import type { CellCommitRequest, CellCommitResult } from "./cell-edit.ts";
 import { resolveTableMessages } from "./messages.ts";
+import { cellEditingFeature, createSnapshotSignal, createStableRows, defaultCell, groupingFeature, hierarchyFeature } from "./data-table-features.tsx";
+import type { DataTableCellAttributes, DataTableCellBinding, DataTableFeature, DataTableFeatureContext, DataTablePresentation, DisplayDataRow, DisplayGroupRow, DisplayRow, StableRow } from "./data-table-features.tsx";
 
 export interface DataTableResult<Row extends object> extends PageResult<Row> {
   readonly facets?: Readonly<Record<string, Readonly<Record<string, number>>>>;
@@ -158,6 +154,7 @@ interface DataTableBaseProps<Row extends object> {
   readonly initialState?: DataTableInitialState;
   /** Reactively applies an app-owned accepted filter. Use onAcceptedStateChange to keep table-authored changes synchronized. */
   readonly filter?: FilterNode;
+  /** Row and cell height as a CSS length, such as `"2.75rem"` for two-line cells. Pair with `estimatedRowHeight` in pixels. */
   readonly rowHeight?: string;
   readonly variableRowHeight?: boolean;
   readonly estimatedRowHeight?: number;
@@ -208,51 +205,16 @@ export interface ServerDataTableProps<Row extends object> extends DataTableBaseP
 
 export type DataTableProps<Row extends object> = ClientDataTableProps<Row> | ServerDataTableProps<Row>;
 
-interface StableRow<Row extends object> {
-  readonly id: string;
-  readonly value: Accessor<Row>;
-  readonly update: (row: Row) => boolean;
-}
-
 interface ScrollAnchor {
   readonly id: string;
+  readonly index: number;
   readonly offset: number;
 }
 
-interface RenderedRow<Row extends object> {
-  readonly key: string;
-  readonly row: Accessor<DisplayRow<Row>>;
-  readonly updateRow: (row: DisplayRow<Row>) => void;
-  readonly item: Accessor<VirtualItem>;
-  readonly updateItem: (item: VirtualItem) => void;
+interface VirtualRow<Row extends object> {
+  readonly row: DisplayRow<Row>;
+  readonly item: VirtualItem;
 }
-
-interface DisplayDataRow<Row extends object> {
-  readonly kind: "data";
-  readonly key: string;
-  readonly row: StableRow<Row>;
-  readonly parentId: string | null;
-  readonly depth: number;
-  readonly position: number;
-  readonly setSize: number;
-  readonly canExpand: boolean;
-  readonly expanded: boolean;
-  readonly unloaded: boolean;
-  readonly pending: boolean;
-  readonly error: unknown;
-}
-
-interface DisplayGroupRow<Row extends object> {
-  readonly kind: "group";
-  readonly key: string;
-  readonly group: ClientRowGroup<Row>;
-  readonly label: string;
-  readonly position: number;
-  readonly setSize: number;
-  readonly expanded: boolean;
-}
-
-type DisplayRow<Row extends object> = DisplayDataRow<Row> | DisplayGroupRow<Row>;
 
 function displayDataRow<Row extends object>(row: DisplayRow<Row>): DisplayDataRow<Row> | undefined {
   return row.kind === "data" ? row : undefined;
@@ -262,113 +224,12 @@ function displayGroupRow<Row extends object>(row: DisplayRow<Row>): DisplayGroup
   return row.kind === "group" ? row : undefined;
 }
 
-function createStableRows<Row extends object>(getRowId: (row: Row) => string): (rows: readonly Row[]) => readonly StableRow<Row>[] {
-  const identity = createRowIdentity(getRowId);
-  const cache = new Map<string, StableRow<Row>>();
-  const [revision, setRevision] = createSignal(0);
-  return rows => {
-    const ids = identity.resolveIds(rows);
-    const retained = new Set<string>();
-    const resolved: StableRow<Row>[] = [];
-    let changed = false;
-    for (let index = 0; index < rows.length; index++) {
-      const row = rows[index]!;
-      const id = ids[index]!;
-      retained.add(id);
-      const existing = cache.get(id);
-      if (existing) {
-        changed = existing.update(row) || changed;
-        resolved.push(existing);
-        continue;
-      }
-      let current = row;
-      const record: StableRow<Row> = Object.freeze({
-        id,
-        value: (): Row => {
-          revision();
-          return current;
-        },
-        update: (next: Row): boolean => {
-          if (Object.is(current, next)) return false;
-          current = next;
-          return true;
-        },
-      });
-      cache.set(id, record);
-      resolved.push(record);
-    }
-    for (const id of cache.keys()) if (!retained.has(id)) cache.delete(id);
-    if (changed) setRevision(value => value + 1);
-    return Object.freeze(resolved);
-  };
+function sameSelection(left: BulkSelection | undefined, right: BulkSelection | undefined): boolean {
+  return left === right || JSON.stringify(left) === JSON.stringify(right);
 }
 
-interface ClientStableRows<Row extends object> {
-  readonly update: (rows: readonly Row[]) => void;
-  readonly resolve: (row: Row, index: number) => StableRow<Row>;
-  readonly has: (id: string) => boolean;
-}
-
-function createClientStableRows<Row extends object>(getRowId: (row: Row) => string): ClientStableRows<Row> {
-  const cache = new Map<string, StableRow<Row>>();
-  let retained: ReadonlySet<string> = new Set();
-  const known = new WeakMap<Row, string>();
-  const [revision, setRevision] = createSignal(0);
-  function create(id: string, row: Row): StableRow<Row> {
-    let current = row;
-    const record: StableRow<Row> = Object.freeze({
-      id,
-      value: (): Row => {
-        revision();
-        return current;
-      },
-      update: (next: Row): boolean => {
-        if (Object.is(current, next)) return false;
-        current = next;
-        return true;
-      },
-    });
-    cache.set(id, record);
-    known.set(row, id);
-    return record;
-  }
-  return Object.freeze({
-    update(rows: readonly Row[]): void {
-      if (!Array.isArray(rows)) throw new Error("Table rows must be an array");
-      const ids = new Set<string>();
-      let changed = false;
-      for (let index = 0; index < rows.length; index++) {
-        const row = rows[index];
-        if (typeof row !== "object" || row === null) throw new Error(`rows[${index}] must be an object`);
-        const id = getRowId(row);
-        if (typeof id !== "string" || !id || id.trim() !== id) throw new Error(`rows[${index}] has an invalid stable ID`);
-        if (ids.has(id)) throw new Error(`rows[${index}] duplicates row ID ${id}`);
-        const prior = known.get(row);
-        if (prior !== undefined && prior !== id) throw new Error(`rows[${index}] changed stable ID from ${prior} to ${id}`);
-        ids.add(id);
-        const existing = cache.get(id);
-        if (existing) {
-          known.set(row, id);
-          changed = existing.update(row) || changed;
-        }
-      }
-      for (const id of cache.keys()) if (!ids.has(id)) cache.delete(id);
-      retained = ids;
-      if (changed) setRevision(value => value + 1);
-    },
-    resolve(row: Row, index: number): StableRow<Row> {
-      const id = getRowId(row);
-      if (!retained.has(id)) throw new Error(`Client result row at index ${index} is not part of the supplied data`);
-      return cache.get(id) ?? create(id, row);
-    },
-    has: (id: string) => retained.has(id),
-  });
-}
-
-function defaultCell(value: ColumnValue): JSX.Element {
-  if (value === null) return "";
-  if (typeof value === "boolean") return value ? "Yes" : "No";
-  return String(value);
+function sameKeys(left: readonly string[], right: readonly string[]): boolean {
+  return left.length === right.length && left.every((key, index) => key === right[index]);
 }
 
 function errorMessage(value: unknown): string {
@@ -404,14 +265,6 @@ function exportResetKey(options: false | DataTableExportOptions | undefined): st
   return key;
 }
 
-function editorAccepts<Row extends object>(editor: ColumnEditor<Row>, value: ColumnValue): boolean {
-  if (value === null) return editor.nullable === true;
-  if (editor.type === "text") return typeof value === "string";
-  if (editor.type === "number") return typeof value === "number";
-  if (editor.type === "boolean") return typeof value === "boolean";
-  if (editor.type === "select") return typeof value === "string" && editor.options.includes(value);
-  return false;
-}
 
 function filterActive(filter: FilterNode): boolean {
   if (filter.kind === "and" || filter.kind === "or") return filter.children.some(filterActive);
@@ -530,18 +383,17 @@ function clampColumnWidth(value: number, minimum: number | null, maximum: number
 }
 
 export function DataTable<Row extends object>(props: DataTableProps<Row>): JSX.Element {
+  return renderDataTable(props, [filterBarFeature, groupingFeature, hierarchyFeature, cellEditingFeature]);
+}
+
+/** Internal composition root. Features own their props, state, and rendering hooks; omitted features are not bundled. */
+export function renderDataTable<Row extends object>(props: DataTableProps<Row>, features: readonly DataTableFeature[]): JSX.Element {
   if (props.mode === "server" && typeof props.onStateChange !== "function") throw new Error("Server mode requires onStateChange");
   if (props.mode !== "server" && !Array.isArray(props.data)) throw new Error("Client mode requires a complete data array");
   if (props.mode !== "server" && props.initialResult !== undefined) throw new Error("initialResult is available only in server mode");
   if (props.selection && (props.selection.mode !== "multiple" || typeof props.selection.onChange !== "function")) throw new Error("DataTable selection requires multiple mode and onChange");
   if (typeof props.selection?.resetKey === "number" && !Number.isFinite(props.selection.resetKey)) throw new Error("DataTable selection resetKey must be a finite number or string");
   if (props.grouping && props.hierarchy) throw new Error("DataTable grouping and hierarchy are separate presentation modes");
-  if (props.grouping && props.mode !== "server" && props.pagination !== false) throw new Error("Client grouping requires complete continuous data with pagination=false");
-  if (props.grouping && (typeof props.grouping.by !== "string" || !props.grouping.by.trim())) throw new Error("DataTable grouping requires a column ID");
-  if (props.grouping?.getLabel !== undefined && typeof props.grouping.getLabel !== "function") throw new Error("DataTable grouping getLabel must be a function");
-  if (props.hierarchy && !props.hierarchy.getChildren && !props.hierarchy.onLoadChildren) throw new Error("DataTable hierarchy requires getChildren or onLoadChildren");
-  if (props.hierarchy?.onLoadChildren && !props.hierarchy.hasChildren) throw new Error("Async DataTable hierarchy requires hasChildren");
-  if (typeof props.hierarchy?.resetKey === "number" && !Number.isFinite(props.hierarchy.resetKey)) throw new Error("DataTable hierarchy resetKey must be a finite number or string");
   if (typeof props.editResetKey === "number" && !Number.isFinite(props.editResetKey)) throw new Error("DataTable editResetKey must be a finite number or string");
   const variant = () => {
     const value: unknown = props.variant;
@@ -569,38 +421,15 @@ export function DataTable<Row extends object>(props: DataTableProps<Row>): JSX.E
   const searchOptions = resolveSearchOptions(props.search, searchableDefinitions.length);
   const mobileLayout = resolveMobileLayout(props.mobileLayout);
   if (mobileLayout?.titleColumn && !definitions.some(column => column.id === mobileLayout.titleColumn)) throw new Error(`Unknown mobileLayout title column: ${mobileLayout.titleColumn}`);
-  const editableDefinitions = definitions.filter(column => column.editor !== null);
-  if (editableDefinitions.length > 0 && !props.onCellCommit) throw new Error("DataTable editable columns require onCellCommit");
-  if (editableDefinitions.length === 0 && props.onCellCommit) throw new Error("DataTable onCellCommit requires at least one editable column");
-  for (const column of editableDefinitions) {
-    if (!column.accessor || !column.editor) throw new Error(`Editable column ${column.id} requires an accessor and editor`);
-  }
-  const editToaster = props.onCellCommit ? createToaster() : undefined;
   const initialState = initialTableState(props);
-  const groupingColumn = props.grouping ? definitions.find(column => column.id === props.grouping?.by) : undefined;
-  if (props.grouping && !groupingColumn?.accessor) throw new Error(`Grouping column ${props.grouping.by} must be an accessor column`);
   const selection = props.selection ? createTableSelection(initialState.filter, schema.filterColumns) : undefined;
-  const [selectionRevision, setSelectionRevision] = createSignal(0);
   let selectionAnchorId: string | undefined;
   let selectionSearch = initialState.search;
   let selectionResetKey = props.selection?.resetKey;
-  const hierarchy = props.hierarchy ? createRowHierarchy<Row>({
-    getRowId: props.getRowId,
-    ...(props.hierarchy.getChildren ? { getChildren: props.hierarchy.getChildren } : {}),
-    ...(props.hierarchy.hasChildren ? { canLoadChildren: props.hierarchy.hasChildren } : {}),
-    ...(props.hierarchy.onLoadChildren ? { loadChildren: props.hierarchy.onLoadChildren } : {}),
-    ...(props.hierarchy.defaultExpanded !== undefined ? { defaultExpanded: props.hierarchy.defaultExpanded } : {}),
-  }) : undefined;
-  const [hierarchyRevision, setHierarchyRevision] = createSignal(0);
-  let hierarchyResetKey = props.hierarchy?.resetKey;
-  const groupExpansion = new Map<string, boolean>();
-  const [groupRevision, setGroupRevision] = createSignal(0);
   const [clientState, setClientState] = createSignal(initialState);
   const [searchDraft, setSearchDraft] = createSignal(initialState.search);
   const [searchScheduled, setSearchScheduled] = createSignal(false);
   const [layoutColumns, setLayoutColumns] = createSignal(initialState.columns);
-  const [serverRevision, setServerRevision] = createSignal(0);
-  const [exportRevision, setExportRevision] = createSignal(0);
   const [clientExportError, setClientExportError] = createSignal<unknown>(null);
   const [lastDownload, setLastDownload] = createSignal<{ readonly href: string; readonly filename: string }>();
   const [coldVisible, setColdVisible] = createSignal(false);
@@ -623,10 +452,12 @@ export function DataTable<Row extends object>(props: DataTableProps<Row>): JSX.E
       return artifact;
     })
     : undefined;
-  const serverSnapshot = (): TableRequestSnapshot<TableState, DataTableResult<Row>> | undefined => {
-    serverRevision();
-    return requests?.getSnapshot();
-  };
+  // Client export code loads on first use. Reset and disposal advance the generation so a late load cannot publish.
+  let clientExportGeneration = 0;
+  let clientExportInFlight = false;
+  const server = requests ? createSnapshotSignal(requests.getSnapshot) : undefined;
+  const serverSnapshot = () => server?.snapshot();
+  const exportStore = serverExports ? createSnapshotSignal(serverExports.getSnapshot) : undefined;
 
   const getValue = (row: Row, columnId: string): ColumnValue => {
     const column = definitionById.get(columnId);
@@ -653,17 +484,17 @@ export function DataTable<Row extends object>(props: DataTableProps<Row>): JSX.E
   });
 
   onMount(() => {
-    if (!requests || serverSnapshot()?.accepted) return;
-    const completion = requests.request(initialState);
-    setServerRevision(revision => revision + 1);
-    void completion.finally(() => setServerRevision(revision => revision + 1));
+    if (!requests || !server || serverSnapshot()?.accepted) return;
+    void server.track(requests.request(initialState));
   });
   createEffect(() => {
     const nextResetKey = exportResetKey(props.export);
     if (Object.is(nextResetKey, configuredExportResetKey)) return;
     configuredExportResetKey = nextResetKey;
     serverExports?.clear();
-    setExportRevision(revision => revision + 1);
+    clientExportGeneration++;
+    clientExportInFlight = false;
+    exportStore?.sync();
     setClientExportError(null);
     const download = lastDownload();
     if (download) URL.revokeObjectURL(download.href);
@@ -672,7 +503,7 @@ export function DataTable<Row extends object>(props: DataTableProps<Row>): JSX.E
   onCleanup(() => {
     if (searchTimer !== undefined) window.clearTimeout(searchTimer);
     requests?.dispose();
-    hierarchy?.dispose();
+    clientExportGeneration++;
     serverExports?.dispose();
     const download = lastDownload();
     if (download) URL.revokeObjectURL(download.href);
@@ -710,15 +541,12 @@ export function DataTable<Row extends object>(props: DataTableProps<Row>): JSX.E
   });
 
   async function transition(next: TableState): Promise<TableRequestOutcome | "client"> {
-    if (!requests) {
+    if (!requests || !server) {
       setClientState(next);
       props.onAcceptedStateChange?.(Object.freeze({ ...next, columns: layoutColumns() }));
       return "client";
     }
-    const completion = requests.request(next);
-    setServerRevision(revision => revision + 1);
-    const outcome = await completion;
-    setServerRevision(revision => revision + 1);
+    const outcome = await server.track(requests.request(next));
     const accepted = requests.getSnapshot().accepted;
     if (outcome === "accepted" && accepted) props.onAcceptedStateChange?.(Object.freeze({ ...accepted.state, columns: layoutColumns() }));
     return outcome;
@@ -859,163 +687,126 @@ export function DataTable<Row extends object>(props: DataTableProps<Row>): JSX.E
   }
 
   function retry(): void {
-    if (!requests || busy()) return;
-    const completion = requests.retry();
-    setServerRevision(revision => revision + 1);
-    void completion.then(outcome => {
-      setServerRevision(revision => revision + 1);
+    if (!requests || !server || busy()) return;
+    void server.track(requests.retry()).then(outcome => {
       const accepted = requests.getSnapshot().accepted;
       if (outcome === "accepted" && accepted) props.onAcceptedStateChange?.(Object.freeze({ ...accepted.state, columns: layoutColumns() }));
     });
   }
 
-  const reconcileRows = createStableRows(props.getRowId);
-  const clientStableRows = createClientStableRows(props.getRowId);
-  const flatDisplayCache = new Map<string, DisplayDataRow<Row>>();
-  const clientRowIndex = createMemo(() => {
-    if (props.mode === "server") return undefined;
-    const source = props.data ?? [];
-    clientStableRows.update(source);
-    for (const id of flatDisplayCache.keys()) if (!clientStableRows.has(id)) flatDisplayCache.delete(id);
-    return clientStableRows;
-  });
-  function stableResultRows(rows: readonly Row[]): readonly StableRow<Row>[] {
-    const client = clientRowIndex();
-    if (!client) return reconcileRows(rows);
-    return rows.map((row, index) => client.resolve(row, index));
-  }
+  const stableRows = createStableRows(props.getRowId, () => props.mode === "server" ? result().rows : props.data ?? []);
+  const flatDisplayCache = new WeakMap<StableRow<Row>, DisplayDataRow<Row>>();
   function flatDisplayRow(row: StableRow<Row>, index: number, setSize: number): DisplayDataRow<Row> {
-    const existing = flatDisplayCache.get(row.id);
-    if (existing && existing.row === row && existing.position === index + 1 && existing.setSize === setSize) return existing;
+    const existing = flatDisplayCache.get(row);
+    if (existing && existing.position === index + 1 && existing.setSize === setSize) return existing;
     const created: DisplayDataRow<Row> = Object.freeze({ kind: "data", key: `row:${row.id}`, row, parentId: null, depth: 1, position: index + 1, setSize, canExpand: false, expanded: false, unloaded: false, pending: false, error: null });
-    flatDisplayCache.set(row.id, created);
+    flatDisplayCache.set(row, created);
     return created;
   }
-  const groupNumberFormatter = createMemo(() => new Intl.NumberFormat(locale()));
-  function groupLabel(group: ClientRowGroup<Row>): string {
-    const supplied = props.grouping?.getLabel?.(group.value);
-    const label = supplied ?? (group.value === null ? messages().groupMissing : typeof group.value === "number" ? groupNumberFormatter().format(group.value) : String(group.value));
-    if (typeof label !== "string" || !label.trim()) throw new Error(`Group ${group.id} requires a nonempty label`);
-    return label;
-  }
-  function groupExpanded(id: string): boolean {
-    groupRevision();
-    const existing = groupExpansion.get(id);
-    if (existing !== undefined) return existing;
-    const initial = props.grouping?.collapsible === false || props.grouping?.defaultExpanded !== false;
-    groupExpansion.set(id, initial);
-    return initial;
-  }
-  function setGroupExpanded(id: string, expanded: boolean): void {
-    if (pending() || props.grouping?.collapsible === false || groupExpanded(id) === expanded) return;
-    groupExpansion.set(id, expanded);
-    setGroupRevision(revision => revision + 1);
-  }
-  const structuredRows = createMemo<readonly DisplayRow<Row>[]>(() => {
-    if (hierarchy) {
-      hierarchyRevision();
-      const nextResetKey = props.hierarchy?.resetKey;
-      if (!Object.is(nextResetKey, hierarchyResetKey)) hierarchy.reset();
-      hierarchyResetKey = nextResetKey;
-      hierarchy.updateRoots(result().rows);
-      const snapshot = hierarchy.getSnapshot();
-      const stable = reconcileRows(snapshot.map(item => item.row));
-      const stableById = new Map(stable.map(row => [row.id, row]));
-      return Object.freeze(snapshot.map((item: HierarchyRow<Row>): DisplayDataRow<Row> => {
-        const row = stableById.get(item.id);
-        if (!row) throw new Error(`Missing stable hierarchy row: ${item.id}`);
-        return Object.freeze({ kind: "data", key: `row:${item.id}`, row, parentId: item.parentId, depth: item.depth, position: item.position, setSize: item.setSize, canExpand: item.canExpand, expanded: item.expanded, unloaded: item.unloaded, pending: item.pending, error: item.error });
-      }));
-    }
-    if (props.grouping && groupingColumn?.accessor) {
-      groupRevision();
-      if (props.mode === "server" && serverSnapshot()?.accepted === null) return Object.freeze([]);
-      const current = result();
-      const aggregateColumns = definitions.flatMap(column => column.aggregate && column.accessor ? [{ id: column.id, aggregate: column.aggregate, getValue: column.accessor }] : []);
-      const groups = props.mode === "server"
-        ? normalizeServerGroups(current.rows, current.groups, { column: groupingColumn.id, aggregateColumns: aggregateColumns.map(column => column.id), getRowId: props.getRowId })
-        : groupClientRows(current.rows, { column: groupingColumn.id, getValue: groupingColumn.accessor, aggregates: aggregateColumns });
-      const stable = props.mode === "server" ? reconcileRows(current.rows) : stableResultRows(current.rows);
-      const stableById = new Map(stable.map(row => [row.id, row]));
-      const rows: DisplayRow<Row>[] = [];
-      for (let groupIndex = 0; groupIndex < groups.length; groupIndex++) {
-        const group = groups[groupIndex]!;
-        const expanded = groupExpanded(group.id);
-        rows.push(Object.freeze({ kind: "group", key: group.id, group, label: groupLabel(group), position: groupIndex + 1, setSize: groups.length, expanded }));
-        if (!expanded) continue;
-        for (let rowIndex = 0; rowIndex < group.rows.length; rowIndex++) {
-          const id = props.getRowId(group.rows[rowIndex]!);
-          const row = stableById.get(id);
-          if (!row) throw new Error(`Missing stable grouped row: ${id}`);
-          rows.push(Object.freeze({ kind: "data", key: `row:${id}`, row, parentId: group.id, depth: 2, position: rowIndex + 1, setSize: group.rows.length, canExpand: false, expanded: false, unloaded: false, pending: false, error: null }));
-        }
-      }
-      return Object.freeze(rows);
-    }
-    return Object.freeze([]);
+  const featureContext: DataTableFeatureContext<Row> = Object.freeze({
+    props,
+    definitions,
+    filterColumns: schema.filterColumns,
+    messages,
+    locale,
+    pending,
+    result,
+    accepted: acceptedAvailable,
+    acceptedFilter: () => acceptedState().filter,
+    requestFilter,
+    stableRows,
+    createStableRows: (source: () => readonly Row[]) => createStableRows(props.getRowId, source),
+    rowAt,
+    rowIndex,
+    focusRow,
   });
-  const flatResultRows = createMemo<readonly Row[]>(() => hierarchy || props.grouping ? Object.freeze([]) : result().rows);
-  const serverFlatStableRows = createMemo<readonly StableRow<Row>[]>(() => props.mode === "server" && !hierarchy && !props.grouping ? Object.freeze(stableResultRows(flatResultRows())) : Object.freeze([]));
+  const extensions = features.flatMap(feature => feature(featureContext) ?? []);
+  const presentations = extensions.flatMap(extension => extension.presentation ? [extension.presentation] : []);
+  if (presentations.length > 1) throw new Error("DataTable grouping and hierarchy are separate presentation modes");
+  const presentation: DataTablePresentation<Row> | undefined = presentations[0];
+  const treePresentation = presentation !== undefined;
+  const cellExtensions = extensions.flatMap(extension => extension.cell ? [extension.cell] : []);
+  const queryExtensions = extensions.flatMap(extension => extension.query ? [extension.query] : []);
+  const overlays = extensions.flatMap(extension => extension.overlay ? [extension.overlay] : []);
+  const flatResultRows = createMemo<readonly Row[]>(() => presentation ? Object.freeze([]) : result().rows);
+  const serverFlatStableRows = createMemo<readonly StableRow<Row>[]>(() => props.mode === "server" && !presentation
+    ? Object.freeze(flatResultRows().map((row, index) => stableRows.resolve(row, index)))
+    : Object.freeze([]));
   function flatStableRow(index: number): StableRow<Row> | undefined {
     const row = flatResultRows()[index];
     if (!row) return undefined;
-    const client = clientRowIndex();
-    if (client) return client.resolve(row, index);
-    return serverFlatStableRows()[index];
+    return props.mode === "server" ? serverFlatStableRows()[index] : stableRows.resolve(row, index);
   }
-  const rowCount = (): number => hierarchy || props.grouping ? structuredRows().length : flatResultRows().length;
+  const rowCount = (): number => presentation ? presentation.rows().length : flatResultRows().length;
   function rowAt(index: number): DisplayRow<Row> | undefined {
-    if (hierarchy || props.grouping) return structuredRows()[index];
+    if (presentation) return presentation.rows()[index];
     const row = flatStableRow(index);
     return row ? flatDisplayRow(row, index, flatResultRows().length) : undefined;
   }
-  function rowIndex(key: string): number {
-    if (hierarchy || props.grouping) return structuredRows().findIndex(row => row.key === key);
-    for (let index = 0; index < flatResultRows().length; index++) if (`row:${flatStableRow(index)?.id ?? ""}` === key) return index;
-    return -1;
+  /**
+   * Callers pass the index they already know (the realized item, focused row, or scroll anchor), so keyboard
+   * handling is O(1). The scan only runs when rows moved under a stale hint, at most once per accepted row change.
+   */
+  function rowIndex(key: string, hint?: number): number {
+    if (hint !== undefined && hint >= 0 && rowAt(hint)?.key === key) return hint;
+    if (presentation) return presentation.rows().findIndex(row => row.key === key);
+    if (!key.startsWith("row:")) return -1;
+    const id = key.slice("row:".length);
+    return flatResultRows().findIndex(row => props.getRowId(row) === id);
   }
-  let selectionInitialized = false;
-  const selectableRows = createMemo(() => {
-    const rows = hierarchy || props.grouping
-      ? structuredRows().flatMap(row => row.kind === "data" ? [row.row] : [])
-      : props.mode === "server" ? serverFlatStableRows()
-      : selection || actions().length > 0 ? stableResultRows(flatResultRows()) : Object.freeze([]);
-    if (!selection) return { rows, before: "", payload: undefined };
-    const before = JSON.stringify(selection.getPayload());
-    const nextResetKey = props.selection?.resetKey;
-    const nextSearch = acceptedState().search;
-    if (!Object.is(nextResetKey, selectionResetKey) || nextSearch !== selectionSearch) {
-      selection.reset();
-      selectionAnchorId = undefined;
-    }
-    selectionResetKey = nextResetKey;
-    selectionSearch = nextSearch;
-    selection.setFilter(acceptedState().filter);
-    selection.setLoadedIds(rows.map(row => row.id));
-    return { rows, before, payload: selection.getPayload() };
+  const loadedRows = createMemo<readonly StableRow<Row>[]>(() => presentation
+    ? presentation.rows().flatMap(row => row.kind === "data" ? [row.row] : [])
+    : props.mode === "server" ? serverFlatStableRows()
+    : selection || actions().length > 0 ? flatResultRows().map((row, index) => stableRows.resolve(row, index)) : Object.freeze([]));
+  const loadedIds = createMemo<ReadonlySet<string>>(() => new Set(loadedRows().map(row => row.id)));
+  const [selectionPayload, setSelectionPayload] = createSignal<BulkSelection | undefined>(selection?.getPayload(), { equals: sameSelection });
+  // The accepted boundary (reset key, search, filter, and loaded rows) drives selection eligibility before rows render.
+  createComputed(() => {
+    const ids = loadedIds();
+    const resetKey = props.selection?.resetKey;
+    const state = acceptedState();
+    if (!selection) return;
+    untrack(() => {
+      if (!Object.is(resetKey, selectionResetKey) || state.search !== selectionSearch) {
+        selection.reset();
+        selectionAnchorId = undefined;
+      }
+      selectionResetKey = resetKey;
+      selectionSearch = state.search;
+      selection.setFilter(state.filter);
+      selection.setLoadedIds([...ids]);
+      setSelectionPayload(selection.getPayload());
+    });
   });
-  createEffect(() => {
-    const synchronized = selectableRows();
-    if (!selection || !synchronized.payload) return;
-    setSelectionRevision(revision => revision + 1);
-    if (selectionInitialized && JSON.stringify(synchronized.payload) !== synchronized.before) props.selection?.onChange(synchronized.payload);
-    selectionInitialized = true;
-  });
+  let notifiedSelection = selectionPayload();
+  // Boundary-driven clears reach the application here; user changes notify directly in publishSelection.
+  createEffect(on(selectionPayload, payload => {
+    if (!payload || payload === notifiedSelection) return;
+    notifiedSelection = payload;
+    props.selection?.onChange(payload);
+  }, { defer: true }));
   function publishSelection(): void {
     if (!selection) return;
     const payload = selection.getPayload();
-    setSelectionRevision(revision => revision + 1);
+    notifiedSelection = payload;
+    setSelectionPayload(payload);
     props.selection?.onChange(payload);
   }
+  const selectionMarks = createMemo<ReadonlySet<string>>(() => {
+    const payload = selectionPayload();
+    return new Set(payload?.kind === "query" ? payload.excluded : payload?.ids ?? []);
+  });
   function rowSelected(id: string): boolean {
-    selectionRevision();
-    selectableRows();
-    return selection?.isSelected(id) ?? false;
+    const payload = selectionPayload();
+    if (!payload) return false;
+    return payload.kind === "query" ? loadedIds().has(id) && !selectionMarks().has(id) : selectionMarks().has(id);
+  }
+  function selectionAnchorLoaded(id: string): boolean {
+    return loadedIds().has(id);
   }
   function changeRowSelection(id: string, selected: boolean, range: boolean): void {
     if (!selection || pending()) return;
-    const anchorLoaded = selectionAnchorId !== undefined && selectableRows().rows.some(row => row.id === selectionAnchorId);
-    if (range && anchorLoaded && selectionAnchorId) selection.selectRange(selectionAnchorId, id, selected);
+    if (range && selectionAnchorId !== undefined && selectionAnchorLoaded(selectionAnchorId)) selection.selectRange(selectionAnchorId, id, selected);
     else {
       selection.setSelected(id, selected);
       selectionAnchorId = id;
@@ -1038,10 +829,13 @@ export function DataTable<Row extends object>(props: DataTableProps<Row>): JSX.E
     selectionAnchorId = undefined;
     publishSelection();
   }
-  const selectedLoadedCount = createMemo(() => selectableRows().rows.filter(row => rowSelected(row.id)).length);
-  const selectionPayload = createMemo(() => {
-    selectionRevision();
-    return selection?.getPayload();
+  const selectedLoadedCount = createMemo(() => {
+    const payload = selectionPayload();
+    if (!payload) return 0;
+    const loaded = loadedIds();
+    let marked = 0;
+    for (const id of selectionMarks()) if (loaded.has(id)) marked++;
+    return payload.kind === "query" ? loaded.size - marked : marked;
   });
   const selectionActive = createMemo(() => {
     const payload = selectionPayload();
@@ -1057,10 +851,10 @@ export function DataTable<Row extends object>(props: DataTableProps<Row>): JSX.E
   function actionContext(anchor?: StableRow<Row>): DataTableActionContext<Row> {
     const payload = anchor ? rowActionSelection(anchor) : selectionPayload();
     if (!payload) throw new Error("DataTable selection actions require an active selection");
-    const loadedRows = selectableRows().rows
+    const selectedRows = loadedRows()
       .filter(row => payload.kind === "query" ? !payload.excluded.includes(row.id) : payload.ids.includes(row.id))
       .map(row => row.value());
-    return Object.freeze({ selection: payload, loadedRows: Object.freeze(loadedRows), ...(anchor ? { anchor: anchor.value() } : {}) });
+    return Object.freeze({ selection: payload, loadedRows: Object.freeze(selectedRows), ...(anchor ? { anchor: anchor.value() } : {}) });
   }
 
   function actionDisabled(action: DataTableAction<Row>, context: DataTableActionContext<Row>): boolean {
@@ -1124,14 +918,15 @@ export function DataTable<Row extends object>(props: DataTableProps<Row>): JSX.E
     if (typeof label !== "string" || !label.trim()) throw new Error(`Selection label for ${row.id} must be nonempty`);
     return label;
   }
+  const acceptedColumns = createMemo(() => acceptedState().columns);
+  const acceptedColumnById = createMemo(() => new Map(acceptedColumns().map(column => [column.id, column])));
   const columnRecords = definitions.map((definition, index) => {
     const initial = initialState.columns.find(column => column.id === definition.id);
     if (!initial) throw new Error(`Missing initial state for table column: ${definition.id}`);
-    const [state, updateState] = createSignal(initial);
-    return Object.freeze({ definition, state, updateState, variable: `--sheen-table-column-${index}`, sortDescriptionId: createUniqueId() });
+    const state = createMemo(() => acceptedColumnById().get(definition.id) ?? initial);
+    return Object.freeze({ definition, state, variable: `--sheen-table-column-${index}`, sortDescriptionId: createUniqueId() });
   });
   const columnRecordById = new Map(columnRecords.map(column => [column.definition.id, column]));
-  const acceptedColumns = createMemo(() => acceptedState().columns);
   const orderedColumnStates = createMemo(() => orderColumnStates(acceptedColumns()));
   const summaryEligible = createMemo(() => {
     const ids = props.summarizeColumns ?? [];
@@ -1170,70 +965,10 @@ export function DataTable<Row extends object>(props: DataTableProps<Row>): JSX.E
     });
   };
   const visibleDefinitions = createMemo(() => {
-    const ordered = orderedColumnStates();
-    for (const state of ordered) columnRecordById.get(state.id)?.updateState(state);
-    return ordered.flatMap(state => {
+    return orderedColumnStates().flatMap(state => {
       const record = columnRecordById.get(state.id);
       return record && state.visible && !summarizedIds().has(state.id) ? [record] : [];
     });
-  });
-  type CellEditController = ReturnType<typeof createCellEdit<ColumnValue, string>>;
-  interface CellEditRecord {
-    readonly controller: CellEditController;
-    readonly revision: Accessor<number>;
-    readonly publish: () => void;
-  }
-  const cellEditRecords = new Map<string, Map<string, CellEditRecord>>();
-  const [editGeneration, setEditGeneration] = createSignal(0);
-  let currentEditResetKey = props.editResetKey;
-
-  function cellEditRecord(row: StableRow<Row>, column: (typeof columnRecords)[number]): CellEditRecord | undefined {
-    editGeneration();
-    const editor = column.definition.editor;
-    const accessor = column.definition.accessor;
-    const commit = props.onCellCommit;
-    if (!editor || !accessor || !commit) return undefined;
-    const existing = cellEditRecords.get(row.id)?.get(column.definition.id);
-    if (existing) return existing;
-    const initial = accessor(row.value());
-    if (!editorAccepts(editor, initial)) throw new Error(`Initial value for editable cell ${row.id}/${column.definition.id} does not match its editor`);
-    const [revision, setRevision] = createSignal(0);
-    const publish = () => setRevision(value => value + 1);
-    const controller = createCellEdit<ColumnValue, string>(initial, async (request, signal) => {
-      const applicationRequest: DataTableCellCommitRequest<Row> = Object.freeze({ ...request, rowId: row.id, row: row.value(), column: column.definition.id });
-      const result = await commit(applicationRequest, signal);
-      const value = result.kind === "accepted" ? result.value : result.current;
-      if (!editorAccepts(editor, value)) throw new Error(`Committed value for ${row.id}/${column.definition.id} does not match its editor`);
-      return result;
-    }, { validate: value => {
-      if (!editorAccepts(editor, value)) return value === null ? messages().cellValueRequired : messages().cellValueInvalid;
-      return editor.validate?.(value, row.value()) ?? null;
-    } });
-    const record = Object.freeze({ controller, revision, publish });
-    const rowRecords = cellEditRecords.get(row.id) ?? new Map<string, CellEditRecord>();
-    rowRecords.set(column.definition.id, record);
-    cellEditRecords.set(row.id, rowRecords);
-    return record;
-  }
-
-  function editSnapshot(record: CellEditRecord | undefined): CellEditSnapshot<ColumnValue, string> | undefined {
-    record?.revision();
-    return record?.controller.getSnapshot();
-  }
-
-  createEffect(() => {
-    const nextResetKey = props.editResetKey;
-    if (typeof nextResetKey === "number" && !Number.isFinite(nextResetKey)) throw new Error("DataTable editResetKey must be a finite number or string");
-    if (Object.is(nextResetKey, currentEditResetKey)) return;
-    currentEditResetKey = nextResetKey;
-    for (const columns of cellEditRecords.values()) for (const record of columns.values()) record.controller.dispose();
-    cellEditRecords.clear();
-    editToaster?.clear();
-    setEditGeneration(generation => generation + 1);
-  });
-  onCleanup(() => {
-    for (const columns of cellEditRecords.values()) for (const record of columns.values()) record.controller.dispose();
-    cellEditRecords.clear();
   });
   const availableExportFormats = createMemo<readonly DataTableExportFormat[]>(() => {
     const hasVisibleValue = visibleDefinitions().some(column => column.definition.accessor !== null);
@@ -1241,10 +976,7 @@ export function DataTable<Row extends object>(props: DataTableProps<Row>): JSX.E
     if (props.mode === "server" && !serverExports) return Object.freeze([]);
     return configuredExportFormats;
   });
-  const serverExportSnapshot = (): ServerExportSnapshot<Blob> | undefined => {
-    exportRevision();
-    return serverExports?.getSnapshot();
-  };
+  const serverExportSnapshot = () => exportStore?.snapshot();
   const exportPending = (): boolean => serverExportSnapshot()?.pending ?? false;
   const exportError = (): unknown => serverExportSnapshot()?.error ?? clientExportError();
 
@@ -1260,29 +992,35 @@ export function DataTable<Row extends object>(props: DataTableProps<Row>): JSX.E
     anchor.click();
   }
 
-  function exportClient(format: DataTableExportFormat): void {
-    if (props.mode === "server") return;
+  async function exportClient(format: DataTableExportFormat): Promise<void> {
+    if (props.mode === "server" || clientExportInFlight) return;
     setClientExportError(null);
+    // Capture the accepted view, selection, and columns at request time; only the code load is deferred.
+    const generation = clientExportGeneration;
+    clientExportInFlight = true;
     try {
       const view = clientView()?.view ?? [];
       const payload = selectionActive() ? selectionPayload() : undefined;
       const rows = payload ? selectClientRows(view, payload, { locale: locale(), filterColumns: schema.filterColumns, getRowId: props.getRowId, getValue }) : view;
-      const exported = createClientExport(rows, visibleDefinitions().flatMap(column => column.definition.accessor
+      const columns = visibleDefinitions().flatMap(column => column.definition.accessor
         ? [{ id: column.definition.id, header: column.definition.header, value: column.definition.accessor }]
-        : []));
+        : []);
+      const { createClientExport } = await import("./export.ts");
+      if (generation !== clientExportGeneration) return;
+      const exported = createClientExport(rows, columns);
       const content = format === "csv" ? exported.toCSV() : exported.toJSON();
       publishDownload(new Blob([content], { type: format === "csv" ? "text/csv;charset=utf-8" : "application/json;charset=utf-8" }), format);
     } catch (value) {
-      setClientExportError(value);
+      if (generation === clientExportGeneration) setClientExportError(value);
+    } finally {
+      if (generation === clientExportGeneration) clientExportInFlight = false;
     }
   }
 
   async function finishServerExport(completion: Promise<ServerExportOutcome>): Promise<void> {
-    setExportRevision(revision => revision + 1);
-    const outcome = await completion;
-    setExportRevision(revision => revision + 1);
+    const outcome = await (exportStore ? exportStore.track(completion) : completion);
     if (outcome !== "accepted") return;
-    const accepted = serverExports?.getSnapshot().accepted;
+    const accepted = serverExportSnapshot()?.accepted;
     if (accepted) publishDownload(accepted.artifact, accepted.request.format);
   }
 
@@ -1295,7 +1033,7 @@ export function DataTable<Row extends object>(props: DataTableProps<Row>): JSX.E
   function requestExport(format: DataTableExportFormat): void {
     if (pending() || exportPending()) return;
     if (props.mode === "server") exportServer(format);
-    else exportClient(format);
+    else void exportClient(format);
   }
 
   function retryExport(): void {
@@ -1358,9 +1096,12 @@ export function DataTable<Row extends object>(props: DataTableProps<Row>): JSX.E
   }
 
   function autoFitColumn(column: (typeof columnRecords)[number]): void {
-    const measured = [...tableElement?.querySelectorAll<HTMLElement>("[data-column]") ?? []]
-      .filter(element => element.dataset.column === column.definition.id)
-      .reduce((maximum, element) => Math.max(maximum, element.scrollWidth + 1), 0);
+    const cells = [...tableElement?.querySelectorAll<HTMLElement>("[data-column]") ?? []].filter(element => element.dataset.column === column.definition.id);
+    // Grid tracks size every cell to the current column width, so measure each cell at its content width to fit both wider and narrower content.
+    const previous = cells.map(cell => cell.style.inlineSize);
+    for (const cell of cells) cell.style.inlineSize = "max-content";
+    const measured = cells.reduce((maximum, cell) => Math.max(maximum, Math.ceil(cell.getBoundingClientRect().width)), 0);
+    cells.forEach((cell, index) => { cell.style.inlineSize = previous[index] ?? ""; });
     setColumnWidth(column, measured > 0 ? measured : currentColumnWidth(column));
   }
 
@@ -1418,7 +1159,7 @@ export function DataTable<Row extends object>(props: DataTableProps<Row>): JSX.E
   });
   const toolbarActions = createMemo<readonly DataTableToolbarAction[]>(() => {
     const next: DataTableToolbarAction[] = [];
-    if (selection && !hierarchy && acceptedState().search.length === 0) next.push({ kind: "action", id: "select-all", label: messages().selectAll, disabled: pending(), onSelect: selectAllMatchingRows });
+    if (selection && (presentation?.allowSelectAll ?? true) && acceptedState().search.length === 0) next.push({ kind: "action", id: "select-all", label: messages().selectAll, disabled: pending(), onSelect: selectAllMatchingRows });
     if (availableExportFormats().length > 0) next.push({ kind: "menu", id: "export", label: messages().export, disabled: pending() || exportPending(), items: exportMenuItems() });
     if (lastDownload()) next.push({ kind: "action", id: "download", label: messages().downloadLastExport, onSelect: downloadLastExport });
     if (props.columnControls !== false) next.push({ kind: "menu", id: "columns", label: messages().columns, items: columnMenuItems() });
@@ -1649,41 +1390,37 @@ export function DataTable<Row extends object>(props: DataTableProps<Row>): JSX.E
     measuredDensity = currentDensity;
     if (virtualizerMounted && changed) virtualizer.measure();
   });
-  const renderedRowCache = new Map<string, RenderedRow<Row>>();
-  const renderedRows = createMemo<readonly RenderedRow<Row>[]>(() => {
-    const retained = new Set<string>();
-    const rows: RenderedRow<Row>[] = [];
+  const virtualRows = createMemo<ReadonlyMap<string, VirtualRow<Row>>>(() => {
+    const rows = new Map<string, VirtualRow<Row>>();
     for (const item of virtualizer.getVirtualItems()) {
       const row = rowAt(item.index);
-      if (!row) continue;
-      retained.add(row.key);
-      const existing = renderedRowCache.get(row.key);
-      if (existing) {
-        existing.updateRow(row);
-        existing.updateItem(item);
-        rows.push(existing);
-        continue;
-      }
-      const [currentRow, setCurrentRow] = createSignal(row);
-      const [currentItem, setCurrentItem] = createSignal(item);
-      const rendered = Object.freeze({ key: row.key, row: currentRow, updateRow: (next: DisplayRow<Row>): void => { setCurrentRow(next); }, item: currentItem, updateItem: (next: VirtualItem): void => { setCurrentItem(next); } });
-      renderedRowCache.set(row.key, rendered);
-      rows.push(rendered);
+      if (row) rows.set(row.key, { row, item });
     }
-    for (const id of renderedRowCache.keys()) if (!retained.has(id)) renderedRowCache.delete(id);
     return rows;
   });
+  // Rendered rows are keyed by stable display key, so a row's DOM survives position and data refreshes.
+  const renderedKeys = createMemo<readonly string[]>(() => [...virtualRows().keys()], [], { equals: sameKeys });
+  function virtualRow(key: string): VirtualRow<Row> {
+    const row = virtualRows().get(key);
+    if (!row) throw new Error(`Missing rendered table row: ${key}`);
+    return row;
+  }
   const [activeRowKey, setActiveRowKey] = createSignal<string | null>(null);
+  let activeRowHint = -1;
+  function activateRow(key: string, index: number): void {
+    activeRowHint = index;
+    setActiveRowKey(key);
+  }
   const focusableRowKey = createMemo<string | null>(() => {
-    if (!props.onRowActivate && !selection && !hierarchy && !props.grouping && actions().length === 0) return null;
+    if (!props.onRowActivate && !selection && !treePresentation && actions().length === 0) return null;
     const active = activeRowKey();
-    return active && rowIndex(active) >= 0 ? active : rowAt(0)?.key ?? null;
+    return active && rowIndex(active, activeRowHint) >= 0 ? active : rowAt(0)?.key ?? null;
   });
   let focusFrame: number | undefined;
   function focusRow(index: number): void {
     const row = rowAt(index);
     if (!row || !viewport) return;
-    setActiveRowKey(row.key);
+    activateRow(row.key, index);
     virtualizer.scrollToIndex(index, { align: "auto" });
     let attempts = 10;
     const realize = (): void => {
@@ -1699,60 +1436,14 @@ export function DataTable<Row extends object>(props: DataTableProps<Row>): JSX.E
     if (focusFrame !== undefined) cancelAnimationFrame(focusFrame);
     focusFrame = requestAnimationFrame(realize);
   }
-  function changeHierarchyExpansion(row: DisplayDataRow<Row>, expanded: boolean): void {
-    if (!hierarchy || pending()) return;
-    const completion = hierarchy.setExpanded(row.row.id, expanded);
-    setHierarchyRevision(revision => revision + 1);
-    void completion.finally(() => setHierarchyRevision(revision => revision + 1));
-  }
-  function retryHierarchy(row: DisplayDataRow<Row>): void {
-    if (!hierarchy || pending()) return;
-    const completion = hierarchy.retry(row.row.id);
-    setHierarchyRevision(revision => revision + 1);
-    void completion.finally(() => setHierarchyRevision(revision => revision + 1));
-  }
-  const [hierarchyMounted, setHierarchyMounted] = createSignal(false);
-  onMount(() => { setHierarchyMounted(true); });
-  createEffect(() => {
-    if (!hierarchy || !hierarchyMounted()) return;
-    for (const row of structuredRows()) if (row.kind === "data" && row.expanded && row.unloaded && !row.pending && row.error === null) changeHierarchyExpansion(row, true);
-  });
-  function handleRowKeyDown(event: KeyboardEvent, row: DisplayRow<Row>): void {
+  function handleRowKeyDown(event: KeyboardEvent, row: DisplayRow<Row>, index: number): void {
     if (event.target !== event.currentTarget || event.altKey) return;
     if (selection && !pending() && row.kind === "data" && (event.ctrlKey || event.metaKey) && !event.shiftKey && event.key.toLowerCase() === "a") {
       event.preventDefault();
       selectLoadedRows(true);
       return;
     }
-    if (row.kind === "group" && !event.ctrlKey && !event.metaKey && !event.shiftKey && (event.key === " " || event.key === "Enter")) {
-      event.preventDefault();
-      setGroupExpanded(row.group.id, !row.expanded);
-      return;
-    }
-    if (row.kind === "group" && !event.ctrlKey && !event.metaKey && !event.shiftKey && (event.key === "ArrowRight" || event.key === "ArrowLeft")) {
-      event.preventDefault();
-      setGroupExpanded(row.group.id, event.key === "ArrowRight");
-      return;
-    }
-    if (hierarchy && row.kind === "data" && row.canExpand && !event.ctrlKey && !event.metaKey && !event.shiftKey && event.key === "ArrowRight") {
-      event.preventDefault();
-      if (!row.expanded) changeHierarchyExpansion(row, true);
-      else {
-        const current = rowIndex(row.key);
-        const child = rowAt(current + 1);
-        if (child?.kind === "data" && child.parentId === row.row.id) focusRow(current + 1);
-      }
-      return;
-    }
-    if (hierarchy && row.kind === "data" && !event.ctrlKey && !event.metaKey && !event.shiftKey && event.key === "ArrowLeft") {
-      event.preventDefault();
-      if (row.expanded) changeHierarchyExpansion(row, false);
-      else if (row.parentId) {
-        const parent = structuredRows().findIndex(candidate => candidate.kind === "data" && candidate.row.id === row.parentId);
-        if (parent >= 0) focusRow(parent);
-      }
-      return;
-    }
+    if (presentation?.keyDown(event, row, index, "table")) return;
     if (selection && !pending() && row.kind === "data" && !event.ctrlKey && !event.metaKey && event.key === " ") {
       event.preventDefault();
       changeRowSelection(row.row.id, !rowSelected(row.row.id), event.shiftKey);
@@ -1764,7 +1455,7 @@ export function DataTable<Row extends object>(props: DataTableProps<Row>): JSX.E
       return;
     }
     if (event.ctrlKey || event.metaKey || (event.shiftKey && !selection)) return;
-    const current = rowIndex(row.key);
+    const current = rowIndex(row.key, index);
     if (current < 0) return;
     const page = Math.max(1, Math.floor((viewport?.clientHeight ?? estimatedRowHeight()) / estimatedRowHeight()));
     const last = Math.max(0, rowCount() - 1);
@@ -1779,7 +1470,7 @@ export function DataTable<Row extends object>(props: DataTableProps<Row>): JSX.E
     event.preventDefault();
     const nextRow = rowAt(next);
     if (selection && row.kind === "data" && event.shiftKey && nextRow?.kind === "data") {
-      if (!selectionAnchorId || !selectableRows().rows.some(candidate => candidate.id === selectionAnchorId)) selectionAnchorId = row.row.id;
+      if (!selectionAnchorId || !selectionAnchorLoaded(selectionAnchorId)) selectionAnchorId = row.row.id;
       selection.selectRange(selectionAnchorId, nextRow.row.id, true);
       publishSelection();
     }
@@ -1809,7 +1500,7 @@ export function DataTable<Row extends object>(props: DataTableProps<Row>): JSX.E
       const top = viewport.scrollTop;
       const item = virtualizer.getVirtualItems().find(candidate => candidate.end > top);
       const row = item ? rowAt(item.index) : undefined;
-      if (item && row) scrollAnchor = { id: row.key, offset: top - item.start };
+      if (item && row) scrollAnchor = { id: row.key, index: item.index, offset: top - item.start };
       return;
     }
     const bounds = viewport.getBoundingClientRect();
@@ -1819,7 +1510,7 @@ export function DataTable<Row extends object>(props: DataTableProps<Row>): JSX.E
     const index = Number(row.dataset.index);
     const item = virtualizer.getVirtualItems().find(candidate => candidate.index === index);
     if (!item) return;
-    scrollAnchor = { id: row.dataset.rowKey, offset: viewport.scrollTop - item.start };
+    scrollAnchor = { id: row.dataset.rowKey, index, offset: viewport.scrollTop - item.start };
   }
   function scheduleScrollAnchorCapture(): void {
     if (anchorFrame !== undefined) cancelAnimationFrame(anchorFrame);
@@ -1829,7 +1520,7 @@ export function DataTable<Row extends object>(props: DataTableProps<Row>): JSX.E
     });
   }
   onCleanup(() => { if (anchorFrame !== undefined) cancelAnimationFrame(anchorFrame); });
-  const currentRowCollection = (): readonly DisplayRow<Row>[] | readonly Row[] => hierarchy || props.grouping ? structuredRows() : flatResultRows();
+  const currentRowCollection = (): readonly DisplayRow<Row>[] | readonly Row[] => presentation ? presentation.rows() : flatResultRows();
   let previousRows = currentRowCollection();
   let previousState = serializeState(acceptedState(), schema);
   createEffect(() => {
@@ -1837,7 +1528,7 @@ export function DataTable<Row extends object>(props: DataTableProps<Row>): JSX.E
     const nextState = serializeState(acceptedState(), schema);
     const anchor = scrollAnchor;
     if (viewport && anchor && nextRows !== previousRows && nextState === previousState) {
-      const index = rowIndex(anchor.id);
+      const index = rowIndex(anchor.id, anchor.index);
       const offset = index < 0 ? undefined : virtualizer.getOffsetForIndex(index, "start")?.[0];
       if (offset !== undefined) viewport.scrollTop = Math.max(0, offset + anchor.offset);
     }
@@ -1922,16 +1613,8 @@ export function DataTable<Row extends object>(props: DataTableProps<Row>): JSX.E
       selectMobileRows(true);
       return;
     }
-    if (row.kind === "group" && !event.ctrlKey && !event.metaKey && !event.shiftKey && (event.key === " " || event.key === "Enter" || event.key === "ArrowRight" || event.key === "ArrowLeft")) {
-      event.preventDefault();
-      setGroupExpanded(row.group.id, event.key === "ArrowRight" ? true : event.key === "ArrowLeft" ? false : !row.expanded);
-      return;
-    }
-    if (hierarchy && row.kind === "data" && row.canExpand && !event.ctrlKey && !event.metaKey && !event.shiftKey && (event.key === "ArrowRight" || event.key === "ArrowLeft")) {
-      event.preventDefault();
-      changeHierarchyExpansion(row, event.key === "ArrowRight");
-      return;
-    }
+    const current = mobileRows().findIndex(candidate => candidate.key === row.key);
+    if (presentation?.keyDown(event, row, current, "cards")) return;
     if (selection && !pending() && row.kind === "data" && !event.ctrlKey && !event.metaKey && event.key === " ") {
       event.preventDefault();
       changeRowSelection(row.row.id, !rowSelected(row.row.id), event.shiftKey);
@@ -1943,7 +1626,6 @@ export function DataTable<Row extends object>(props: DataTableProps<Row>): JSX.E
       return;
     }
     if (event.ctrlKey || event.metaKey || event.shiftKey) return;
-    const current = mobileRows().findIndex(candidate => candidate.key === row.key);
     const last = Math.max(0, mobileRows().length - 1);
     const next = event.key === "ArrowDown" ? Math.min(last, current + 1)
       : event.key === "ArrowUp" ? Math.max(0, current - 1)
@@ -1962,7 +1644,6 @@ export function DataTable<Row extends object>(props: DataTableProps<Row>): JSX.E
         onCheckedChange={checked => { changeRowSelection(cellProps.row.id, checked, selectRange); selectRange = false; }} />
     </td>;
   }
-  const treePresentation = Boolean(hierarchy || props.grouping);
   function logicalColumnIndex(id: string): number {
     const index = orderedColumnStates().findIndex(column => column.id === id);
     if (index < 0) throw new Error(`Missing accepted state for table column: ${id}`);
@@ -1977,157 +1658,33 @@ export function DataTable<Row extends object>(props: DataTableProps<Row>): JSX.E
     ? undefined
     : treePresentation ? -1 : result().total + 1 + (hasFooter() ? 1 : 0);
   const footerRowIndex = (): number => treePresentation ? rowCount() + 2 : result().total + 2;
-  function expansionLabel(row: DisplayDataRow<Row>): string {
-    return `${row.expanded ? messages().collapse : messages().expand} ${row.row.id}`;
+  function bindCell(row: () => DisplayDataRow<Row> | undefined, column: (typeof columnRecords)[number]): DataTableCellBinding<Row> | undefined {
+    for (const extension of cellExtensions) {
+      const binding = extension(row, column.definition);
+      if (binding) return binding;
+    }
+    return undefined;
   }
-  function EditableCellValue(cellProps: { readonly row: DisplayDataRow<Row>; readonly column: (typeof columnRecords)[number]; readonly record: CellEditRecord }): JSX.Element {
-    const editor = cellProps.column.definition.editor;
-    const accessor = cellProps.column.definition.accessor;
-    if (!editor || !accessor) throw new Error(`Editable cell ${cellProps.row.row.id}/${cellProps.column.definition.id} is missing its editor`);
-    const activeEditor = editor;
-    const id = createUniqueId();
-    let editorElement: HTMLInputElement | HTMLSelectElement | undefined;
-    let restingElement: HTMLSpanElement | undefined;
-    let restoringRestingFocus = false;
-    let incoming = accessor(cellProps.row.row.value());
-    const snapshot = (): CellEditSnapshot<ColumnValue, string> => {
-      cellProps.record.revision();
-      return cellProps.record.controller.getSnapshot();
-    };
-    const draft = (): ColumnValue => snapshot().draft?.value ?? snapshot().committed;
-    const label = () => messages().editCell.replaceAll("{column}", cellProps.column.definition.header).replaceAll("{id}", cellProps.row.row.id);
-    const message = () => {
-      const current = snapshot();
-      if (current.invalid) return current.invalid;
-      if (current.conflict) return messages().cellConflict.replaceAll("{value}", current.conflict.current === null ? messages().noValue : String(current.conflict.current));
-      return current.error ? messages().cellUpdateFailedDescription : null;
-    };
-    const content = () => cellProps.column.definition.cell?.(snapshot().committed, cellProps.row.row.value()) ?? defaultCell(snapshot().committed);
-
-    createEffect(() => {
-      const next = accessor(cellProps.row.row.value());
-      if (Object.is(next, incoming)) return;
-      incoming = next;
-      cellProps.record.controller.acceptRefetch(next);
-      cellProps.record.publish();
-    });
-
-    function focusEditor(): void { queueMicrotask(() => editorElement?.focus({ preventScroll: true })); }
-    function focusResting(): void {
-      queueMicrotask(() => {
-        restoringRestingFocus = true;
-        try { restingElement?.focus({ preventScroll: true }); }
-        finally { restoringRestingFocus = false; }
-      });
-    }
-    function begin(): void {
-      if (restoringRestingFocus || pending()) return;
-      if (cellProps.record.controller.begin()) {
-        cellProps.record.publish();
-        focusEditor();
-      }
-    }
-    function update(value: ColumnValue): void {
-      cellProps.record.controller.setDraft(value);
-      cellProps.record.publish();
-    }
-    async function finish(completion: Promise<CellCommitOutcome>, restore: boolean, notify = true): Promise<CellCommitOutcome> {
-      cellProps.record.publish();
-      const outcome = await completion;
-      cellProps.record.publish();
-      const current = snapshot();
-      if (outcome === "accepted" && !current.editing && restore) focusResting();
-      if ((outcome === "invalid" || outcome === "conflict") && restore) focusEditor();
-      if (outcome === "failed" && notify && editToaster) editToaster.show({
-        title: messages().cellUpdateFailed,
-        description: messages().cellUpdateFailedDescription,
-        tone: "danger",
-        priority: "assertive",
-        duration: null,
-        action: {
-          label: messages().retry,
-          retryLabel: messages().retry,
-          errorMessage: messages().retryFailed,
-          run: async () => {
-            const retried = await finish(cellProps.record.controller.retry(), false, false);
-            if (retried !== "accepted") throw new Error(`Cell retry was not accepted: ${retried}`);
-            focusResting();
-          },
-        },
-      });
-      return outcome;
-    }
-    function commit(restore: boolean): void { void finish(cellProps.record.controller.commit(), restore); }
-    function blur(): void {
-      const current = snapshot();
-      const unchangedFailure = (current.error !== null || current.conflict !== null) && current.attempt !== null && current.draft !== null && Object.is(current.attempt.value, current.draft.value);
-      if (!unchangedFailure) commit(false);
-    }
-    function keyDown(event: KeyboardEvent): void {
-      if (event.key === "Enter") {
-        event.preventDefault();
-        commit(true);
-      } else if (event.key === "Escape") {
-        event.preventDefault();
-        cellProps.record.controller.discard();
-        cellProps.record.publish();
-        focusResting();
-      }
-    }
-    function EditorControl(): JSX.Element {
-      const invalid = () => snapshot().invalid !== null || snapshot().error !== null || undefined;
-      const describedBy = () => message() ? `${id}-message` : undefined;
-      if (activeEditor.type === "boolean") return <input ref={element => { editorElement = element; element.checked = draft() === true; }} class="sheen-data-table-editor sheen-data-table-editor-boolean" type="checkbox"
-        aria-label={label()} aria-describedby={describedBy()} aria-invalid={invalid()} aria-busy={snapshot().pending || undefined} onBlur={blur} onKeyDown={keyDown} onChange={event => update(event.currentTarget.checked)} />;
-      if (activeEditor.type === "select") return <select ref={element => { editorElement = element; element.value = draft() === null ? "" : String(draft()); }} class="sheen-data-table-editor"
-        aria-label={label()} aria-describedby={describedBy()} aria-invalid={invalid()} aria-busy={snapshot().pending || undefined} onBlur={blur} onKeyDown={keyDown} onChange={event => update(event.currentTarget.value === "" && activeEditor.nullable ? null : event.currentTarget.value)}>
-        <Show when={activeEditor.nullable}><option value="">{messages().noValue}</option></Show>
-        <For each={activeEditor.options}>{option => <option value={option}>{option}</option>}</For>
-      </select>;
-      if (activeEditor.type === "number") return <input ref={element => { editorElement = element; element.value = draft() === null ? "" : String(draft()); }} class="sheen-data-table-editor" type="number" inputMode="decimal"
-        aria-label={label()} aria-describedby={describedBy()} aria-invalid={invalid()} aria-busy={snapshot().pending || undefined} onBlur={blur} onKeyDown={keyDown}
-        onInput={event => update(event.currentTarget.value === "" ? null : event.currentTarget.valueAsNumber)} />;
-      return <input ref={element => { editorElement = element; element.value = draft() === null ? "" : String(draft()); }} class="sheen-data-table-editor" type="text"
-        aria-label={label()} aria-describedby={describedBy()} aria-invalid={invalid()} aria-busy={snapshot().pending || undefined} onBlur={blur} onKeyDown={keyDown}
-        onInput={event => update(event.currentTarget.value === "" && activeEditor.nullable ? null : event.currentTarget.value)} />;
-    }
-    return <span class="sheen-data-table-edit-value">
-      <Show when={snapshot().editing} fallback={<span ref={element => { restingElement = element; element.addEventListener("focus", begin); if (element.ownerDocument.activeElement === element) queueMicrotask(begin); }} class="sheen-data-table-edit-rest" tabindex="0" aria-keyshortcuts="Enter" onClick={begin}
-        onKeyDown={event => { if (event.key === "Enter") { event.preventDefault(); begin(); } }}>{content()}</span>}>
-        <EditorControl />
-      </Show>
-      <Show when={message()}>{value => <span id={`${id}-message`} class="sheen-data-table-edit-message" role={snapshot().invalid !== null || snapshot().conflict !== null ? "alert" : undefined}>{value()}</span>}</Show>
-    </span>;
-  }
-  function DataCellContent(cellProps: { readonly row: DisplayDataRow<Row>; readonly column: (typeof columnRecords)[number]; readonly first: boolean; readonly edit: CellEditRecord | undefined }): JSX.Element {
+  function DataCellContent(cellProps: { readonly row: DisplayDataRow<Row>; readonly column: (typeof columnRecords)[number]; readonly first: boolean; readonly cell: DataTableCellBinding<Row> | undefined; readonly host: () => HTMLElement | undefined }): JSX.Element {
     const definition = cellProps.column.definition;
     const input = createMemo(() => {
       const row = cellProps.row.row.value();
       return { row, value: definition.accessor?.(row) ?? null };
     }, undefined, { equals: (previous, next) => Object.is(previous.value, next.value) && (definition.cell === null
       || (definition.cellDependencies === null ? previous.row === next.row : definition.cellDependencies.every(key => Object.is(previous.row[key], next.row[key])))) });
-    const content = () => cellProps.edit ? <EditableCellValue row={cellProps.row} column={cellProps.column} record={cellProps.edit} /> : definition.cell?.(input().value, input().row) ?? defaultCell(input().value);
-    if (!treePresentation || !cellProps.first) return <>{content()}</>;
-    return <div class="sheen-data-table-tree-cell" style={{ "--sheen-table-depth": Math.max(0, cellProps.row.depth - 1) }}>
-      <Show when={cellProps.row.canExpand} fallback={<span class="sheen-data-table-expander-space" aria-hidden="true" />}>
-        <button type="button" class="sheen-data-table-expander" aria-label={expansionLabel(cellProps.row)} aria-expanded={cellProps.row.expanded} disabled={pending()}
-          onClick={() => changeHierarchyExpansion(cellProps.row, !cellProps.row.expanded)}>{cellProps.row.expanded ? "▾" : "▸"}</button>
-      </Show>
-      <span class="sheen-data-table-tree-value">{content()}</span>
-      <Show when={cellProps.row.pending}><span class="sheen-data-table-row-status" role="status">{messages().loadingChildren}</span></Show>
-      <Show when={cellProps.row.error !== null}><span class="sheen-data-table-row-status" role="alert">{messages().serverError} <button type="button" onClick={() => retryHierarchy(cellProps.row)}>{messages().retry}</button></span></Show>
-    </div>;
+    if (definition.flash) createEffect(on(() => ({ id: cellProps.row.row.id, value: input().value }), (next, previous) => {
+      const element = cellProps.host();
+      if (!element || !previous || previous.id !== next.id || typeof next.value !== "number" || typeof previous.value !== "number" || next.value === previous.value) return;
+      flashChange(element, next.value > previous.value ? "up" : "down");
+    }, { defer: true }));
+    const content = () => cellProps.cell?.active() ? cellProps.cell.render(() => cellProps.row) : definition.cell?.(input().value, input().row) ?? defaultCell(input().value);
+    const TreeCell = presentation?.TreeCell;
+    if (!TreeCell || !cellProps.first) return <>{content()}</>;
+    return <TreeCell row={cellProps.row}>{content()}</TreeCell>;
   }
   function GroupCellContent(cellProps: { readonly row: DisplayGroupRow<Row>; readonly column: (typeof columnRecords)[number]; readonly labelColumn: boolean }): JSX.Element {
-    if (cellProps.labelColumn) return <div class="sheen-data-table-tree-cell" style={{ "--sheen-table-depth": 0 }}>
-      <Show when={props.grouping?.collapsible !== false} fallback={<span class="sheen-data-table-expander-space" aria-hidden="true" />}>
-        <button type="button" class="sheen-data-table-expander" disabled={pending()} aria-label={`${cellProps.row.expanded ? messages().collapse : messages().expand} ${cellProps.row.label}`}
-          aria-expanded={cellProps.row.expanded} onClick={() => setGroupExpanded(cellProps.row.group.id, !cellProps.row.expanded)}>{cellProps.row.expanded ? "▾" : "▸"}</button>
-      </Show>
-      <span class="sheen-data-table-group-label">{cellProps.row.label} <span class="sheen-data-table-group-count">({groupNumberFormatter().format(cellProps.row.group.count)})</span></span>
-    </div>;
-    const aggregate = cellProps.row.group.aggregates.find(value => value.column === cellProps.column.definition.id)?.value ?? null;
-    return defaultCell(aggregate);
+    const GroupCell = presentation?.GroupCell;
+    return GroupCell ? <GroupCell row={cellProps.row} column={cellProps.column.definition} label={cellProps.labelColumn} /> : null;
   }
   function MobileSelectionControl(controlProps: { readonly row: StableRow<Row> }): JSX.Element {
     let selectRange = false;
@@ -2137,21 +1694,15 @@ export function DataTable<Row extends object>(props: DataTableProps<Row>): JSX.E
   }
   function MobileCellContent(cellProps: { readonly row: DisplayRow<Row>; readonly column: (typeof columnRecords)[number]; readonly title: boolean }): JSX.Element {
     const data = () => displayDataRow(cellProps.row);
-    const edit = createMemo(() => {
-      const current = data();
-      return current ? cellEditRecord(current.row, cellProps.column) : undefined;
-    });
-    const state = () => editSnapshot(edit());
-    const invalid = () => {
-      const current = state();
-      return Boolean(current && (current.invalid !== null || current.error !== null));
-    };
+    const cell = bindCell(data, cellProps.column);
+    const attributes = (): DataTableCellAttributes => cell?.attributes() ?? {};
+    let host: HTMLDivElement | undefined;
     return <Show when={data()} fallback={<Show when={displayGroupRow(cellProps.row)}>{group => <div class="sheen-data-table-mobile-value" data-column={cellProps.column.definition.id} data-align={cellProps.column.definition.align} data-numeric={cellProps.column.definition.numeric || undefined}>
       <GroupCellContent row={group()} column={cellProps.column} labelColumn={cellProps.title} />
     </div>}</Show>}>
-      {current => <div class="sheen-data-table-mobile-value" data-column={cellProps.column.definition.id} data-align={cellProps.column.definition.align} data-numeric={cellProps.column.definition.numeric || undefined}
-        data-editable={edit() ? "" : undefined} data-invalid={invalid() ? "" : undefined} data-stale={state()?.stale ? "" : undefined} data-pending={state()?.pending ? "" : undefined} data-conflict={state()?.conflict ? "" : undefined}>
-        <DataCellContent row={current()} column={cellProps.column} first={cellProps.title} edit={edit()} />
+      {current => <div ref={host} class="sheen-data-table-mobile-value" data-column={cellProps.column.definition.id} data-align={cellProps.column.definition.align} data-numeric={cellProps.column.definition.numeric || undefined}
+        data-editable={attributes()["data-editable"]} data-invalid={attributes()["data-invalid"]} data-stale={attributes()["data-stale"]} data-pending={attributes()["data-pending"]} data-conflict={attributes()["data-conflict"]}>
+        <DataCellContent row={current()} column={cellProps.column} first={cellProps.title} cell={cell} host={() => host} />
       </div>}
     </Show>;
   }
@@ -2165,7 +1716,7 @@ export function DataTable<Row extends object>(props: DataTableProps<Row>): JSX.E
         <div class="sheen-data-table-mobile-title">
           <Show when={title()} fallback={data()?.row.id ?? displayGroupRow(cardProps.row)?.label ?? ""}>{column => <MobileCellContent row={cardProps.row} column={column()} title />}</Show>
         </div>
-        <Show when={data()}>{value => <Show when={actions().length > 0}><DropdownMenu trigger={messages().rowActions.replaceAll("{id}", value().row.id)} items={rowActionItems(value().row)} disabled={pending()} /></Show>}</Show>
+        <Show when={data()}>{value => <Show when={actions().length > 0}><DropdownMenu trigger={<Glyph name="more" />} triggerLabel={messages().rowActions.replaceAll("{id}", value().row.id)} items={rowActionItems(value().row)} disabled={pending()} /></Show>}</Show>
       </div>
       <Show when={details().length > 0}><dl class="sheen-data-table-mobile-fields">
         <For each={details()}>{column => <div class="sheen-data-table-mobile-field">
@@ -2175,18 +1726,17 @@ export function DataTable<Row extends object>(props: DataTableProps<Row>): JSX.E
       </dl></Show>
     </>;
   }
-  return <section ref={root} class={className()} data-variant={variant()} data-sheen-density={density()} data-mobile-layout={mobileLayout ? "" : undefined} data-variable-height={props.variableRowHeight ? "" : undefined} data-selection={selection ? "multiple" : undefined} data-pending={busy() ? "" : undefined} data-previous-results={previous() ? "" : undefined} aria-busy={busy() || undefined} style={{ "--sheen-data-table-initial-viewport-height": `${initialViewportHeight}px` }}>
+  return <section ref={root} class={className()} data-variant={variant()} data-sheen-density={density()} data-mobile-layout={mobileLayout ? "" : undefined} data-variable-height={props.variableRowHeight ? "" : undefined} data-selection={selection ? "multiple" : undefined} data-pending={busy() ? "" : undefined} data-previous-results={previous() ? "" : undefined} aria-busy={busy() || undefined} style={{ "--sheen-data-table-initial-viewport-height": `${initialViewportHeight}px`, ...(props.rowHeight === undefined ? {} : { "--sheen-table-row-h": props.rowHeight }) }}>
     <Show when={acceptedAvailable() ? error() : null}>{value => <div class="sheen-data-table-error" role="alert"><span>{errorMessage(value())}</span><Button onClick={retry}>{messages().retry}</Button></div>}</Show>
     <Show when={exportError()}><div class="sheen-data-table-error" role="alert"><span>{messages().exportFailed}</span><Show when={serverExports}><Button onClick={retryExport}>{messages().retryExport}</Button></Show></div></Show>
     <DataTableToolbar label={messages().tableControls.replace("{caption}", props.caption)} result={resultCount()} resultPrevious={previous() ? messages().previousResults : undefined} actions={toolbarActions()}
-      query={searchOptions || (props.filterBar !== false && schema.filterColumns.length > 0) || columnSummaries().length > 0 ? <>
+      query={searchOptions || queryExtensions.some(query => query.visible()) || columnSummaries().length > 0 ? <>
         <Show when={searchOptions}><div class="sheen-data-table-search-field" data-search-mode={searchMode()}><SearchInput class="sheen-data-table-search" label={searchLabel()} placeholder={searchPlaceholder()} value={searchDraft()} shortcut={searchShortcut()} aria-busy={busy() || undefined}
           onValueChange={updateSearchDraft} onCompositionStart={startSearchComposition} onCompositionEnd={event => finishSearchComposition(event.currentTarget.value)} />
           <Show when={searchOptions?.exactMatch}><DropdownMenu class="sheen-data-table-search-mode-menu" trigger={<span>{searchMode() === "exact" ? messages().searchExact : messages().searchRanked}</span>}
             triggerLabel={`${messages().searchMatchMode}: ${searchMode() === "exact" ? messages().searchExact : messages().searchRanked}`} items={searchModeItems()} disabled={pending()} /></Show>
         </div></Show>
-        <Show when={props.filterBar !== false && schema.filterColumns.length > 0}><FilterBar columns={props.columns} value={acceptedState().filter} facets={result().facets} disabled={pending()} onChange={requestFilter}
-          {...(typeof props.filterBar === "object" && props.filterBar.dateEditor ? { dateEditor: props.filterBar.dateEditor } : {})} /></Show>
+        <For each={queryExtensions}>{query => <Show when={query.visible()}>{query.render()}</Show>}</For>
         <Show when={columnSummaries().length > 0}><div class="sheen-data-table-constraints" role="group" aria-label={messages().constrainedColumns}>
           <For each={columnSummaries().map(item => item.column)}>{id => <span class="sheen-data-table-constraint"><span>{summaryLabel(id)}</span><Button size="sm" variant="ghost" aria-label={messages().restoreColumn.replaceAll("{column}", columnRecordById.get(id)?.definition.header ?? id)} onClick={() => restoreSummary(id)}>{messages().showColumn}</Button></span>}</For>
         </div></Show>
@@ -2201,9 +1751,9 @@ export function DataTable<Row extends object>(props: DataTableProps<Row>): JSX.E
         <thead><tr aria-rowindex="1" style={{ "grid-template-columns": template() }}>
           <Show when={selection}><th class="sheen-data-table-selection-cell" scope="col" role={treePresentation ? "columnheader" : undefined} aria-colindex="1">
             <Checkbox data-sheen-selection-control="" class="sheen-data-table-selection-control" label={messages().selectPage}
-              checked={selectableRows().rows.length > 0 && selectedLoadedCount() === selectableRows().rows.length}
-              indeterminate={selectedLoadedCount() > 0 && selectedLoadedCount() < selectableRows().rows.length}
-              disabled={pending() || selectableRows().rows.length === 0} onCheckedChange={selectLoadedRows} />
+              checked={loadedRows().length > 0 && selectedLoadedCount() === loadedRows().length}
+              indeterminate={selectedLoadedCount() > 0 && selectedLoadedCount() < loadedRows().length}
+              disabled={pending() || loadedRows().length === 0} onCheckedChange={selectLoadedRows} />
           </th></Show>
           <For each={visibleDefinitions()}>{column => {
             const sorted = () => acceptedState().sorting.find(entry => entry.column === column.definition.id);
@@ -2219,11 +1769,11 @@ export function DataTable<Row extends object>(props: DataTableProps<Row>): JSX.E
             const reportedWidth = () => column.state().width ?? (typeof column.definition.width === "number" ? column.definition.width : column.definition.minWidth ?? 160);
             return <th scope="col" role={treePresentation ? "columnheader" : undefined} aria-colindex={logicalColumnIndex(column.definition.id)} data-column={column.definition.id} data-pin={column.state().pin || undefined} data-pin-edge={pinEdge(column)} data-sort-direction={sorted()?.direction} data-sort-priority={sorted() ? sortPosition() : undefined} style={pinStyle(column)}
               aria-sort={sortPosition() === 1 ? sorted()?.direction === "asc" ? "ascending" : sorted()?.direction === "desc" ? "descending" : undefined : undefined}>
-              <div class="sheen-data-table-header-content">
+              <div class="sheen-data-table-header-content" title={column.definition.header}>
                 <Show when={column.definition.sort} fallback={<span class="sheen-data-table-header-label">{column.definition.header}</span>}>
                   <button class="sheen-data-table-sort" type="button" disabled={pending()} aria-describedby={column.sortDescriptionId} onClick={event => requestSort(column.definition.id, event.shiftKey)}>
                     <span class="sheen-data-table-sort-label">{column.definition.header}</span>
-                    <Show when={sorted()}>{value => <span class="sheen-data-table-sort-indicator" aria-hidden="true"><span class="sheen-data-table-sort-direction">{value().direction === "asc" ? "↑" : "↓"}</span><Show when={acceptedState().sorting.length > 1}><span class="sheen-data-table-sort-priority">{sortPosition()}</span></Show></span>}</Show>
+                    <Show when={sorted()}>{value => <span class="sheen-data-table-sort-indicator" aria-hidden="true"><span class="sheen-data-table-sort-direction"><Glyph name={value().direction === "asc" ? "chevron-up" : "chevron-down"} /></span><Show when={acceptedState().sorting.length > 1}><span class="sheen-data-table-sort-priority">{sortPosition()}</span></Show></span>}</Show>
                   </button>
                   <span id={column.sortDescriptionId} class="sheen-data-table-state-label">{sortDescription()}</span>
                 </Show>
@@ -2252,15 +1802,17 @@ export function DataTable<Row extends object>(props: DataTableProps<Row>): JSX.E
           <Show when={bodyState() === "empty"}><EmptyState kind="empty" /></Show>
         </td></tr></tbody>}>
           <tbody style={{ height: `${virtualizer.getTotalSize()}px` }}>
-            <For each={renderedRows()}>{current => {
-              const row = () => current.row();
+            <For each={renderedKeys()}>{key => {
+              const entry = createMemo<VirtualRow<Row>>(previous => virtualRows().get(key) ?? previous, virtualRow(key));
+              const row = createMemo(() => entry().row);
+              const item = createMemo(() => entry().item);
               const dataRow = treePresentation ? () => displayDataRow(row()) : createMemo(() => displayDataRow(row()), undefined, {
                 equals: (previous, next) => previous?.row === next?.row,
               });
               const groupRow = () => displayGroupRow(row());
               const labelColumn = () => {
                 const visible = visibleDefinitions();
-                return visible.some(column => column.definition.id === props.grouping?.by) ? props.grouping?.by : visible[0]?.definition.id;
+                return visible.some(column => column.definition.id === presentation?.labelColumn) ? presentation?.labelColumn : visible[0]?.definition.id;
               };
               function RowCells(): JSX.Element {
                 return <>
@@ -2270,59 +1822,53 @@ export function DataTable<Row extends object>(props: DataTableProps<Row>): JSX.E
                     </Show>
                   </Show>
                   <For each={visibleDefinitions()}>{column => {
-                    const edit = column.definition.editor ? createMemo(() => {
-                      const value = dataRow();
-                      return value ? cellEditRecord(value.row, column) : undefined;
-                    }) : () => undefined;
-                    const state = () => editSnapshot(edit());
-                    const invalid = () => {
-                      const currentState = state();
-                      return Boolean(currentState && (currentState.invalid !== null || currentState.error !== null));
-                    };
-                    return <td role={treePresentation ? "gridcell" : undefined} aria-colindex={logicalColumnIndex(column.definition.id)} data-column={column.definition.id} data-pin={column.state().pin || undefined} data-pin-edge={pinEdge(column)} style={pinStyle(column)} data-align={column.definition.align} data-numeric={column.definition.numeric || undefined}
-                      data-editable={edit() ? "" : undefined} data-invalid={invalid() ? "" : undefined}
-                      data-stale={state()?.stale ? "" : undefined} data-pending={state()?.pending ? "" : undefined} data-conflict={state()?.conflict ? "" : undefined}>
+                    const cell = bindCell(dataRow, column);
+                    const attributes = (): DataTableCellAttributes => cell?.attributes() ?? {};
+                    let host: HTMLTableCellElement | undefined;
+                    return <td ref={host} role={treePresentation ? "gridcell" : undefined} aria-colindex={logicalColumnIndex(column.definition.id)} data-column={column.definition.id} data-pin={column.state().pin || undefined} data-pin-edge={pinEdge(column)} style={pinStyle(column)} data-align={column.definition.align} data-numeric={column.definition.numeric || undefined}
+                      data-editable={attributes()["data-editable"]} data-invalid={attributes()["data-invalid"]}
+                      data-stale={attributes()["data-stale"]} data-pending={attributes()["data-pending"]} data-conflict={attributes()["data-conflict"]}>
                       <Show when={dataRow()} fallback={<Show when={groupRow()}>{value => <GroupCellContent row={value()} column={column} labelColumn={column.definition.id === labelColumn()} />}</Show>}>
-                        {value => <DataCellContent row={value()} column={column} first={column === visibleDefinitions()[0]} edit={edit()} />}
+                        {value => <DataCellContent row={value()} column={column} first={column === visibleDefinitions()[0]} cell={cell} host={() => host} />}
                       </Show>
                     </td>;
                   }}</For>
                 </>;
               }
-              if (props.actions === undefined) return <tr data-row-key={current.key} data-row-id={dataRow()?.row.id} data-group-id={groupRow()?.group.id}
-                data-index={current.item().index} data-selected={dataRow() && rowSelected(dataRow()?.row.id ?? "") ? "" : undefined}
+              if (props.actions === undefined) return <tr data-row-key={key} data-row-id={dataRow()?.row.id} data-group-id={groupRow()?.group.id}
+                data-index={item().index} data-selected={dataRow() && rowSelected(dataRow()?.row.id ?? "") ? "" : undefined}
                 data-loading={dataRow()?.pending ? "" : undefined} data-load-error={dataRow() && dataRow()?.error !== null ? "" : undefined}
-                tabIndex={focusableRowKey() === current.key ? 0 : props.onRowActivate || selection || treePresentation ? -1 : undefined}
-                aria-rowindex={logicalRowIndex(current.item().index)}
+                tabIndex={focusableRowKey() === key ? 0 : props.onRowActivate || selection || treePresentation ? -1 : undefined}
+                aria-rowindex={logicalRowIndex(item().index)}
                 aria-level={treePresentation ? dataRow()?.depth ?? 1 : undefined}
                 aria-posinset={treePresentation ? row().position : undefined} aria-setsize={treePresentation ? row().setSize : undefined}
                 aria-expanded={groupRow()?.expanded ?? (dataRow()?.canExpand ? dataRow()?.expanded : undefined)}
                 aria-selected={selection && dataRow() ? rowSelected(dataRow()?.row.id ?? "") : undefined}
                 aria-busy={dataRow()?.pending ? true : undefined}
-                onFocus={() => setActiveRowKey(current.key)} onKeyDown={event => handleRowKeyDown(event, row())} onClick={event => handleRowClick(event, row())}
-                ref={element => bindVirtualRow(element, current.item().index)}
-                style={{ "grid-template-columns": template(), transform: `translateY(${current.item().start}px)`, "block-size": props.variableRowHeight ? undefined : rowHeight, "min-block-size": rowHeight }}>
+                onFocus={() => activateRow(key, item().index)} onKeyDown={event => handleRowKeyDown(event, row(), item().index)} onClick={event => handleRowClick(event, row())}
+                ref={element => bindVirtualRow(element, item().index)}
+                style={{ "grid-template-columns": template(), transform: `translateY(${item().start}px)`, "block-size": props.variableRowHeight ? undefined : rowHeight, "min-block-size": rowHeight }}>
                 <RowCells />
               </tr>;
               const contextRow = dataRow();
               return <ContextMenu as="tr" items={contextRow ? rowActionItems(contextRow.row) : []} disabled={!contextRow || actions().length === 0 || pending()}
                 onContextMenu={() => { const value = dataRow(); if (value) prepareContextSelection(value.row); }}
-                data-row-key={current.key} data-row-id={dataRow()?.row.id} data-group-id={groupRow()?.group.id}
-                data-index={current.item().index} data-selected={dataRow() && rowSelected(dataRow()?.row.id ?? "") ? "" : undefined}
+                data-row-key={key} data-row-id={dataRow()?.row.id} data-group-id={groupRow()?.group.id}
+                data-index={item().index} data-selected={dataRow() && rowSelected(dataRow()?.row.id ?? "") ? "" : undefined}
                 data-loading={dataRow()?.pending ? "" : undefined} data-load-error={dataRow() && dataRow()?.error !== null ? "" : undefined}
-                tabIndex={focusableRowKey() === current.key ? 0 : props.onRowActivate || selection || treePresentation || actions().length > 0 ? -1 : undefined}
-                aria-rowindex={logicalRowIndex(current.item().index)}
+                tabIndex={focusableRowKey() === key ? 0 : props.onRowActivate || selection || treePresentation || actions().length > 0 ? -1 : undefined}
+                aria-rowindex={logicalRowIndex(item().index)}
                 aria-level={treePresentation ? dataRow()?.depth ?? 1 : undefined}
                 aria-posinset={treePresentation ? row().position : undefined} aria-setsize={treePresentation ? row().setSize : undefined}
                 aria-expanded={groupRow()?.expanded ?? (dataRow()?.canExpand ? dataRow()?.expanded : undefined)}
                 aria-selected={selection && dataRow() ? rowSelected(dataRow()?.row.id ?? "") : undefined}
                 aria-busy={dataRow()?.pending ? true : undefined}
-                onFocus={() => setActiveRowKey(current.key)} onKeyDown={event => handleRowKeyDown(event, row())} onClick={event => handleRowClick(event, row())}
+                onFocus={() => activateRow(key, item().index)} onKeyDown={event => handleRowKeyDown(event, row(), item().index)} onClick={event => handleRowClick(event, row())}
                 ref={element => {
                   if (!(element instanceof HTMLTableRowElement)) throw new Error("DataTable context rows must render as table rows");
-                  bindVirtualRow(element, current.item().index);
+                  bindVirtualRow(element, item().index);
                 }}
-                style={{ "grid-template-columns": template(), transform: `translateY(${current.item().start}px)`, "block-size": props.variableRowHeight ? undefined : rowHeight, "min-block-size": rowHeight }}>
+                style={{ "grid-template-columns": template(), transform: `translateY(${item().start}px)`, "block-size": props.variableRowHeight ? undefined : rowHeight, "min-block-size": rowHeight }}>
                 <RowCells />
               </ContextMenu>;
             }}</For>
@@ -2376,7 +1922,7 @@ export function DataTable<Row extends object>(props: DataTableProps<Row>): JSX.E
         </Show>
       </div></Show>
       <Show when={selectionBarPresent()}><div class="sheen-data-table-selection-actions" data-open={String(selectionBarOpen())} role="toolbar" aria-label={messages().selectionActions} aria-hidden={!selectionBarOpen() || undefined} inert={!selectionBarOpen()} onAnimationEnd={finishSelectionBarExit}>
-        <strong>{messages().selectedCount.replaceAll("{count}", groupNumberFormatter().format(selectionCount()))}</strong>
+        <strong>{messages().selectedCount.replaceAll("{count}", resultNumber().format(selectionCount()))}</strong>
         <For each={actions()}>{action => {
           const context = () => actionContext();
           return <Button size="sm" tone={action.tone ?? "neutral"} disabled={actionDisabled(action, context())} onClick={() => action.onSelect(actionContext())}>{action.label}</Button>;
@@ -2385,6 +1931,6 @@ export function DataTable<Row extends object>(props: DataTableProps<Row>): JSX.E
       </div></Show>
     </div>
     <Show when={range()}>{page => <Pagination class="sheen-data-table-pagination" pageIndex={page().pageIndex} pageCount={page().pageCount} pending={busy()} disabled={previous()} onPageChange={requestPage} />}</Show>
-    <Show when={editToaster}>{controller => <Toaster controller={controller()} />}</Show>
+    <For each={overlays}>{overlay => overlay()}</For>
   </section>;
 }

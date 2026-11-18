@@ -134,7 +134,7 @@ export function AccordionItem(props: AccordionItemProps): JSX.Element {
   });
   return <Primitive.Item {...others} id={id()} value={local.value} disabled={local.disabled ?? false} class={cn("sheen-accordion-item", local.class)}>
     <Primitive.Header as={heading()} class="sheen-accordion-heading">
-      <Primitive.Trigger as={Button} ref={trigger} data-sheen-accordion-trigger="" id={`${id()}-trigger`} aria-controls={`${id()}-content`} aria-disabled={open() && !options.multiple() && !options.collapsible() || undefined} class="sheen-collapsible-trigger">
+      <Primitive.Trigger as={Button} variant="ghost" ref={trigger} data-sheen-accordion-trigger="" id={`${id()}-trigger`} aria-controls={`${id()}-content`} aria-disabled={open() && !options.multiple() && !options.collapsible() || undefined} class="sheen-collapsible-trigger">
         <span class="sheen-collapsible-indicator" aria-hidden="true" />{local.label}
       </Primitive.Trigger>
     </Primitive.Header>

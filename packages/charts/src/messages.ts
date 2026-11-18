@@ -9,6 +9,9 @@ export const englishChartMessages = Object.freeze({
   zoomOut: "Zoom out",
   resetZoom: "Reset zoom",
   keyboardInstructions: "Use Left and Right Arrow, Home, and End to inspect samples. Press Escape to clear the inspection.",
+  gridKeyboardInstructions: "Use the Arrow keys to move between cells and Home and End to reach the row edges. Press Escape to clear the inspection.",
+  seriesColumn: "Series",
+  shareColumn: "Share",
 });
 
 export type ChartMessages = Readonly<Record<keyof typeof englishChartMessages, string>>;
@@ -24,6 +27,9 @@ export function resolveChartMessages(messages: {
   readonly chartZoomOut?: string;
   readonly chartResetZoom?: string;
   readonly chartKeyboardInstructions?: string;
+  readonly chartGridKeyboardInstructions?: string;
+  readonly chartSeriesColumn?: string;
+  readonly chartShareColumn?: string;
 }): ChartMessages {
   return Object.freeze({
     viewAsTable: messages.chartViewAsTable ?? englishChartMessages.viewAsTable,
@@ -36,6 +42,9 @@ export function resolveChartMessages(messages: {
     zoomOut: messages.chartZoomOut ?? englishChartMessages.zoomOut,
     resetZoom: messages.chartResetZoom ?? englishChartMessages.resetZoom,
     keyboardInstructions: messages.chartKeyboardInstructions ?? englishChartMessages.keyboardInstructions,
+    gridKeyboardInstructions: messages.chartGridKeyboardInstructions ?? englishChartMessages.gridKeyboardInstructions,
+    seriesColumn: messages.chartSeriesColumn ?? englishChartMessages.seriesColumn,
+    shareColumn: messages.chartShareColumn ?? englishChartMessages.shareColumn,
   });
 }
 

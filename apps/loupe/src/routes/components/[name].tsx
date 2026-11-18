@@ -1,11 +1,18 @@
-import { useParams } from "@solidjs/router";
+import { createAsync, query, useParams } from "@solidjs/router";
 import { Dynamic } from "solid-js/web";
 import { For, Show, createEffect, createMemo, createSignal, on } from "solid-js";
+import type { Component } from "solid-js";
 import { Button, Code, Heading, Input, Link, Stack, Surface, Table, TableBody, TableCell, TableHead, TableHeaderCell, TableRow, Text } from "@gemologic/sheen";
-import { componentDocs } from "../../generated/component-docs.ts";
-import type { ComponentControl, ComponentDoc, ComponentDocProp } from "../../generated/component-docs.ts";
+import { componentDocLoaders } from "../../generated/component-docs/index.ts";
+import type { ComponentControl, ComponentDoc, ComponentDocProp, ComponentPlayground, PlaygroundValue } from "../../generated/component-docs/index.ts";
 import { componentExamples } from "../../generated/component-examples/index.ts";
-import type { ComponentExampleModule, PlaygroundValue } from "../../generated/component-examples/index.ts";
+import type { ComponentExampleProps } from "../../generated/component-examples/index.ts";
+import "../../package-styles.css";
+
+const getComponentDoc = query(async (name: string): Promise<ComponentDoc | null> => {
+  const load = componentDocLoaders[name];
+  return load ? load() : null;
+}, "component-doc");
 
 const defaultOption = "__sheen_component_default__";
 
@@ -15,12 +22,12 @@ function jsxValue(name: string, value: PlaygroundValue): string {
   return `${name}={${String(value)}}`;
 }
 
-function renderedCode(examples: ComponentExampleModule, values: Readonly<Record<string, PlaygroundValue>>): string {
-  const offset = examples.codeInsertionOffset;
-  if (offset === null) return examples.playgroundTemplate;
+function renderedCode(playground: ComponentPlayground, values: Readonly<Record<string, PlaygroundValue>>): string {
+  const offset = playground.codeInsertionOffset;
+  if (offset === null) return playground.template;
   const attributes = Object.entries(values).sort(([left], [right]) => left.localeCompare(right)).map(([name, value]) => jsxValue(name, value));
   const insertion = attributes.length ? ` ${attributes.join(" ")}` : "";
-  return `${examples.playgroundTemplate.slice(0, offset)}${insertion}${examples.playgroundTemplate.slice(offset)}`;
+  return `${playground.template.slice(0, offset)}${insertion}${playground.template.slice(offset)}`;
 }
 
 function selectOptions(control: ComponentControl): readonly { readonly value: string; readonly label: string; readonly data?: PlaygroundValue }[] {
@@ -57,11 +64,11 @@ function PlaygroundControl(props: {
   </div>}</Show>;
 }
 
-function ComponentPage(props: { readonly doc: ComponentDoc; readonly examples: ComponentExampleModule }) {
-  const [values, setValues] = createSignal<Readonly<Record<string, PlaygroundValue>>>({ ...props.examples.defaults });
-  createEffect(on(() => props.doc.name, () => setValues({ ...props.examples.defaults }), { defer: true }));
-  const controls = createMemo(() => props.examples.controlsSupported ? props.doc.props.filter(prop => prop.control) : []);
-  const code = createMemo(() => renderedCode(props.examples, values()));
+function ComponentPage(props: { readonly doc: ComponentDoc; readonly example: Component<ComponentExampleProps> }) {
+  const [values, setValues] = createSignal<Readonly<Record<string, PlaygroundValue>>>({ ...props.doc.playground.defaults });
+  createEffect(on(() => props.doc.name, () => setValues({ ...props.doc.playground.defaults }), { defer: true }));
+  const controls = createMemo(() => props.doc.playground.controlsSupported ? props.doc.props.filter(prop => prop.control) : []);
+  const code = createMemo(() => renderedCode(props.doc.playground, values()));
   const change = (name: string, value: PlaygroundValue | undefined) => setValues(current => value === undefined
     ? Object.fromEntries(Object.entries(current).filter(([key]) => key !== name))
     : { ...current, [name]: value });
@@ -83,7 +90,7 @@ function ComponentPage(props: { readonly doc: ComponentDoc; readonly examples: C
             </Show>
           </div>
           <Surface variant="raised" padding="lg" bordered class="loupe-playground-preview" data-playground-preview>
-            <Dynamic component={props.examples.playground} values={values()} />
+            <Dynamic component={props.example} kind="playground" values={values()} />
           </Surface>
         </div>
         <pre class="loupe-code-output" aria-label="Generated example code"><code>{code()}</code></pre>
@@ -92,13 +99,13 @@ function ComponentPage(props: { readonly doc: ComponentDoc; readonly examples: C
       <section aria-labelledby="variants-heading">
         <Heading id="variants-heading" level={2}>Variant matrix</Heading>
         <div class="loupe-variant-grid">
-          <For each={props.examples.examples}>{example => <Surface variant="subtle" padding="md" bordered>
+          <For each={props.doc.examples}>{(example, index) => <Surface variant="subtle" padding="md" bordered>
             <Text size="caption" tone="muted">{example.title}</Text>
-            <div class="loupe-variant-preview"><Dynamic component={example.render} /></div>
+            <div class="loupe-variant-preview"><Dynamic component={props.example} kind="example" index={index()} /></div>
           </Surface>}</For>
-          <For each={props.examples.variants}>{variant => <Surface variant="subtle" padding="md" bordered>
+          <For each={props.doc.variants}>{variant => <Surface variant="subtle" padding="md" bordered>
             <Text size="caption" tone="muted">{variant.label}</Text>
-            <div class="loupe-variant-preview"><Dynamic component={props.examples.playground} values={variant.values} /></div>
+            <div class="loupe-variant-preview"><Dynamic component={props.example} kind="playground" values={variant.values} /></div>
           </Surface>}</For>
         </div>
       </section>
@@ -138,12 +145,13 @@ function ComponentPage(props: { readonly doc: ComponentDoc; readonly examples: C
 
 export default function ComponentRoute() {
   const params = useParams<{ name: string }>();
+  const doc = createAsync(() => getComponentDoc(params.name), { deferStream: true });
   const selected = createMemo(() => {
-    const doc = componentDocs.find(candidate => candidate.name === params.name);
-    const examples = componentExamples[params.name];
-    return doc && examples ? { doc, examples } : undefined;
+    const current = doc();
+    const example = current ? componentExamples[current.name] : undefined;
+    return current && example ? { doc: current, example } : undefined;
   });
   return <Show when={selected()} fallback={<main><Heading level={1}>Unknown component</Heading><Link href="/components">Return to component index</Link></main>}>
-    {value => <ComponentPage doc={value().doc} examples={value().examples} />}
+    {value => <ComponentPage doc={value().doc} example={value().example} />}
   </Show>;
 }
