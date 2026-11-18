@@ -262,6 +262,7 @@ for (const host of [
 
     await trigger.click();
     await expect(popup).toBeVisible();
+    await expect(popup.getByRole("button", { name: "Selected date. Sunday, November 1, 2026", exact: true })).toBeFocused();
     await page.keyboard.press("ArrowRight");
     await expect(popup.getByRole("button", { name: "Choose Monday, November 2, 2026", exact: true })).toBeFocused();
     await page.keyboard.press("Enter");
