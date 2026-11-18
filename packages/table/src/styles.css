@@ -72,10 +72,14 @@
 .sheen-data-table tbody { position: relative; display: grid; min-inline-size: 100%; }
 .sheen-data-table tfoot { position: sticky; z-index: var(--sheen-z-chrome); inset-block-end: 0; display: grid; min-inline-size: 100%; color: var(--sheen-color-fg); background: var(--sheen-color-bg-raised); border-block-start: 1px solid var(--sheen-color-border-control); font-weight: var(--sheen-text-h4-weight); }
 .sheen-data-table tfoot td[data-pin] { z-index: calc(var(--sheen-z-chrome) + 1); background: var(--sheen-color-bg-raised); }
-.sheen-data-table tbody tr:not(.sheen-data-table-empty) { --sheen-table-row-bg: var(--sheen-color-bg); transition: background-color var(--sheen-duration-fast) var(--sheen-ease-standard); position: absolute; inset-block-start: 0; inset-inline-start: 0; box-sizing: border-box; align-items: center; border-block-end: 1px solid var(--sheen-color-border); background: var(--sheen-table-row-bg); }
+.sheen-data-table tbody tr:not(.sheen-data-table-empty) { --sheen-table-row-bg: var(--sheen-color-bg); position: absolute; inset-block-start: 0; inset-inline-start: 0; box-sizing: border-box; align-items: center; border-block-end: 1px solid var(--sheen-color-border); background: var(--sheen-table-row-bg); }
 .sheen-data-table tbody tr[data-group-id] { --sheen-table-row-bg: var(--sheen-color-bg-raised); font-weight: var(--sheen-text-h4-weight); }
 .sheen-data-table tbody tr[data-selected] { --sheen-table-row-bg: var(--sheen-color-bg-selected); }
-@media (hover: hover) { .sheen-data-table tbody tr[data-row-id]:hover { --sheen-table-row-bg: var(--sheen-color-bg-hover); } }
+/* Only pointer hover fades in. Selection, focus, and refresh states paint immediately: they answer an action, and a background transition repaints the row on the main thread every frame. */
+@media (hover: hover) {
+  .sheen-data-table tbody tr[data-row-id]:hover { --sheen-table-row-bg: var(--sheen-color-bg-hover); }
+  .sheen-data-table tbody tr[data-row-id]:not([data-selected]):hover, .sheen-data-table tbody tr[data-row-id]:not([data-selected]):hover > [data-pin] { transition: background-color var(--sheen-duration-fast) var(--sheen-ease-standard); }
+}
 .sheen-data-table tbody tr[data-row-id]:focus-visible { --sheen-table-row-bg: var(--sheen-color-bg-hover); }
 @media (hover: hover) { .sheen-data-table tbody tr[data-row-id][data-selected]:hover { --sheen-table-row-bg: color-mix(in oklch, var(--sheen-color-bg-selected) 82%, var(--sheen-color-bg-hover)); } }
 .sheen-data-table tbody tr[data-row-id][data-selected]:focus-visible { --sheen-table-row-bg: color-mix(in oklch, var(--sheen-color-bg-selected) 82%, var(--sheen-color-bg-hover)); }
@@ -91,7 +95,7 @@
 .sheen-data-table-selection-control, .sheen-data-table-selection-control .sheen-checkbox-row { min-block-size: 0; }
 .sheen-data-table-selection-control .sheen-checkbox-row { gap: 0; }
 .sheen-data-table-selection-control .sheen-checkbox-label { position: absolute; inline-size: 1px; block-size: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
-.sheen-data-table th[data-pin], .sheen-data-table td[data-pin] { position: sticky; z-index: calc(var(--sheen-z-chrome) - 1); background: var(--sheen-table-row-bg, var(--sheen-color-bg)); transition: background-color var(--sheen-duration-fast) var(--sheen-ease-standard); }
+.sheen-data-table th[data-pin], .sheen-data-table td[data-pin] { position: sticky; z-index: calc(var(--sheen-z-chrome) - 1); background: var(--sheen-table-row-bg, var(--sheen-color-bg)); }
 .sheen-data-table th[data-pin] { z-index: calc(var(--sheen-z-chrome) + 1); background: var(--sheen-color-bg-raised); }
 .sheen-data-table [data-pin-edge]::before { content: ""; position: absolute; z-index: 1; inset-block: 0; inline-size: 1px; background: var(--sheen-color-border-control); box-shadow: 0 0 0.55rem color-mix(in oklch, var(--sheen-color-fg) 22%, transparent); pointer-events: none; }
 .sheen-data-table [data-pin-edge="start"]::before { inset-inline-end: 0; }

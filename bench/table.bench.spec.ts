@@ -280,11 +280,11 @@ async function measureRefresh(page: Page): Promise<{ readonly duration: number; 
 
 async function prepareFilter(page: Page): Promise<Locator> {
   const section = page.getByRole("region", { name: "Table benchmark surface" });
-  await section.getByRole("button", { name: "+ Filter", exact: true }).click();
+  await section.getByRole("button", { name: "Add filter", exact: true }).click();
   const picker = page.getByRole("dialog", { name: "Filter columns" });
   await picker.getByRole("searchbox", { name: "Search filter columns" }).fill("Name");
   await picker.getByRole("button", { name: "Name", exact: true }).click();
-  const editor = page.getByRole("dialog", { name: "+ Filter: Name" });
+  const editor = page.getByRole("dialog", { name: "Add filter: Name" });
   await editor.getByRole("button", { name: /Operator/ }).click();
   await page.getByRole("option", { name: "contains", exact: true }).click();
   await editor.getByRole("textbox", { name: "Value" }).fill("Needle");

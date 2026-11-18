@@ -96,6 +96,8 @@
 .sheen-chart-tooltip-value { font-variant-numeric: tabular-nums; font-weight: 600; }
 .sheen-chart-zoom-controls { display: flex; justify-content: flex-end; gap: 2px; padding: 2px; border: 1px solid var(--sheen-color-border); border-radius: var(--sheen-control-radius); }
 .sheen-chart-zoom-controls button { display: grid; place-items: center; inline-size: calc(var(--sheen-control-h-md) + 2px); min-block-size: calc(var(--sheen-control-h-md) + 2px); margin: 0; padding: 0; border: 0; border-radius: max(0px, calc(var(--sheen-control-radius) - 2px)); background: transparent; color: var(--sheen-color-fg-muted); cursor: pointer; transition: background-color var(--sheen-duration-fast) var(--sheen-ease-standard), color var(--sheen-duration-fast) var(--sheen-ease-standard); }
+/* Paint transitions ease interaction states only; theme and data-driven restyles land at once. */
+.sheen-chart-zoom-controls button:not(:hover, :focus-visible, :active) { transition-property: none; }
 .sheen-chart-zoom-controls button:hover:not(:disabled) { background: var(--sheen-color-bg-hover); color: var(--sheen-color-fg); }
 .sheen-chart-zoom-controls button:focus-visible { outline: 2px solid var(--sheen-color-focus-ring); outline-offset: 2px; box-shadow: 0 0 0 2px var(--sheen-color-focus-ring-offset); }
 .sheen-chart-zoom-controls button:disabled { color: var(--sheen-color-fg-subtle); cursor: not-allowed; }

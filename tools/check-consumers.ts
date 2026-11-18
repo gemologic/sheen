@@ -488,7 +488,7 @@ try {
   await assertUiBundleBudget(temporary, "ui-core-full", 32_000);
   await assertUiBundleBudget(temporary, "ui-forms-full", 60_000);
   await assertUiBundleBudget(temporary, "ui-overlays-full", 55_000);
-  await assertUiBundleBudget(temporary, "ui-navigation-full", 59_000);
+  await assertUiBundleBudget(temporary, "ui-navigation-full", 60_000);
   await assertUiBundleBudget(temporary, "ui-ai-full", 6_000);
   await assertUiBundleBudget(temporary, "ui-sortable-list", 16_500);
   await assertUiBundleBudget(temporary, "ui-sortable-full", 20_000);

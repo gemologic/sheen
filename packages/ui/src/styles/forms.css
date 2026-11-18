@@ -32,7 +32,9 @@
 .sheen-search-input-clear:not(:disabled) + .sheen-search-input-indicator { display: none; }
 .sheen-textarea { box-sizing: border-box; inline-size: 100%; min-inline-size: 0; padding-block: var(--sheen-space-block-xs); resize: vertical; line-height: var(--sheen-text-ui-leading); }
 .sheen-textarea[data-autoresize="true"] { resize: none; overflow-y: auto; }
-.sheen-input { background: color-mix(in oklab, var(--sheen-color-bg-inset) 50%, var(--sheen-color-bg-raised)); border-color: var(--sheen-color-border-control); transition: border-color var(--sheen-duration-fast) var(--sheen-ease-standard), background-color var(--sheen-duration-fast) var(--sheen-ease-standard), box-shadow var(--sheen-duration-fast) var(--sheen-ease-standard); }
+.sheen-input { background: color-mix(in oklab, var(--sheen-color-bg-inset) 50%, var(--sheen-color-bg-raised)); border-color: var(--sheen-color-border-control); transition: border-color var(--sheen-duration-fast) var(--sheen-ease-standard), background-color var(--sheen-duration-fast) var(--sheen-ease-standard); }
+/* Paint transitions ease interaction states only; theme, layout, and data-driven restyles land at once instead of cross-fading every control on the main thread. The focus ring is not transitioned: focus must show at once. */
+.sheen-input:not(:hover, :focus, :active) { transition-property: none; }
 .sheen-input:hover:not(:focus-visible, :disabled, [aria-disabled="true"]) { border-color: var(--sheen-color-fg-muted); }
 .sheen-input::placeholder { color: var(--sheen-color-fg-muted); opacity: 1; }
 /* One invalid treatment for every field control: danger boundary, danger focus ring, and an icon on the message. */
@@ -82,10 +84,13 @@
 .sheen-slider-error { color: var(--sheen-color-danger-fg); }
 .sheen-select { position: relative; }
 .sheen-select-trigger { display: flex; align-items: center; justify-content: space-between; gap: var(--sheen-space-inline-md); text-align: start; cursor: pointer; }
+/* The opening menu answers a trigger press, so the trigger switches state without its own border and shadow transition; those cannot be composited and repaint the page each frame. */
+.sheen-input.sheen-select-trigger { transition: none; }
 .sheen-select-trigger [data-placeholder] { color: var(--sheen-color-fg-muted); }
 .sheen-select-trigger:disabled { color: var(--sheen-color-fg-subtle); cursor: default; }
-.sheen-select-chevron { color: var(--sheen-color-fg-muted); transition: rotate var(--sheen-duration-normal) var(--sheen-ease-standard); }
-.sheen-select-trigger[data-expanded] .sheen-select-chevron { rotate: 180deg; }
+/* `transform`, not the independent `rotate` property: Chromium only composites independent transform properties on HTML boxes, so `rotate` on this SVG repaints every frame. */
+.sheen-select-chevron { color: var(--sheen-color-fg-muted); transition: transform var(--sheen-duration-normal) var(--sheen-ease-standard); }
+.sheen-select-trigger[data-expanded] .sheen-select-chevron { transform: rotate(180deg); }
 .sheen-select-native { position: absolute; inline-size: 1px; block-size: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .sheen-select-content { --sheen-color-focus-ring-offset: var(--sheen-color-bg-raised); background: var(--sheen-color-bg-raised); color: var(--sheen-color-fg); border: var(--sheen-control-border-width) solid var(--sheen-color-border); border-radius: var(--sheen-control-radius); padding: var(--sheen-space-inline-xs); max-block-size: min(20rem, var(--kb-popper-content-available-height)); overflow: auto; transform-origin: var(--kb-select-content-transform-origin); }
 .sheen-select-listbox { list-style: none; margin: 0; padding: 0; outline: none; }
@@ -98,7 +103,8 @@
 .sheen-select-option-description { font-size: var(--sheen-text-ui-sm-size); color: var(--sheen-color-fg-muted); }
 .sheen-select-indicator { position: absolute; inset-inline-end: var(--sheen-control-px-md); inset-block-start: var(--sheen-space-block-xs); }
 .sheen-select-empty { margin: var(--sheen-space-block-xs); color: var(--sheen-color-fg-muted); }
-.sheen-select-content[data-expanded] { transform-origin: var(--kb-popper-content-transform-origin); animation: sheen-layer-enter var(--sheen-duration-normal) var(--sheen-ease-spring); }
+/* Selects open often inside dense forms and tables, so they fade in quickly rather than using the larger layer entrance. */
+.sheen-select-content[data-expanded] { animation: sheen-dialog-enter var(--sheen-duration-fast) var(--sheen-ease-standard); }
 .sheen-select-content[data-closed] { animation: sheen-dialog-exit var(--sheen-duration-fast) var(--sheen-ease-exit); pointer-events: none; }
 .sheen-combobox { position: relative; min-inline-size: 0; }
 .sheen-combobox-control { display: flex; align-items: center; min-inline-size: 0; }
@@ -115,7 +121,9 @@
 .sheen-checkbox-row { display: flex; align-items: center; gap: var(--sheen-space-inline-md); min-block-size: var(--sheen-control-h-md); position: relative; }
 .sheen-checkbox-input, .sheen-switch-input { position: absolute; inline-size: var(--sheen-icon-size-md); block-size: var(--sheen-icon-size-md); margin: 0; opacity: 0; pointer-events: none; }
 .sheen-checkbox-control { display: grid; place-items: center; flex: 0 0 auto; box-sizing: border-box; inline-size: var(--sheen-icon-size-md); block-size: var(--sheen-icon-size-md); border: var(--sheen-control-border-width) solid var(--sheen-color-border-control); border-radius: var(--sheen-control-radius); background: var(--sheen-color-bg-inset); transition: background-color var(--sheen-duration-fast) var(--sheen-ease-standard), border-color var(--sheen-duration-fast) var(--sheen-ease-standard); }
+:is(.sheen-checkbox-row, .sheen-radio-row):not(:hover, :focus-within, :active) :is(.sheen-checkbox-control, .sheen-radio-control) { transition-property: none; }
 .sheen-checkbox-row:hover .sheen-checkbox-input:not(:disabled, :checked) + .sheen-checkbox-control, .sheen-radio-row:hover .sheen-radio-input:not(:disabled, :checked) + .sheen-radio-control, .sheen-switch-row:hover .sheen-switch-input:not(:disabled, :checked) + .sheen-switch-control { border-color: var(--sheen-color-fg-muted); }
+.sheen-switch-row:not(:hover, :focus-within, :active) :is(.sheen-switch-control, .sheen-switch-thumb) { transition-property: none; }
 .sheen-checkbox-input:checked + .sheen-checkbox-control, .sheen-checkbox-control[data-indeterminate] { border-color: var(--sheen-color-accent); background: var(--sheen-color-accent); color: var(--sheen-color-fg-on-accent); }
 .sheen-checkbox-input:focus-visible + .sheen-checkbox-control { outline: 2px solid var(--sheen-color-focus-ring); outline-offset: 2px; box-shadow: 0 0 0 2px var(--sheen-color-focus-ring-offset); }
 .sheen-checkbox-indicator { display: grid; place-items: center; inline-size: 100%; block-size: 100%; visibility: hidden; scale: 0.4; transition: scale var(--sheen-duration-normal) var(--sheen-ease-spring), visibility 0s var(--sheen-duration-normal); }
@@ -187,6 +195,7 @@
 .sheen-segmented-indicator { position: absolute; top: 0; left: 0; box-sizing: border-box; border-radius: calc(var(--sheen-control-radius) - var(--sheen-control-border-width)); background: var(--sheen-color-accent-subtle); box-shadow: var(--sheen-elevation-raised); pointer-events: none; }
 .sheen-segmented-options[data-indicator-ready] > .sheen-segmented-indicator { transition: translate var(--sheen-duration-normal) var(--sheen-ease-spring), inline-size var(--sheen-duration-normal) var(--sheen-ease-standard), block-size var(--sheen-duration-normal) var(--sheen-ease-standard); }
 .sheen-segmented-options[data-indicator-ready] .sheen-segmented-input:checked + .sheen-segmented-item-label { background: transparent; box-shadow: none; }
+.sheen-segmented-item:not(:hover, :focus-within, :active) .sheen-segmented-item-label { transition-property: none; }
 .sheen-segmented-item { position: relative; z-index: 1; display: grid; flex: 0 0 auto; min-inline-size: max-content; cursor: pointer; scroll-snap-align: nearest; }
 .sheen-segmented-input { position: absolute; inline-size: 1px; block-size: 1px; margin: 0; overflow: hidden; opacity: 0; pointer-events: none; }
 .sheen-segmented-item-label { display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; min-block-size: var(--sheen-control-h-sm); padding-inline: var(--sheen-control-px-md); border-radius: calc(var(--sheen-control-radius) - var(--sheen-control-border-width)); color: var(--sheen-color-fg-muted); transition: background-color var(--sheen-duration-fast) var(--sheen-ease-standard), color var(--sheen-duration-fast) var(--sheen-ease-standard), box-shadow var(--sheen-duration-fast) var(--sheen-ease-standard); font-size: var(--sheen-text-ui-sm-size); line-height: var(--sheen-text-ui-sm-leading); user-select: none; white-space: nowrap; }

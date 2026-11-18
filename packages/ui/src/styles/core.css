@@ -44,6 +44,8 @@
   transition: background-color var(--sheen-duration-fast) var(--sheen-ease-standard), color var(--sheen-duration-fast) var(--sheen-ease-standard), border-color var(--sheen-duration-fast) var(--sheen-ease-standard), box-shadow var(--sheen-duration-fast) var(--sheen-ease-standard), scale var(--sheen-duration-press) var(--sheen-ease-standard);
 }
 .sheen-button:hover { background: var(--sheen-color-bg-hover); }
+/* Paint transitions ease interaction states only; theme, layout, and data-driven restyles land at once instead of cross-fading every control on the main thread. */
+.sheen-button:not(:hover, :focus-visible, :active) { transition-property: none; }
 .sheen-button.sheen-button-accent { --sheen-tone: var(--sheen-color-accent); --sheen-tone-fg: var(--sheen-color-accent-fg); --sheen-tone-subtle: var(--sheen-color-accent-subtle); --sheen-tone-on: var(--sheen-color-fg-on-accent); }
 .sheen-button.sheen-button-danger { --sheen-tone: var(--sheen-color-danger); --sheen-tone-fg: var(--sheen-color-danger-fg); --sheen-tone-subtle: var(--sheen-color-danger-subtle); --sheen-tone-on: var(--sheen-color-danger-on); }
 .sheen-button.sheen-button-success { --sheen-tone: var(--sheen-color-success); --sheen-tone-fg: var(--sheen-color-success-fg); --sheen-tone-subtle: var(--sheen-color-success-subtle); --sheen-tone-on: var(--sheen-color-success-on); }
@@ -72,6 +74,7 @@
 .sheen-button.sheen-button-lg { min-block-size: var(--sheen-control-h-lg); padding-inline: var(--sheen-control-px-lg); }
 .sheen-link[data-link-variant="text"] { color: var(--sheen-color-accent-fg); text-decoration: underline; text-underline-offset: 0.15em; }
 .sheen-link[data-link-variant="quiet"] { color: inherit; text-decoration: underline; text-decoration-color: transparent; text-underline-offset: 0.2em; transition: text-decoration-color var(--sheen-duration-fast) var(--sheen-ease-standard), color var(--sheen-duration-fast) var(--sheen-ease-standard); }
+.sheen-link[data-link-variant="quiet"]:not(:hover, :focus-visible) { transition-property: none; }
 .sheen-link[data-link-variant="quiet"]:is(:hover, :focus-visible) { color: var(--sheen-color-accent-fg); text-decoration-color: currentColor; }
 .sheen-link[data-link-variant="button"] { display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; text-decoration: none; }
 .sheen-button:focus-visible, .sheen-input:focus-visible, .sheen-link:focus-visible {
@@ -248,6 +251,7 @@
 .sheen-list-item { min-inline-size: 0; }
 .sheen-list-item-row { display: flex; align-items: center; gap: var(--sheen-space-inline-md); box-sizing: border-box; inline-size: 100%; min-inline-size: 0; margin: 0; padding: var(--sheen-list-pad-block) var(--sheen-list-pad-inline); border: 0; border-radius: var(--sheen-control-radius); background: transparent; color: inherit; font: inherit; text-align: start; text-decoration: none; }
 .sheen-list-item[data-interactive] > .sheen-list-item-row { cursor: pointer; transition: background-color var(--sheen-duration-fast) var(--sheen-ease-standard); }
+.sheen-list-item[data-interactive] > .sheen-list-item-row:not(:hover, :focus-visible, :active) { transition-property: none; }
 .sheen-list-item[data-interactive] > .sheen-list-item-row:hover { background: var(--sheen-color-bg-hover); color: inherit; }
 .sheen-list-item[data-selected] > .sheen-list-item-row, .sheen-list-item > .sheen-list-item-row[aria-current="page"] { background: var(--sheen-color-bg-selected); box-shadow: inset 2px 0 0 var(--sheen-color-focus-ring); }
 .sheen-list-item[data-selected] > .sheen-list-item-row:dir(rtl), .sheen-list-item > .sheen-list-item-row[aria-current="page"]:dir(rtl) { box-shadow: inset -2px 0 0 var(--sheen-color-focus-ring); }

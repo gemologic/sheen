@@ -50,3 +50,25 @@ test("admin numeric cells use fixed precision without unsupported historical tre
   const alignment = await row.locator('[data-column="balance"]').evaluate(element => getComputedStyle(element).textAlign);
   expect(alignment).toBe("end");
 });
+
+test("theme switches restyle idle controls without starting transitions", async ({ page }) => {
+  await page.goto("/admin?configure=1");
+  await expect(page.locator('[data-sheen-portal="root"]')).toHaveAttribute("data-sheen-ready", "true");
+  await page.getByText("Customize starter", { exact: true }).click();
+  const trigger = page.locator(".loupe-admin-customize").getByRole("button", { name: /^Theme /u });
+  await page.mouse.move(0, 0);
+  await trigger.focus();
+  await page.evaluate(() => {
+    const started: string[] = [];
+    Reflect.set(window, "sheenTransitions", started);
+    document.addEventListener("transitionrun", event => {
+      if (!(event.target instanceof Element) || event.target.closest(".sheen-select-trigger, .sheen-select-content")) return;
+      started.push(`${event.target.className.toString()} ${event.propertyName}`);
+    }, true);
+  });
+  await trigger.press("Enter");
+  await page.locator(".sheen-select-content").getByRole("option", { name: "Graphite", exact: true }).press("Enter");
+  await expect(page.locator(".sheen-admin-scope")).toHaveAttribute("data-sheen-theme", "graphite");
+  await page.evaluate(() => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));
+  expect(await page.evaluate(() => Reflect.get(window, "sheenTransitions"))).toEqual([]);
+});

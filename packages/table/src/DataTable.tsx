@@ -3,7 +3,7 @@ import type { MenuItem, ShortcutAction } from "@gemologic/sheen";
 import { createVirtualizer } from "@tanstack/solid-virtual";
 import type { VirtualItem } from "@tanstack/solid-virtual";
 import { For, Index, Show, createComputed, createEffect, createMemo, createSignal, createUniqueId, on, onCleanup, onMount, untrack } from "solid-js";
-import type { JSX } from "solid-js";
+import type { Accessor, JSX, Signal } from "solid-js";
 import { changeTableState } from "./table-state-changes.ts";
 import { canMoveColumn, moveColumn, orderColumnStates, placeColumn } from "./column-layout.ts";
 import { constrainedColumnValues, summarizedColumns } from "./constrained-columns.ts";
@@ -1414,6 +1414,24 @@ export function renderDataTable<Row extends object>(props: DataTableProps<Row>, 
     if (!row) throw new Error(`Missing rendered table row: ${key}`);
     return row;
   }
+  // Each rendered row reads its own entry signal. Scrolling rebuilds `virtualRows`, but only rows whose item or data changed are notified,
+  // instead of marking every rendered row's reactive subtree stale on every frame.
+  const rowEntries = new Map<string, Signal<VirtualRow<Row>>>();
+  createComputed(() => {
+    const current = virtualRows();
+    for (const [key, entry] of rowEntries) {
+      const next = current.get(key);
+      if (next) entry[1](next);
+      else rowEntries.delete(key);
+    }
+  });
+  function rowEntry(key: string): Accessor<VirtualRow<Row>> {
+    const existing = rowEntries.get(key);
+    if (existing) return existing[0];
+    const entry = createSignal(untrack(() => virtualRow(key)), { equals: (previous, next) => previous.row === next.row && previous.item === next.item });
+    rowEntries.set(key, entry);
+    return entry[0];
+  }
   const [activeRowKey, setActiveRowKey] = createSignal<string | null>(null);
   let activeRowHint = -1;
   function activateRow(key: string, index: number): void {
@@ -1812,7 +1830,7 @@ export function renderDataTable<Row extends object>(props: DataTableProps<Row>, 
         </td></tr></tbody>}>
           <tbody style={{ height: `${virtualizer.getTotalSize()}px` }}>
             <For each={renderedKeys()}>{key => {
-              const entry = createMemo<VirtualRow<Row>>(previous => virtualRows().get(key) ?? previous, virtualRow(key));
+              const entry = rowEntry(key);
               const row = createMemo(() => entry().row);
               const item = createMemo(() => entry().item);
               const dataRow = treePresentation ? () => displayDataRow(row()) : createMemo(() => displayDataRow(row()), undefined, {

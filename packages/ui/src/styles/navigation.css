@@ -39,6 +39,8 @@
 .sheen-nav-list > ul { display: flex; flex-direction: column; gap: var(--sheen-space-block-xs); margin: 0; padding: 0; list-style: none; }
 .sheen-nav-item-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; min-inline-size: 0; }
 .sheen-nav-item { display: flex; align-items: center; gap: var(--sheen-space-inline-sm); padding-block: var(--sheen-space-block-xs); padding-inline: var(--sheen-space-inline-sm); border-inline-start: 2px solid transparent; border-radius: var(--sheen-control-radius); color: var(--sheen-color-fg); text-decoration: none; overflow-wrap: anywhere; transition: background-color var(--sheen-duration-fast) var(--sheen-ease-standard), border-color var(--sheen-duration-fast) var(--sheen-ease-standard), color var(--sheen-duration-fast) var(--sheen-ease-standard); }
+/* Paint transitions ease interaction states only; theme, layout, and data-driven restyles land at once instead of cross-fading every control on the main thread. */
+.sheen-nav-item:not(:hover, :focus-visible, :active) { transition-property: none; }
 .sheen-nav-item-row > .sheen-nav-item { min-inline-size: 0; }
 .sheen-nav-item-actions { display: inline-flex; align-items: center; flex: none; }
 .sheen-nav-item-label { min-inline-size: 0; }
@@ -52,6 +54,7 @@
 .sheen-tree-group[hidden] { display: none; }
 .sheen-tree-item { min-inline-size: 0; outline: none; }
 .sheen-tree-item-row { display: flex; align-items: center; gap: var(--sheen-space-inline-sm); min-block-size: var(--sheen-control-h-sm); padding-inline: var(--sheen-space-inline-xs) var(--sheen-space-inline-sm); border-radius: var(--sheen-control-radius); cursor: default; }
+.sheen-tree-item-row:not(:hover, :focus-within, :active) { transition-property: none; }
 .sheen-tree-item-row { transition: background-color var(--sheen-duration-fast) var(--sheen-ease-standard); }
 .sheen-tree-item-row:hover { background: var(--sheen-color-bg-hover); }
 .sheen-tree-item[data-selected] > .sheen-tree-item-row { background: var(--sheen-color-bg-selected); }
