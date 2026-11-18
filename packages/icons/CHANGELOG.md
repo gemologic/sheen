@@ -1,5 +1,16 @@
 # @gemologic/sheen-icons
 
+## 0.3.0
+
+### Minor Changes
+
+- a6c322f: The semantic icon catalog grows from 42 to 257 names covering navigation, actions, files, communication, media, commerce, charts, devices, development (`terminal`, `gitBranch`, `database`, `server`, `cloud`, `key`, `api`), status, people, text formatting, layout, time, location, and brand marks (`githubLogo`, `googleLogo`, and others). The existing 42 names and their artwork are unchanged. Each name has a `<Name>Icon` export and an `@gemologic/sheen-icons/icons/<kebab-name>` entry.
+  
+  Phosphor covers every name. The 113 names without Radix artwork render their Phosphor glyph in Radix themes, resolved at build time, so every name has exactly one glyph per set. `iconRegistry` entries for those names have no `radix` key, and the package root now exports `fallbackIconSet` and the `IconSources` type. `DynamicIcon` retains the larger registry, now about 58KB gzip; single literal and per-icon imports stay around 1.3KB gzip.
+- a6c322f: Breaking: Sheen now requires `solid-js@1.9.19`. Update the application's exact `solid-js` dependency from 1.9.15 to 1.9.19; `sheenRuntime()` rejects other versions. A fresh install of `vite-plugin-solid` resolves `babel-preset-solid@1.9.19`, which requires `solid-js ^1.9.16`, so 1.9.15 now produces an invalid dependency tree.
+  
+  The vendored DOM renderer is rebuilt from Solid 1.9.19 with the same two corrections: delegated events do not mark hydration complete while lazy components are pending, and an empty `composedPath()` falls back to walking the DOM tree. CLI scaffolds generate the new pin and `vite@8.3.8`, which resolves Vite security advisories in 8.2.2 (GHSA-9jrq-w75r-8gcw, GHSA-rq7h-c2jc-7f22, GHSA-vfpm-58rq-9qcg, and the bundled launch-editor advisories). Sheen's `vite` peer range stays `>=8 <9`.
+
 ## 0.2.1
 
 No changes in this release.
