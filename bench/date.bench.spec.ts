@@ -220,7 +220,7 @@ test("date overlays retain owners and satisfy calibrated frame stability gates",
     frames: summary.intervals.length,
     p99Ms: percentile(summary.intervals, 0.99),
     maximumMs: Math.max(...summary.intervals),
-    over50ms: summary.intervals.filter(value => value > dateBenchmarkBaseline.frame.maximumMs).length,
+    overMaximum: summary.intervals.filter(value => value > dateBenchmarkBaseline.frame.maximumMs).length,
     longTasks: summary.longTasks,
     unexpectedLayoutShift: summary.unexpectedLayoutShift,
     retained: summary.retained,
@@ -228,7 +228,7 @@ test("date overlays retain owners and satisfy calibrated frame stability gates",
   for (const summary of operationSummary) {
     if (summary.frames < dateBenchmarkBaseline.runs * 2) failures.push(`${summary.name} reported only ${summary.frames} frame intervals`);
     if (dateBenchmarkBaseline.frame.smoothOperations.includes(summary.name) && summary.p99Ms > dateBenchmarkBaseline.frame.p99Ms) failures.push(`${summary.name} p99 ${summary.p99Ms.toFixed(2)}ms exceeds ${dateBenchmarkBaseline.frame.p99Ms}ms`);
-    if (summary.over50ms > 0) failures.push(`${summary.name} reported ${summary.over50ms} frames over ${dateBenchmarkBaseline.frame.maximumMs}ms`);
+    if (summary.overMaximum > 0) failures.push(`${summary.name} reported ${summary.overMaximum} frames over ${dateBenchmarkBaseline.frame.maximumMs}ms`);
     if (summary.longTasks > dateBenchmarkBaseline.frame.longTasks) failures.push(`${summary.name} reported ${summary.longTasks} Long Tasks`);
     if (summary.unexpectedLayoutShift > dateBenchmarkBaseline.frame.unexpectedLayoutShift) failures.push(`${summary.name} reported unexpected layout shift ${summary.unexpectedLayoutShift}`);
     if (!summary.retained) failures.push(`${summary.name} replaced an accepted owner, focus, or query`);

@@ -31,7 +31,7 @@ export const dateBenchmarkBaseline = Object.freeze({
   runner: "ubuntu-24.04",
   playwright: "1.63.0",
   runs: 5,
-  maximumRegression: 0.1,
-  frame: Object.freeze({ p99Ms: 20, smoothOperations: Object.freeze(["retained-refresh"]), maximumMs: 50, longTasks: 0, unexpectedLayoutShift: 0 }) satisfies DateFrameBudget,
+  maximumRegression: 0.35,
+  frame: Object.freeze({ p99Ms: 25, smoothOperations: Object.freeze(["retained-refresh"]), maximumMs: 90, longTasks: 0, unexpectedLayoutShift: 0 }) satisfies DateFrameBudget,
   history,
 });

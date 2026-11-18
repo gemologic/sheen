@@ -65,8 +65,8 @@ export const adminAppBenchmarkBaseline = Object.freeze({
   fixture: "northstar-heavy-v1",
   playwright: "1.63.0",
   runs: 5,
-  maximumRegression: 0.1,
+  maximumRegression: 0.35,
   expected: Object.freeze({ rows: 12_000, chartPoints: 20_000, maximumMountedRows: 100, maximumDomNodes: 5_000 }),
-  frame: Object.freeze({ smoothP99Ms: 20, smoothOperations: Object.freeze(["table-scroll"]), maximumMs: 50, longTasks: 0, unexpectedLayoutShift: 0 }) satisfies AdminAppFrameBudget,
+  frame: Object.freeze({ smoothP99Ms: 25, smoothOperations: Object.freeze(["table-scroll"]), maximumMs: 90, longTasks: 0, unexpectedLayoutShift: 0 }) satisfies AdminAppFrameBudget,
   history,
 });

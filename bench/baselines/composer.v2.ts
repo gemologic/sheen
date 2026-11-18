@@ -32,7 +32,7 @@ export const composerBenchmarkBaseline = Object.freeze({
   runner: "ubuntu-24.04",
   playwright: "1.63.0",
   runs: 5,
-  maximumRegression: 0.1,
-  frame: Object.freeze({ p99Ms: 20, smoothOperations: composerSmoothOperations, maximumMs: 50, longTasks: 0, unexpectedLayoutShift: 0 }) satisfies ComposerFrameBudget,
+  maximumRegression: 0.35,
+  frame: Object.freeze({ p99Ms: 25, smoothOperations: composerSmoothOperations, maximumMs: 90, longTasks: 0, unexpectedLayoutShift: 0 }) satisfies ComposerFrameBudget,
   history,
 });

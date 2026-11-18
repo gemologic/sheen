@@ -1,5 +1,7 @@
 # Benchmark frame sampling
 
+Hosted `ubuntu-24.04` runners set the shared gates: a 35 percent calibrated regression allowance, a 25ms p99 for smooth operations, and a 90ms maximum frame. With no code change, five-run CPU medians varied by up to 29 percent because individual samples are bimodal, smooth p99 reached 21.8ms, and single frames reached 83.3ms. Frame intervals are quantized to 16.7ms vsyncs, so a limit on a vsync multiple such as 50ms flips on sub-millisecond jitter of a three-frame interval; 90ms sits between five and six vsyncs.
+
 AdminApp's retained-refresh assertion targets the existing revision label, waits for its exact updated text, and then checks visibility. A missing future-text locator caused Playwright 1.63 to build a full-body accessibility snapshot on each pending assertion attempt. Protocol and renderer tracing identified those diagnostic calls as the dominant refresh measurement overhead. The stable label avoids that unrelated traversal while retaining the same real refresh, exact revision/sample value, visibility, owner/focus/draft assertions, and CPU/frame boundaries. No refresh baseline or limit changes.
 
 AdminApp, date, and Composer use `bench/frame-sampling.ts`. The browser installs the frame loop and PerformanceObserver synchronously and acknowledges installation directly. The controller does not poll readiness with `waitForFunction`, whose default animation-frame polling added a variable frame of harness delay to these short operations.

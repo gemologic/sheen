@@ -304,7 +304,7 @@ test("AdminApp operations retain owners and satisfy calibrated frame stability g
     frames: summary.intervals.length,
     p99Ms: percentile(summary.intervals, 0.99),
     maximumMs: Math.max(...summary.intervals),
-    over50ms: summary.intervals.filter(value => value > adminAppBenchmarkBaseline.frame.maximumMs).length,
+    overMaximum: summary.intervals.filter(value => value > adminAppBenchmarkBaseline.frame.maximumMs).length,
     longTasks: summary.longTasks,
     unexpectedLayoutShift: summary.unexpectedLayoutShift,
     unexpectedLayoutShiftSources: Object.freeze([...summary.unexpectedLayoutShiftSources]),
@@ -316,7 +316,7 @@ test("AdminApp operations retain owners and satisfy calibrated frame stability g
     if (adminAppBenchmarkBaseline.frame.smoothOperations.includes(summary.name) && summary.p99Ms > adminAppBenchmarkBaseline.frame.smoothP99Ms) {
       failures.push(`${summary.name} p99 ${summary.p99Ms.toFixed(2)}ms exceeds ${adminAppBenchmarkBaseline.frame.smoothP99Ms}ms`);
     }
-    if (summary.over50ms > 0) failures.push(`${summary.name} reported ${summary.over50ms} frames over ${adminAppBenchmarkBaseline.frame.maximumMs}ms`);
+    if (summary.overMaximum > 0) failures.push(`${summary.name} reported ${summary.overMaximum} frames over ${adminAppBenchmarkBaseline.frame.maximumMs}ms`);
     if (summary.longTasks > adminAppBenchmarkBaseline.frame.longTasks) failures.push(`${summary.name} reported ${summary.longTasks} Long Tasks`);
     if (summary.unexpectedLayoutShift > adminAppBenchmarkBaseline.frame.unexpectedLayoutShift) failures.push(`${summary.name} reported unexpected layout shift ${summary.unexpectedLayoutShift}`);
     if (!summary.retained) failures.push(`${summary.name} replaced an accepted owner, focus, or draft`);

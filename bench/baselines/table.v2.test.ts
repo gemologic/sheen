@@ -3,7 +3,7 @@ import { compatibleTableBenchmarkHistory, tableBenchmarkBaseline } from "./table
 
 describe("table benchmark baseline", () => {
   it("pins the expanded finite five-run gate instead of a placeholder", () => {
-    expect(tableBenchmarkBaseline).toMatchObject({ schema: 2, runner: "ubuntu-24.04", playwright: "1.63.0", runs: 5, maximumRegression: 0.1 });
+    expect(tableBenchmarkBaseline).toMatchObject({ schema: 2, runner: "ubuntu-24.04", playwright: "1.63.0", runs: 5, maximumRegression: 0.35 });
     expect(tableBenchmarkBaseline.history).toHaveLength(3);
     const latest = tableBenchmarkBaseline.history.at(-1);
     expect(latest?.source).toContain("GitHub Actions five-run production capture");

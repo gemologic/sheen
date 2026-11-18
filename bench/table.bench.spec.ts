@@ -534,8 +534,8 @@ test("calibrated table workloads stay within normalized and absolute frame gates
   const blankFrames = runs.reduce((total, run) => total + run.scroll.browser.blankFrames, 0);
   const lostTraces = runs.filter(run => run.resize.cdp.dataLoss || run.scroll.cdp.dataLoss).length;
   const frameSummary = Object.freeze({
-    resize: Object.freeze({ cdpSource: runs[0]?.resize.cdp.source ?? "unavailable", cdpFrames: resizeCdp.length + tableBenchmarkBaseline.runs, cdpP99Ms: percentile(resizeCdp, 0.99), browserP99Ms: percentile(resizeBrowser, 0.99), over50ms: resizeBrowser.filter(value => value > tableBenchmarkBaseline.frame.maximumMs).length, longTasks: resizeLongTasks.length }),
-    scroll: Object.freeze({ cdpSource: runs[0]?.scroll.cdp.source ?? "unavailable", cdpFrames: scrollCdp.length + tableBenchmarkBaseline.runs, cdpP99Ms: percentile(scrollCdp, 0.99), browserP99Ms: percentile(scrollBrowser, 0.99), over50ms: scrollCdp.filter(value => value > tableBenchmarkBaseline.frame.maximumMs).length, longTasks: scrollLongTasks.length, blankFrames }),
+    resize: Object.freeze({ cdpSource: runs[0]?.resize.cdp.source ?? "unavailable", cdpFrames: resizeCdp.length + tableBenchmarkBaseline.runs, cdpP99Ms: percentile(resizeCdp, 0.99), browserP99Ms: percentile(resizeBrowser, 0.99), overMaximum: resizeBrowser.filter(value => value > tableBenchmarkBaseline.frame.maximumMs).length, longTasks: resizeLongTasks.length }),
+    scroll: Object.freeze({ cdpSource: runs[0]?.scroll.cdp.source ?? "unavailable", cdpFrames: scrollCdp.length + tableBenchmarkBaseline.runs, cdpP99Ms: percentile(scrollCdp, 0.99), browserP99Ms: percentile(scrollBrowser, 0.99), overMaximum: scrollCdp.filter(value => value > tableBenchmarkBaseline.frame.maximumMs).length, longTasks: scrollLongTasks.length, blankFrames }),
     lostTraces,
   });
   if (resizeCdp.length < 30 * tableBenchmarkBaseline.runs) failures.push(`resize CDP trace reported only ${resizeCdp.length} frame intervals`);
@@ -543,7 +543,7 @@ test("calibrated table workloads stay within normalized and absolute frame gates
   if (scrollCdp.length < 60 * tableBenchmarkBaseline.runs) failures.push(`scroll CDP trace reported only ${scrollCdp.length} frame intervals`);
   if (frameSummary.resize.browserP99Ms > tableBenchmarkBaseline.frame.p99Ms) failures.push(`resize browser p99 ${frameSummary.resize.browserP99Ms.toFixed(2)}ms exceeds ${tableBenchmarkBaseline.frame.p99Ms}ms`);
   if (frameSummary.scroll.cdpP99Ms > tableBenchmarkBaseline.frame.p99Ms) failures.push(`scroll CDP p99 ${frameSummary.scroll.cdpP99Ms.toFixed(2)}ms exceeds ${tableBenchmarkBaseline.frame.p99Ms}ms`);
-  if (frameSummary.resize.over50ms > 0 || frameSummary.scroll.over50ms > 0) failures.push(`CDP frames over ${tableBenchmarkBaseline.frame.maximumMs}ms: resize=${frameSummary.resize.over50ms}, scroll=${frameSummary.scroll.over50ms}`);
+  if (frameSummary.resize.overMaximum > 0 || frameSummary.scroll.overMaximum > 0) failures.push(`CDP frames over ${tableBenchmarkBaseline.frame.maximumMs}ms: resize=${frameSummary.resize.overMaximum}, scroll=${frameSummary.scroll.overMaximum}`);
   if (frameSummary.resize.longTasks > tableBenchmarkBaseline.frame.longTasks || frameSummary.scroll.longTasks > tableBenchmarkBaseline.frame.longTasks) failures.push(`long tasks: resize=${frameSummary.resize.longTasks}, scroll=${frameSummary.scroll.longTasks}`);
   if (blankFrames > tableBenchmarkBaseline.frame.blankFrames) failures.push(`blank scroll frames: ${blankFrames}`);
   if (lostTraces > 0) failures.push(`CDP reported data loss in ${lostTraces} traces`);

@@ -245,7 +245,7 @@ test("Composer edits retain the application and satisfy calibrated frame stabili
     frames: summary.intervals.length,
     p99Ms: percentile(summary.intervals, 0.99),
     maximumMs: Math.max(...summary.intervals),
-    over50ms: summary.intervals.filter(value => value > composerBenchmarkBaseline.frame.maximumMs).length,
+    overMaximum: summary.intervals.filter(value => value > composerBenchmarkBaseline.frame.maximumMs).length,
     longTasks: summary.longTasks,
     unexpectedLayoutShift: summary.unexpectedLayoutShift,
     retained: summary.retained,
@@ -255,7 +255,7 @@ test("Composer edits retain the application and satisfy calibrated frame stabili
     if (composerBenchmarkBaseline.frame.smoothOperations.includes(summary.name) && summary.p99Ms > composerBenchmarkBaseline.frame.p99Ms) {
       failures.push(`${summary.name} p99 ${summary.p99Ms.toFixed(2)}ms exceeds ${composerBenchmarkBaseline.frame.p99Ms}ms`);
     }
-    if (summary.over50ms > 0) failures.push(`${summary.name} reported ${summary.over50ms} frames over ${composerBenchmarkBaseline.frame.maximumMs}ms`);
+    if (summary.overMaximum > 0) failures.push(`${summary.name} reported ${summary.overMaximum} frames over ${composerBenchmarkBaseline.frame.maximumMs}ms`);
     if (summary.longTasks > composerBenchmarkBaseline.frame.longTasks) failures.push(`${summary.name} reported ${summary.longTasks} Long Tasks`);
     if (summary.unexpectedLayoutShift > composerBenchmarkBaseline.frame.unexpectedLayoutShift) failures.push(`${summary.name} reported unexpected layout shift ${summary.unexpectedLayoutShift}`);
     if (!summary.retained) failures.push(`${summary.name} replaced an accepted editor, application, table, rule, row, or draft owner`);

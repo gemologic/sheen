@@ -33,8 +33,8 @@ export const tableBenchmarkBaseline: TableBenchmarkBaseline = Object.freeze({
   runner: "ubuntu-24.04",
   playwright: "1.63.0",
   runs: 5,
-  maximumRegression: 0.1,
-  frame: Object.freeze({ p99Ms: 20, maximumMs: 50, longTasks: 0, blankFrames: 0 }),
+  maximumRegression: 0.35,
+  frame: Object.freeze({ p99Ms: 25, maximumMs: 90, longTasks: 0, blankFrames: 0 }),
   referenceMs: Object.freeze({ render: 200, multiSort: 100, search: 50, filter: 50, refresh: 100 }),
   history: Object.freeze([
     Object.freeze({

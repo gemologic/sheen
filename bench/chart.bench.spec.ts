@@ -275,7 +275,7 @@ test("charts satisfy calibrated operation and absolute frame-stability gates", a
     frames: summary.intervals.length,
     p99Ms: percentile(summary.intervals, 0.99),
     maximumMs: Math.max(...summary.intervals),
-    over50ms: summary.intervals.filter(value => value > chartBenchmarkBaseline.frame.maximumMs).length,
+    overMaximum: summary.intervals.filter(value => value > chartBenchmarkBaseline.frame.maximumMs).length,
     longTasks: summary.longTasks,
     unexpectedLayoutShift: summary.unexpectedLayoutShift,
     transientOverlayLayoutShift: summary.transientOverlayLayoutShift,
@@ -286,7 +286,7 @@ test("charts satisfy calibrated operation and absolute frame-stability gates", a
   for (const summary of operationSummary) {
     if (summary.frames < chartBenchmarkBaseline.runs * 2) failures.push(`${summary.name} reported only ${summary.frames} frame intervals`);
     if (continuousOperations.has(summary.name) && summary.p99Ms > chartBenchmarkBaseline.frame.p99Ms) failures.push(`${summary.name} p99 ${summary.p99Ms.toFixed(2)}ms exceeds ${chartBenchmarkBaseline.frame.p99Ms}ms`);
-    if (summary.over50ms > 0) failures.push(`${summary.name} reported ${summary.over50ms} frames over ${chartBenchmarkBaseline.frame.maximumMs}ms`);
+    if (summary.overMaximum > 0) failures.push(`${summary.name} reported ${summary.overMaximum} frames over ${chartBenchmarkBaseline.frame.maximumMs}ms`);
     if (summary.longTasks > chartBenchmarkBaseline.frame.longTasks) failures.push(`${summary.name} reported ${summary.longTasks} Long Tasks`);
     if (summary.unexpectedLayoutShift > chartBenchmarkBaseline.frame.unexpectedLayoutShift) failures.push(`${summary.name} reported unexpected layout shift ${summary.unexpectedLayoutShift}`);
     if (!summary.retained) failures.push(`${summary.name} replaced an accepted chart owner`);

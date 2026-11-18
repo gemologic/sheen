@@ -16,8 +16,8 @@ export const chartBenchmarkBaseline = Object.freeze({
   runner: "ubuntu-24.04",
   playwright: "1.63.0",
   runs: 5,
-  maximumRegression: 0.1,
-  frame: Object.freeze({ p99Ms: 20, maximumMs: 50, longTasks: 0, unexpectedLayoutShift: 0 }) satisfies ChartFrameBudget,
+  maximumRegression: 0.35,
+  frame: Object.freeze({ p99Ms: 25, maximumMs: 90, longTasks: 0, unexpectedLayoutShift: 0 }) satisfies ChartFrameBudget,
   referenceMs: Object.freeze({ initialDraw: 16, sparkline: 1 }),
   history: Object.freeze([
     Object.freeze({
