@@ -83,6 +83,23 @@ index 6a05111c7de78a88a403e76dc9c4902f90207081..f2b330f772554784d6a4cd33628b5a3c
      const delegate = access(mergedProps.keyboardDelegate);
      let focusedKey;
      if (autoFocus === "first") {
+@@ -437,9 +439,15 @@ function createSelectableCollection(props, ref, scrollRef) {
+       focusWithoutScrolling(refEl);
+     }
+   };
+   onMount(() => {
+     if (mergedProps.deferAutoFocus) {
+-      setTimeout(tryAutoFocus, 0);
++      // A deferred autofocus must not override focus that moved while it waited, such as keyboard navigation into a submenu.
++      const scheduledFocus = document.activeElement;
++      setTimeout(() => {
++        const active = document.activeElement;
++        if (active !== scheduledFocus && active !== ref() && active !== document.body) return;
++        tryAutoFocus();
++      }, 0);
+     } else {
+       tryAutoFocus();
+     }
 diff --git a/dist/chunk/3DLZMX4Z.jsx b/dist/chunk/3DLZMX4Z.jsx
 index 16d0457a76623bc733fef790ad9f9ee4b0888a17..fdef91c0963623ed3f44216e4096fa063e26e102 100644
 --- a/dist/chunk/3DLZMX4Z.jsx
@@ -401,6 +418,23 @@ index 63e2aa3bf4c0e01102440c9bd14aa4ca563ee5d8..4ae5e69ed56855529adf5375c9228a30
      const delegate = access3(mergedProps.keyboardDelegate);
      let focusedKey;
      if (autoFocus === "first") {
+@@ -469,9 +471,15 @@ function createSelectableCollection(props, ref, scrollRef) {
+       focusWithoutScrolling(refEl);
+     }
+   };
+   onMount(() => {
+     if (mergedProps.deferAutoFocus) {
+-      setTimeout(tryAutoFocus, 0);
++      // A deferred autofocus must not override focus that moved while it waited, such as keyboard navigation into a submenu.
++      const scheduledFocus = document.activeElement;
++      setTimeout(() => {
++        const active = document.activeElement;
++        if (active !== scheduledFocus && active !== ref() && active !== document.body) return;
++        tryAutoFocus();
++      }, 0);
+     } else {
+       tryAutoFocus();
+     }
 diff --git a/dist/chunk/V25KEN4T.jsx b/dist/chunk/V25KEN4T.jsx
 index 8bdcea7217d0e8ad42eeda7bb938d357fbd99a4a..4ac69fadc61fa76e33cdffb27bd5dbc84a4e511a 100644
 --- a/dist/chunk/V25KEN4T.jsx

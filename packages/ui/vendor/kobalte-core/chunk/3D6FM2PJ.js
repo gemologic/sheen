@@ -441,7 +441,13 @@ function createSelectableCollection(props, ref, scrollRef) {
   };
   onMount(() => {
     if (mergedProps.deferAutoFocus) {
-      setTimeout(tryAutoFocus, 0);
+      // A deferred autofocus must not override focus that moved while it waited, such as keyboard navigation into a submenu.
+      const scheduledFocus = document.activeElement;
+      setTimeout(() => {
+        const active = document.activeElement;
+        if (active !== scheduledFocus && active !== ref() && active !== document.body) return;
+        tryAutoFocus();
+      }, 0);
     } else {
       tryAutoFocus();
     }
