@@ -1,6 +1,6 @@
 {
   "name": "@gemologic/sheen-patterns",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Application layouts and the customizable AdminApp baseline for Sheen SolidJS applications.",
   "type": "module",
   "license": "MIT",

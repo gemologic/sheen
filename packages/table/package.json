@@ -1,6 +1,6 @@
 {
   "name": "@gemologic/sheen-table",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Compact accessible data tables and query-building components for Sheen SolidJS applications.",
   "type": "module",
   "license": "MIT",
