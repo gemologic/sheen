@@ -35,7 +35,7 @@ export default function ToasterFixture() {
       const response = await fetch("/api/optimistic", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ reject: false }) });
       if (!response.ok) throw new Error("Apply rejected");
     } } })}>Show successful action</Button>
-    <Button onClick={() => notices.show({ title: "Action notification", duration: 300, action: { label: "Undo", errorMessage: "Undo failed safely", run: async () => {
+    <Button onClick={() => notices.show({ title: "Action notification", duration: 1_000, action: { label: "Undo", errorMessage: "Undo failed safely", run: async () => {
       const response = await fetch("/api/optimistic", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ reject: true }) });
       if (!response.ok) throw new Error("Private failure");
     } } })}>Show action notification</Button>

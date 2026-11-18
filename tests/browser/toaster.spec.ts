@@ -162,7 +162,8 @@ test("pending and failed actions remain available beyond their configured lifeti
   await page.getByRole("textbox", { name: "Unrelated draft" }).fill("Still editing");
   await page.getByRole("heading").hover();
   await expect(card).toHaveAttribute("data-invalid", "true");
-  await page.waitForTimeout(800);
+  // Outlive the 1s configured lifetime; a shorter lifetime lets a slow runner expire the card before the first click lands.
+  await page.waitForTimeout(1_200);
   await expect(card.getByRole("button", { name: "Retry", exact: true })).toBeEnabled();
   await expect(page.getByRole("region", { name: "Notifications", exact: true }).getByRole("status")).toContainText("Undo failed safely");
   await expect(card).not.toContainText("Private failure");

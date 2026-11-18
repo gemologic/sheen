@@ -1,4 +1,9 @@
 import { expect, test } from "@playwright/test";
+import type { Page } from "@playwright/test";
+
+async function scrollEventsDispatched(page: Page): Promise<void> {
+  await page.evaluate(() => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));
+}
 
 test.use({ viewport: { width: 375, height: 750 }, hasTouch: true });
 
@@ -104,11 +109,14 @@ test("responsive changes keep phone and desktop restoration coordinates separate
   await page.getByRole("button", { name: "Toggle restored sidebar", exact: true }).click();
   await main.evaluate(element => { element.scrollTop = 700; });
   await expect.poll(() => main.evaluate(element => element.scrollTop)).toBe(700);
+  // Restoration records positions from scroll events, which dispatch on the next frame; resizing earlier loses the position.
+  await scrollEventsDispatched(page);
   await page.setViewportSize({ width: 375, height: 750 });
   await expect.poll(() => page.evaluate(() => scrollY)).toBe(0);
   await page.mouse.move(300, 600);
   await page.mouse.wheel(0, 200);
   await expect.poll(() => page.evaluate(() => scrollY)).toBe(200);
+  await scrollEventsDispatched(page);
   await page.setViewportSize({ width: 1100, height: 750 });
   await expect.poll(() => main.evaluate(element => element.scrollTop)).toBe(700);
   await page.setViewportSize({ width: 375, height: 750 });

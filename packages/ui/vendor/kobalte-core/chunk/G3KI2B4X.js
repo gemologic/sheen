@@ -94,7 +94,8 @@ function createFocusScope(props, ref) {
       if (restored) return;
       restored = true;
       clearTimeout(mountTimer);
-      const preventAutoFocus = isPaused() || shouldPreventUnmountAutoFocus();
+      // Focus still on the element that held it at open was never moved by the user, so closing restores it as usual.
+      const preventAutoFocus = isPaused() || getActiveElement(container) !== previouslyFocusedElement && shouldPreventUnmountAutoFocus();
       focusScope.pause();
       focusScopeStack.remove(focusScope);
       const unmountEvent = new CustomEvent(AUTOFOCUS_ON_UNMOUNT_EVENT, EVENT_OPTIONS);

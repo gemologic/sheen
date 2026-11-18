@@ -163,7 +163,7 @@ diff --git a/dist/chunk/G3KI2B4X.js b/dist/chunk/G3KI2B4X.js
 index 7844b9f7b903e5cddd00467678d9d40384fd2ad2..ced7874e31d49060b2aba6341e54064c324cb721 100644
 --- a/dist/chunk/G3KI2B4X.js
 +++ b/dist/chunk/G3KI2B4X.js
-@@ -86,6 +86,35 @@ function createFocusScope(props, ref) {
+@@ -86,6 +86,36 @@ function createFocusScope(props, ref) {
        return;
      }
      focusScopeStack.add(focusScope);
@@ -174,7 +174,8 @@ index 7844b9f7b903e5cddd00467678d9d40384fd2ad2..ced7874e31d49060b2aba6341e54064c
 +      if (restored) return;
 +      restored = true;
 +      clearTimeout(mountTimer);
-+      const preventAutoFocus = isPaused() || shouldPreventUnmountAutoFocus();
++      // Focus still on the element that held it at open was never moved by the user, so closing restores it as usual.
++      const preventAutoFocus = isPaused() || getActiveElement(container) !== previouslyFocusedElement && shouldPreventUnmountAutoFocus();
 +      focusScope.pause();
 +      focusScopeStack.remove(focusScope);
 +      const unmountEvent = new CustomEvent(AUTOFOCUS_ON_UNMOUNT_EVENT, EVENT_OPTIONS);
@@ -199,7 +200,7 @@ index 7844b9f7b903e5cddd00467678d9d40384fd2ad2..ced7874e31d49060b2aba6341e54064c
      const previouslyFocusedElement = getActiveElement(container);
      const hasFocusedCandidate = contains(container, previouslyFocusedElement);
      if (!hasFocusedCandidate) {
-@@ -93,7 +122,8 @@ function createFocusScope(props, ref) {
+@@ -93,7 +123,8 @@ function createFocusScope(props, ref) {
        container.addEventListener(AUTOFOCUS_ON_MOUNT_EVENT, onMountAutoFocus);
        container.dispatchEvent(mountEvent);
        if (!mountEvent.defaultPrevented) {
@@ -209,7 +210,7 @@ index 7844b9f7b903e5cddd00467678d9d40384fd2ad2..ced7874e31d49060b2aba6341e54064c
            focusWithoutScrolling(firstTabbable());
            if (getActiveElement(container) === previouslyFocusedElement) {
              focusWithoutScrolling(container);
-@@ -102,20 +132,11 @@ function createFocusScope(props, ref) {
+@@ -102,20 +133,11 @@ function createFocusScope(props, ref) {
        }
      }
      onCleanup(() => {
@@ -262,7 +263,7 @@ diff --git a/dist/chunk/KEL2LLJM.jsx b/dist/chunk/KEL2LLJM.jsx
 index 1ff4c0953b05dc157c1523e289729783bd005238..07d455e40281a6c16a8c3f445cc173bc1619016c 100644
 --- a/dist/chunk/KEL2LLJM.jsx
 +++ b/dist/chunk/KEL2LLJM.jsx
-@@ -98,6 +98,35 @@ function createFocusScope(props, ref) {
+@@ -98,6 +98,36 @@ function createFocusScope(props, ref) {
        return;
      }
      focusScopeStack.add(focusScope);
@@ -273,7 +274,8 @@ index 1ff4c0953b05dc157c1523e289729783bd005238..07d455e40281a6c16a8c3f445cc173bc
 +      if (restored) return;
 +      restored = true;
 +      clearTimeout(mountTimer);
-+      const preventAutoFocus = isPaused() || shouldPreventUnmountAutoFocus();
++      // Focus still on the element that held it at open was never moved by the user, so closing restores it as usual.
++      const preventAutoFocus = isPaused() || getActiveElement(container) !== previouslyFocusedElement && shouldPreventUnmountAutoFocus();
 +      focusScope.pause();
 +      focusScopeStack.remove(focusScope);
 +      const unmountEvent = new CustomEvent(AUTOFOCUS_ON_UNMOUNT_EVENT, EVENT_OPTIONS);
@@ -298,7 +300,7 @@ index 1ff4c0953b05dc157c1523e289729783bd005238..07d455e40281a6c16a8c3f445cc173bc
      const previouslyFocusedElement = getActiveElement(
        container
      );
-@@ -110,7 +139,8 @@ function createFocusScope(props, ref) {
+@@ -110,7 +140,8 @@ function createFocusScope(props, ref) {
        container.addEventListener(AUTOFOCUS_ON_MOUNT_EVENT, onMountAutoFocus);
        container.dispatchEvent(mountEvent);
        if (!mountEvent.defaultPrevented) {
@@ -308,7 +310,7 @@ index 1ff4c0953b05dc157c1523e289729783bd005238..07d455e40281a6c16a8c3f445cc173bc
            focusWithoutScrolling(firstTabbable());
            if (getActiveElement(container) === previouslyFocusedElement) {
              focusWithoutScrolling(container);
-@@ -119,31 +149,11 @@ function createFocusScope(props, ref) {
+@@ -119,31 +150,11 @@ function createFocusScope(props, ref) {
        }
      }
      onCleanup(() => {
