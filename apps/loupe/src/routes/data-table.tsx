@@ -132,7 +132,8 @@ export default function DataTableFixture() {
     const attempt = (childAttempts.get(row.id) ?? 0) + 1;
     childAttempts.set(row.id, attempt);
     const fail = row.id === "tree-retry" && attempt === 1;
-    const delay = row.id === "tree-remote" && attempt === 1 ? 80 : 5;
+    // The first remote load stays in flight long enough to collapse and re-expand before its stale result lands.
+    const delay = row.id === "tree-remote" && attempt === 1 ? 1_000 : 5;
     const parameters = new URLSearchParams({ parent: row.id, attempt: String(attempt), delay: String(delay), fail: String(fail) });
     const response = await fetch(`/api/data-table-children?${parameters}`, row.id === "tree-remote" && attempt === 1 ? {} : { signal });
     if (!response.ok) throw new Error(`Child request failed (${response.status})`);

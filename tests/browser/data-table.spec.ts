@@ -15,7 +15,19 @@ async function openColumns(page: Page, section: Locator, caption: string): Promi
   await more.press("Enter");
   const columnsItem = page.getByRole("menuitem", { name: "Columns", exact: true });
   await expect(columnsItem).toBeVisible();
-  await columnsItem.hover();
+  await openSubmenu(page, columnsItem, page.getByRole("menu", { name: "Columns", exact: true }));
+}
+
+// Submenus open from pointer movement. One synthetic move can be swallowed by the parent menu's pointer-grace handling,
+// so move across the trigger like a real pointer and retry until the submenu shows.
+async function openSubmenu(page: Page, trigger: Locator, content: Locator): Promise<void> {
+  await expect(async () => {
+    const box = await trigger.boundingBox();
+    if (!box) throw new Error("Expected submenu trigger geometry");
+    await page.mouse.move(box.x + box.width * 0.25, box.y + box.height / 2);
+    await page.mouse.move(box.x + box.width * 0.75, box.y + box.height / 2, { steps: 4 });
+    await expect(content).toBeVisible({ timeout: 1_000 });
+  }).toPass();
 }
 
 test("continuous client mode virtualizes one complete bounded result without page controls", async ({ page }) => {
@@ -156,7 +168,7 @@ test("column resize stays on the CSS path during pointer movement and commits on
   expect(autoFit).toBeGreaterThanOrEqual(100);
   expect(autoFit).toBeLessThanOrEqual(360);
   await openColumns(page, section, "Interactive columns");
-  await page.getByRole("menuitem", { name: "Name", exact: true }).hover();
+  await openSubmenu(page, page.getByRole("menuitem", { name: "Name", exact: true }), page.getByRole("menuitem", { name: "Reset width" }));
   await page.getByRole("menuitem", { name: "Reset width" }).click();
   await expect(header).toHaveCSS("width", "180px");
   await expect(section.getByLabel("Accepted column layout")).toContainText("name:shown:default:center");
@@ -261,7 +273,7 @@ test("columns reorder, pin, and hide through pointer-independent controls withou
 
   await section.getByRole("button", { name: "Use RTL column layout" }).click();
   await openColumns(page, section, "Interactive columns");
-  await page.getByRole("menuitem", { name: "Name", exact: true }).hover();
+  await openSubmenu(page, page.getByRole("menuitem", { name: "Name", exact: true }), page.getByRole("menuitemradio", { name: "Pin to start" }));
   await page.getByRole("menuitemradio", { name: "Pin to start" }).click();
   await page.keyboard.press("Escape");
   await page.keyboard.press("Escape");
@@ -288,7 +300,7 @@ test("columns reorder, pin, and hide through pointer-independent controls withou
   expect(pinnedFill.cell).toBe(pinnedFill.row);
 
   await openColumns(page, section, "Interactive columns");
-  await page.getByRole("menuitem", { name: "Amount", exact: true }).hover();
+  await openSubmenu(page, page.getByRole("menuitem", { name: "Amount", exact: true }), page.getByRole("menuitemcheckbox", { name: "Show column" }));
   await page.getByRole("menuitemcheckbox", { name: "Show column" }).click();
   await page.keyboard.press("Escape");
   await page.keyboard.press("Escape");
@@ -337,7 +349,7 @@ test("polished table chrome spans light compact and contrast spacious RTL config
     await table.getByRole("button", { name: "Name", exact: true }).click();
     await table.getByRole("button", { name: "Amount", exact: true }).click({ modifiers: ["Shift"] });
     await openColumns(page, section, "Interactive columns");
-    await page.getByRole("menuitem", { name: "Name", exact: true }).hover();
+    await openSubmenu(page, page.getByRole("menuitem", { name: "Name", exact: true }), page.getByRole("menuitemradio", { name: "Pin to start" }));
     await page.getByRole("menuitemradio", { name: "Pin to start" }).click();
     await page.keyboard.press("Escape");
     await page.keyboard.press("Escape");
@@ -443,12 +455,14 @@ test("hierarchical rows load, cancel, discard stale children, and retry without 
 
   const remoteParent = table.locator('[data-row-id="tree-remote"]');
   await remoteParent.evaluate(element => element.setAttribute("data-parent-identity", "retained"));
+  const staleChildren = page.waitForResponse(response => response.url().includes("parent=tree-remote&attempt=1"));
   await remoteParent.getByRole("button", { name: "Expand tree-remote" }).click();
   await expect(remoteParent).toHaveAttribute("data-loading", "");
   await remoteParent.getByRole("button", { name: "Collapse tree-remote" }).click();
   await remoteParent.getByRole("button", { name: "Expand tree-remote" }).click();
   await expect(table.locator('[data-row-id="tree-remote-child-2"]')).toBeVisible();
-  await page.waitForTimeout(100);
+  await staleChildren;
+  await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
   await expect(table.locator('[data-row-id="tree-remote-child-1"]')).toHaveCount(0);
   await expect(remoteParent).toHaveAttribute("data-parent-identity", "retained");
 
