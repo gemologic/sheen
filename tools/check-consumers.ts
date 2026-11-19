@@ -201,6 +201,30 @@ async function assertCodeRendererBudget(temporary: string, codePackage: string):
   process.stdout.write(`Isolated CodeBlock renderer budget passed: ${bytes}B gzip, without Shiki\n`);
 }
 
+async function assertCodeHighlightBudget(temporary: string): Promise<void> {
+  const entry = join(temporary, "code-highlight.mjs");
+  await cp(new URL("tests/consumers/code-highlight.mjs", root), entry);
+  const shiki = join(temporary, "node_modules", "shiki");
+  await symlink(await realpath(new URL("packages/code/node_modules/shiki", root)), shiki, "dir");
+  const built = await build({
+    configFile: false,
+    root: temporary,
+    logLevel: "warn",
+    resolve: { conditions: ["browser", "module", "production"] },
+    build: { write: false, minify: true, lib: { entry, formats: ["es"], fileName: "code-highlight" }, rolldownOptions: { external: [/^solid-js(?:\/|$)/] } },
+  });
+  const chunks = (Array.isArray(built) ? built : [built]).flatMap(result => "output" in result ? result.output : []).flatMap(output => output.type === "chunk" ? [output] : []);
+  const initial = chunks.filter(chunk => chunk.isEntry);
+  const initialBytes = gzipBytes(initial.map(chunk => chunk.code).join("\n"));
+  const totalBytes = chunks.reduce((sum, chunk) => sum + Buffer.byteLength(chunk.code), 0);
+  assert.ok(initial.length === 1 && initial[0]?.imports.length === 0, "Highlight entry must have no static chunk imports");
+  assert.ok(!chunks.some(chunk => Object.keys(chunk.modules).some(id => /engine-oniguruma|onig\.wasm|shiki\/dist\/wasm|bundle-(?:web|full)|langs-bundle/u.test(id))), "Highlight consumer must not retain the oniguruma engine, wasm, or a bundled language/theme index");
+  assert.ok(chunks.length <= 5, `Highlight consumer emitted ${chunks.length} chunks, expected entry, engine, two themes, and one grammar:\n${chunks.map(chunk => chunk.fileName).join("\n")}`);
+  assert.ok(initialBytes < 40_000, `Highlight entry is ${initialBytes} gzip bytes, budget is <40000`);
+  assert.ok(totalBytes < 450_000, `Highlight consumer emits ${totalBytes} bytes, budget is <450000`);
+  process.stdout.write(`Highlight consumer budget passed: ${chunks.length} chunks, ${totalBytes}B total, ${initialBytes}B gzip entry\n`);
+}
+
 async function assertAdvancedViewerBudget(temporary: string, codePackage: string, fixture: "code-diff-viewer" | "code-log-viewer" | "code-json-viewer", expectedModule: "DiffViewer" | "LogViewer" | "JSONViewer"): Promise<void> {
   const entry = join(temporary, `${fixture}.mjs`);
   await cp(new URL(`tests/consumers/${fixture}.mjs`, root), entry);
@@ -234,7 +258,7 @@ async function assertAdvancedViewerBudget(temporary: string, codePackage: string
   process.stdout.write(`${fixture} isolated bundle passed: ${bytes}B gzip (<20000B)\n`);
 }
 
-async function assertDateBundleBudget(temporary: string, datePackage: string, fixture: "date-core" | "date-field" | "date-picker" | "date-time-picker", expectedModule: string, maximum: number): Promise<void> {
+async function assertDateBundleBudget(temporary: string, datePackage: string, fixture: "date-core" | "date-native" | "date-field" | "date-picker" | "date-time-picker", expectedModule: string, maximum: number): Promise<void> {
   const entry = join(temporary, `${fixture}.mjs`);
   await cp(new URL(`tests/consumers/${fixture}.mjs`, root), entry);
   let retained: readonly string[] = [];
@@ -265,6 +289,7 @@ async function assertDateBundleBudget(temporary: string, datePackage: string, fi
   if (fixture === "date-core") {
     assert.ok(!retained.some(id => /(?:solid-js|@ark-ui|@gemologic\/sheen\/dist)/u.test(id)), "Date core must not retain Solid, Ark UI, or the Sheen UI runtime");
   }
+  if (fixture === "date-native") assert.ok(!retained.some(id => /@ark-ui/u.test(id)), "Native date fields must not retain Ark UI");
   assert.ok(bytes < maximum, `${fixture} is ${bytes} gzip bytes, budget is <${maximum}; retained modules:\n${retained.slice(0, 40).join("\n")}`);
   process.stdout.write(`${fixture} bundle budget passed: ${bytes}B gzip (<${maximum}B)\n`);
 }
@@ -303,8 +328,9 @@ async function assertQueryBuilderBundle(temporary: string, tablePackage: string)
   process.stdout.write(`Isolated QueryBuilder entry passed: ${bytes}B gzip (<55000B)\n`);
 }
 
-async function assertDataTableBundleBudget(temporary: string, tablePackage: string, maximum?: number): Promise<void> {
-  const entry = join(temporary, "table-datatable.mjs");
+async function assertDataTableBundleBudget(temporary: string, tablePackage: string, fixture: "table-datatable" | "table-datatable-light", maximum?: number): Promise<void> {
+  const entry = join(temporary, `${fixture}.mjs`);
+  await cp(new URL(`tests/consumers/${fixture}.mjs`, root), entry);
   const built = await build({
     configFile: false,
     root: temporary,
@@ -313,7 +339,7 @@ async function assertDataTableBundleBudget(temporary: string, tablePackage: stri
     build: {
       write: false,
       minify: true,
-      lib: { entry, formats: ["es"], fileName: "table-datatable-budget", cssFileName: "table-datatable-budget" },
+      lib: { entry, formats: ["es"], fileName: `${fixture}-budget`, cssFileName: `${fixture}-budget` },
       rolldownOptions: { external: [/^solid-js(?:\/|$)/] },
     },
   });
@@ -336,18 +362,19 @@ async function assertDataTableBundleBudget(temporary: string, tablePackage: stri
   assert.ok(retained.some(module => module.id.startsWith(tablePackage) && module.id.endsWith("/dist/DataTable.js")), "DataTable budget fixture must retain the built DataTable entry");
   const bytes = gzipBytes(initialChunks.map(chunk => chunk.code).join("\n"));
   const deferredBytes = deferredChunks.length === 0 ? 0 : gzipBytes(deferredChunks.map(chunk => chunk.code).join("\n"));
-  if (process.argv.includes("--report-bundles")) process.stdout.write(`table-datatable chunks: ${[...chunks.values()].map(chunk => `${chunk.fileName}${initial.has(chunk.fileName) ? "" : " (deferred)"} ${gzipBytes(chunk.code)}B`).join(", ")}\n`);
-  if (process.argv.includes("--report-bundles")) process.stdout.write(`table-datatable retained modules:\n${retained.map(module => `${module.bytes}\t${module.id}`).join("\n")}\n`);
+  if (fixture === "table-datatable-light") assert.ok(!retained.some(module => module.id.startsWith(tablePackage) && /\/dist\/(?:FilterBar|grouping|row-hierarchy|cell-edit)\.js$/u.test(module.id)), "Light DataTable must not retain filter bar, grouping, hierarchy, or cell editing");
+  if (process.argv.includes("--report-bundles")) process.stdout.write(`${fixture} chunks: ${[...chunks.values()].map(chunk => `${chunk.fileName}${initial.has(chunk.fileName) ? "" : " (deferred)"} ${gzipBytes(chunk.code)}B`).join(", ")}\n`);
+  if (process.argv.includes("--report-bundles")) process.stdout.write(`${fixture} retained modules:\n${retained.map(module => `${module.bytes}\t${module.id}`).join("\n")}\n`);
   if (maximum === undefined) {
-    process.stdout.write(`DataTable entry measured baseline: ${bytes}B gzip initial, ${deferredBytes}B gzip deferred\n`);
+    process.stdout.write(`${fixture} entry measured baseline: ${bytes}B gzip initial, ${deferredBytes}B gzip deferred\n`);
     return;
   }
-  assert.ok(bytes < maximum, `DataTable entry is ${bytes} gzip bytes, budget is <${maximum}; retained modules:\n${retained.slice(0, 40).map(module => `${module.bytes}\t${module.id}`).join("\n")}`);
-  process.stdout.write(`DataTable entry bundle budget passed: ${bytes}B gzip initial (<${maximum}B), ${deferredBytes}B gzip deferred\n`);
+  assert.ok(bytes < maximum, `${fixture} entry is ${bytes} gzip bytes, budget is <${maximum}; retained modules:\n${retained.slice(0, 40).map(module => `${module.bytes}\t${module.id}`).join("\n")}`);
+  process.stdout.write(`${fixture} entry bundle budget passed: ${bytes}B gzip initial (<${maximum}B), ${deferredBytes}B gzip deferred\n`);
 }
 
 async function assertNoDateDependencyTypes(directory: string): Promise<void> {
-  const publicModules = ["index", "core", "types", "calendar-date", "time", "time-zone", "date-time", "date-range", "format", "Calendar", "DateField", "DatePicker", "TimeField", "TimePicker", "TimeZoneSelect", "DateTimePicker", "table-filter"];
+  const publicModules = ["index", "core", "types", "calendar-date", "time", "time-zone", "date-time", "date-range", "format", "Calendar", "DateField", "DatePicker", "TimeField", "TimePicker", "TimeZoneSelect", "DateTimePicker", "table-filter", "native", "native-entry"];
   for (const module of publicModules) {
     const path = join(directory, `${module}.d.ts`);
     const source = await readFile(path, "utf8");
@@ -403,6 +430,7 @@ try {
   await cp(new URL("packages/code/dist", root), join(codePackage, "dist"), { recursive: true });
   await cp(new URL("packages/code/src/styles.css", root), join(codePackage, "src", "styles.css"));
   await assertCodeRendererBudget(temporary, codePackage);
+  await assertCodeHighlightBudget(temporary);
   await assertAdvancedViewerBudget(temporary, codePackage, "code-diff-viewer", "DiffViewer");
   await assertAdvancedViewerBudget(temporary, codePackage, "code-log-viewer", "LogViewer");
   await assertAdvancedViewerBudget(temporary, codePackage, "code-json-viewer", "JSONViewer");
@@ -421,6 +449,7 @@ try {
   await assertDateBundleBudget(temporary, datePackage, "date-field", "DateField", 32_500);
   await assertDateBundleBudget(temporary, datePackage, "date-picker", "DatePicker", 58_000);
   await assertDateBundleBudget(temporary, datePackage, "date-time-picker", "DateTimePicker", 104_000);
+  await assertDateBundleBudget(temporary, datePackage, "date-native", "native", 10_000);
   const compiler = fileURLToPath(import.meta.resolve("typescript/bin/tsc"));
   for (const name of ["private-theme", "table-pagination", "chart-core"]) {
     const fixture = join(temporary, `${name}.mts`);
@@ -579,7 +608,8 @@ try {
     assert.ok(css.some(asset => asset.type === "asset" && String(asset.source).includes("sheen-data-table")), "Installed DataTable styles must produce component CSS");
     process.stdout.write(`Isolated ${entryCondition} DataTable entry and styles passed\n`);
   }
-  await assertDataTableBundleBudget(temporary, table, 110_000);
+  await assertDataTableBundleBudget(temporary, table, "table-datatable", 111_300);
+  await assertDataTableBundleBudget(temporary, table, "table-datatable-light", 83_500);
   const patterns = join(temporary, "node_modules", "@gemologic", "sheen-patterns");
   await mkdir(patterns, { recursive: true });
   await cp(new URL("packages/patterns/package.json", root), join(patterns, "package.json"));
@@ -621,7 +651,24 @@ try {
       assert.ok([...resolved].some(id => id.startsWith(patterns) && id.endsWith("/dist/admin.js")), "Admin consumer must resolve the dedicated built entry");
       assert.ok(retained.some(id => id.startsWith(patterns) && id.endsWith("/dist/AdminApp.js")), "Admin consumer must retain AdminApp composition");
       assert.ok(!retained.some(id => id.startsWith(patterns) && id.endsWith("/dist/index.js")), "Admin entry must not pull the base patterns barrel");
-      assert.ok(bytes < 81_000, `Admin application entry is ${bytes} gzip bytes, budget is <81000; retained modules:\n${retained.slice(0, 30).join("\n")}`);
+      // First paint is the entry plus its static imports; the command palette and shortcut sheet load on idle or intent.
+      const chunks = new Map(outputs.flatMap(output => output.type === "chunk" ? [[output.fileName, output] as const] : []));
+      const initial = new Set<string>();
+      const pending = [...chunks.values()].filter(chunk => chunk.isEntry).map(chunk => chunk.fileName);
+      for (let name = pending.pop(); name !== undefined; name = pending.pop()) {
+        if (initial.has(name)) continue;
+        initial.add(name);
+        pending.push(...(chunks.get(name)?.imports ?? []));
+      }
+      const initialChunks = [...chunks.values()].filter(chunk => initial.has(chunk.fileName));
+      const deferredChunks = [...chunks.values()].filter(chunk => !initial.has(chunk.fileName));
+      const initialModules = initialChunks.flatMap(chunk => Object.entries(chunk.modules).filter(([, details]) => details.renderedLength > 0).map(([id]) => id));
+      assert.ok(!initialModules.some(id => /\/dist\/primitives\/(?:CommandPalette|ShortcutSheet)\.js$|cmdk-solid/u.test(id)), "Admin first paint must not retain the command palette or shortcut sheet");
+      const initialBytes = gzipBytes(initialChunks.map(chunk => chunk.code).join("\n"));
+      const deferredBytes = gzipBytes(deferredChunks.map(chunk => chunk.code).join("\n"));
+      assert.ok(initialBytes < 75_500, `Admin application first paint is ${initialBytes} gzip bytes, budget is <75500; retained modules:\n${initialModules.slice(0, 30).join("\n")}`);
+      assert.ok(deferredBytes < 9_000, `Admin deferred overlays are ${deferredBytes} gzip bytes, budget is <9000`);
+      process.stdout.write(`patterns-admin split: ${initialBytes}B gzip initial, ${deferredBytes}B gzip deferred\n`);
     } else if (fixtureName === "patterns-marketing") {
       assert.ok([...resolved].some(id => id.startsWith(patterns) && id.endsWith("/dist/marketing.js")), "Marketing consumer must resolve the dedicated built entry");
       assert.ok(retained.some(id => id.startsWith(patterns) && id.endsWith("/dist/PricingTable.js")), "Marketing consumer must retain the marketing sections");

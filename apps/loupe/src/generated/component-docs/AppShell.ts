@@ -88,7 +88,7 @@ export const componentDoc = Object.freeze({
     },
     {
       "name": "shortcutHelp",
-      "description": "Enable localized help, pending indicator, global question-mark binding, and development-only mod+shift+d theme cycling. Requires app-owned ThemeProvider and ShortcutProvider ancestors; defaults to false. Apps should enable this even when character shortcuts are disabled. Development policy comes from ShortcutProvider.",
+      "description": "Enable localized help, pending indicator, global question-mark binding, and development-only mod+shift+d theme cycling. The help trigger renders on the server; the sheet body loads on idle or intent and a first question-mark press is queued. Requires app-owned ThemeProvider and ShortcutProvider ancestors; defaults to false. Apps should enable this even when character shortcuts are disabled. Development policy comes from ShortcutProvider.",
       "type": "boolean",
       "required": false
     }

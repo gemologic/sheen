@@ -1,0 +1,31 @@
+{
+  "name": "vite-spa",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1 --port 4330",
+    "build": "vite build",
+    "preview": "vite preview --host 127.0.0.1 --port 4330",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "@gemologic/sheen": "workspace:*",
+    "@gemologic/sheen-icons": "workspace:*",
+    "@gemologic/sheen-patterns": "workspace:*",
+    "@gemologic/sheen-table": "workspace:*",
+    "@gemologic/sheen-tokens": "workspace:*",
+    "@solidjs/meta": "0.29.4",
+    "solid-js": "1.9.19"
+  },
+  "devDependencies": {
+    "@eslint-community/eslint-plugin-eslint-comments": "4.7.2",
+    "@types/node": "24.13.3",
+    "eslint": "10.10.0",
+    "eslint-plugin-sheen": "workspace:*",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.69.0",
+    "vite": "8.3.8",
+    "vite-plugin-solid": "2.11.14"
+  }
+}

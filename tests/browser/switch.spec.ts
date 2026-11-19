@@ -86,3 +86,18 @@ test("switch pre-hydration changes update the thumb and hydrate without losing f
     expect(errors).toEqual([]);
   } finally { release(); }
 });
+
+test("switch plain clicks hit the native input and an aria-label names an unlabeled switch", async ({ page }) => {
+  await page.goto("/switch");
+  await expect(page.locator('[data-sheen-portal="root"]')).toHaveAttribute("data-sheen-ready", "true");
+  const controlled = page.getByRole("switch", { name: "Controlled setting", exact: true });
+  await controlled.click();
+  await expect(controlled).toBeChecked();
+  const unlabeled = page.getByRole("switch", { name: "Production alerts", exact: true });
+  await unlabeled.click();
+  await expect(unlabeled).toBeChecked();
+  await unlabeled.focus();
+  await page.keyboard.press("Space");
+  await expect(unlabeled).not.toBeChecked();
+  await expect(page.getByRole("switch", { name: "Disabled setting", exact: true })).toBeDisabled();
+});

@@ -41,6 +41,18 @@ The placement grammar covers the common product families without allowing each a
 
 Start with a preset, then override only what defines the product. A content-heavy workspace can keep navigation and account in the sidebar; a lightweight product can use horizontal topbar navigation and omit the sidebar entirely. The same models and behavior render in either placement, including derived menu direction, mobile order, keyboard access, focus restoration, and scoped theming. Composer edits this grammar directly and emits the chosen preset, appearance, and overrides as copyable TSX.
 
+Each navigation zone accepts one `AdminNavigationModel` or an ordered array of them. Every model becomes one labeled sidebar section, or one labeled `nav` in the topbar, and the zone still moves as a unit, so the twelve-zone grammar is unchanged. Use `primaryNavigation` for the product's working areas and `secondaryNavigation` for support, settings, or developer destinations. Section IDs must be unique across both zones, and item IDs must be unique across the sidebar. The sidebar resolves one most-specific current link across all sections.
+
+```tsx
+<AdminApp
+  primaryNavigation={[workspaceSection, dataSection, billingSection]}
+  secondaryNavigation={[supportSection, developerSection]}
+  {...applicationModels}
+>
+  {page}
+</AdminApp>
+```
+
 ## Main-content layouts
 
 Action groups default to inline controls. Set `presentation: "overflow"` for infrequent help or utility groups; the labeled trigger opens a scoped popover containing native links and buttons. For overflow icons, pass a factory such as `icon: () => <ExternalLinkIcon decorative />` so hidden controls do not evaluate DOM-bearing JSX during hydration. Sidebar-footer groups open upward. Selection closes the panel, Escape returns focus, and stable action IDs retain current callbacks as models refresh. Prefer at most one filled primary action per task surface. An overlay that starts a new task may have its own primary action; a destructive confirmation uses danger semantics.
@@ -125,4 +137,6 @@ The 2026-09-09 local production repeat passed. Its median initial ready time was
 
 ## Delivery and bundle boundary
 
-Importing the base patterns entry and AppShell does not retain AdminApp, table, chart, date, Composer, command-palette, or toast-service code. The dedicated Admin entry intentionally includes the complete shell service composition. Its measured production consumer baseline is 76.8 KB gzip with an 80 KB gate; the base AppShell fixture is 32.4 KB gzip. Vite and other ESM-aware bundlers prune unused package modules, but they cannot remove services that AdminApp actually instantiates. Table, chart, date, and Composer remain separate package or route chunks rather than being hidden behind arithmetic in the Admin budget.
+Importing the base patterns entry and AppShell does not retain AdminApp, table, chart, date, Composer, command-palette, or toast-service code. The dedicated Admin entry includes the complete shell service composition, but overlay bodies that first paint does not need are client-only chunks: the command palette (with its cmdk engine) and the keyboard shortcut sheet. Their triggers render on the server. Each chunk preloads when the browser is idle after hydration and again on trigger hover or focus. A first Ctrl/Cmd+K, `?`, or trigger activation before the chunk arrives is queued, not dropped: the shell holds the Ctrl/Cmd+K binding until the palette registers its own, then opens the overlay with focus inside it. Closing returns focus to the opener unless a command moved focus elsewhere. A failed chunk load surfaces as an unhandled rejection, and the next intent retries.
+
+The production consumer gate is 75.5 KB gzip for first paint and 9 KB gzip for the deferred overlays; see [bundle budgets](bundle-budgets.md) for measurements. Account, workspace, and sidebar row menus remain in first paint because `DropdownMenu` renders its own trigger, and deferring it would replace a hydrated, focusable trigger node. The phone drawer remains too, because its `Dialog` is already required by the navigation guard and the confirmation service. The base AppShell fixture is 34.9 KB gzip. Vite and other ESM-aware bundlers prune unused package modules, but they cannot remove services that AdminApp actually instantiates. Table, chart, date, and Composer remain separate package or route chunks rather than being hidden behind arithmetic in the Admin budget.

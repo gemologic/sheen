@@ -11,7 +11,7 @@ export default defineMeta<DataTableProps<ExampleRow>>({
     caption: { description: "Required accessible table caption, visually hidden by default." },
     variant: { description: "Standalone frame or application-pane integration; omission follows context." },
     density: { description: "Optional table-local compact, comfortable, or spacious density. Omission inherits the surrounding application density." },
-    pagination: { description: "False selects complete continuous results; page state selects numbered pagination. Client defaults false and server requires an explicit choice." },
+    pagination: { description: "False selects complete continuous results; { pageIndex, pageSize } selects numbered pagination; server-only { kind: \"cursor\", pageSize, cursor } selects opaque after/before cursor pages with a first/previous/next pager and no page count. Client defaults false and server requires an explicit choice." },
     initialState: { description: "Optional initial query and column-layout state; pagination remains configured by the pagination prop." },
     filter: { description: "Optional app-owned accepted filter applied reactively without remounting retained rows; onAcceptedStateChange synchronizes table-authored changes." },
     rowHeight: { description: "CSS length for the fixed row block size or the minimum measured variable-row size.", default: "var(--sheen-table-row-h)" },
@@ -19,7 +19,7 @@ export default defineMeta<DataTableProps<ExampleRow>>({
     estimatedRowHeight: { description: "Positive CSS-pixel estimate used before measurement. Defaults to the active compact, comfortable, or spacious row token.", default: 34 },
     initialViewportHeight: { description: "Positive CSS-pixel viewport size used for deterministic server rendering and hydration.", default: 400 },
     class: { description: "Optional class merged onto the table region." },
-    onAcceptedStateChange: { description: "Receives accepted query states and locally committed layout states; transient resize frames are excluded." },
+    onAcceptedStateChange: { description: "Receives accepted query states, including the accepted cursor in cursor mode, and locally committed layout states; transient resize frames are excluded." },
     onRowActivate: { description: "Enables roving row focus and receives Enter activation for the focused row." },
     selection: { description: "Enables table-owned multiple selection, optional authorization-boundary resetKey, and immutable explicit-ID or query/exclusion payloads." },
     actions: { description: "One validated action model rendered in the bottom selection bar and each accepted row's context menu." },
@@ -35,10 +35,10 @@ export default defineMeta<DataTableProps<ExampleRow>>({
     editResetKey: { description: "Discards drafts, conflicts, failed attempts, and pending commits when an account or permission boundary changes." },
     mode: { description: "Client processes complete supplied data; server delegates the full query and requires pagination plus onStateChange.", default: "client" },
     data: { description: "Complete bounded client dataset. Available only in client mode." },
-    initialResult: { description: "Optional authoritative server result used for SSR without a duplicate hydration request. Delegated grouping includes groups for the accepted page." },
-    onStateChange: { description: "Server request adapter receiving complete state and an AbortSignal. Available only in server mode." },
+    initialResult: { description: "Optional authoritative server result used for SSR without a duplicate hydration request. Delegated grouping includes groups for the accepted page. Cursor mode supplies one cursor page instead." },
+    onStateChange: { description: "Server request adapter receiving complete state and an AbortSignal. Numbered and complete modes return { rows, total }; cursor mode returns { rows, nextCursor, previousCursor, total? } where either cursor may be null and total may be exact, an estimate, or a lower bound. Search, filter, and sort changes request the first page. Available only in server mode." },
     refreshKey: { description: "Server-only invalidation key. Changes revalidate the latest requested or accepted query, retaining rows, layout, drafts, selection, and scroll. The initial value does not fetch; changing it supersedes pending transport." },
-    onExport: { description: "Optional server adapter returning a Blob for the captured accepted state and immutable selection. Server export UI is hidden without it." },
+    onExport: { description: "Optional server adapter returning a Blob for the captured accepted state and immutable selection. Server export UI is hidden without it. Cursor state is included but exports should cover the full query, not one cursor page." },
   },
   tokens: ["--sheen-table-row-h", "--sheen-color-border", "--sheen-color-bg", "--sheen-color-bg-raised"],
   a11y: { role: "table or treegrid, row, gridcell, columnheader, list, listitem, checkbox, toolbar, menu, separator, navigation, status", keyboard: ["Tab", "Shift+Tab", "Shift+F10", "ContextMenu", "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Home", "End", "PageUp", "PageDown", "Enter", "Space", "Shift+Space", "Control+A", "Meta+A"] },
@@ -58,10 +58,26 @@ const rows = [{ id: "one", name: "Alpha", amount: 12 }, { id: "two", name: "Beta
 ]);
 const rows = [{ id: "one", name: "Alpha", status: "Active" }, { id: "two", name: "Beta", status: "Paused" }];`,
     code: '<DataTable data={rows} columns={columns} getRowId={row => row.id} caption="Active accounts" summarizeColumns={["status"]} filter={{ kind: "enum", column: "status", operator: "in", values: ["Active"] }} initialViewportHeight={160} />',
+  }, {
+    title: "Cursor server pages",
+    setup: `const columns = defineColumns<{ readonly id: string; readonly name: string }>([
+  { id: "name", header: "Name", accessor: row => row.name, sort: "text" },
+]);
+const page = [{ id: "a1", name: "Alpha" }, { id: "a2", name: "Beta" }];`,
+    code: '<DataTable mode="server" columns={columns} getRowId={row => row.id} caption="Accounts" pagination={{ kind: "cursor", pageSize: 25, cursor: null }} onStateChange={async state => ({ rows: page, nextCursor: state.pagination.cursor ? null : "a2", previousCursor: state.pagination.cursor ? "a1" : null, total: { kind: "estimate", value: 2 } })} initialViewportHeight={160} />',
+  }, {
+    title: "Light composition with only the filter bar",
+    setup: `const FilteredTable = createDataTable([filterBarFeature]);
+const columns = defineColumns<{ readonly id: string; readonly name: string; readonly status: string }>([
+  { id: "name", header: "Name", accessor: row => row.name, search: true },
+  { id: "status", header: "Status", accessor: row => row.status, filter: { type: "enum", options: ["Active", "Paused"] } },
+]);
+const rows = [{ id: "one", name: "Alpha", status: "Active" }, { id: "two", name: "Beta", status: "Paused" }];`,
+    code: '<FilteredTable data={rows} columns={columns} getRowId={row => row.id} caption="Accounts" pagination={false} initialViewportHeight={160} />',
   }],
   composer: { allowedParentRegions: ["main-grid"], acceptedChildRegions: [], editableSafeProps: ["caption", "pagination", "density"], fixtureFactory: "records", codeGenerationAdapter: "records-table" },
   guidance: {
-    do: ["Use continuous client mode for bounded local datasets.", "Use numbered server pagination for large or expensive remote results.", "Enable mobileLayout when a table must be functional on phones; tune its bounded continuous page size to row complexity.", "Supply full-query counts and aggregates when the server delegates grouping.", "Provide initialResult when server rendering already fetched the accepted page.", "Define row actions once so context, card overflow, and bulk paths cannot drift.", "Return complete server exports from onExport rather than walking pages in the component.", "Return explicit conflict results from onCellCommit instead of parsing transport error text.", "Change selection.resetKey, hierarchy.resetKey, export.resetKey, and editResetKey when the user's authorization or account boundary changes.", "Keep column controls enabled when users can drag, so every layout action has a keyboard path."],
-    dont: ["Do not use pagination=false for an incomplete server response or infinite fetching.", "Do not render an unbounded phone card list; mobileLayout limits continuous pages to at most 100 cards.", "Do not calculate group totals from one server page.", "Do not paginate, sort, filter, or export one server page locally and present it as the complete query.", "Do not materialize all-matching selection by walking server pages or offer it for a hierarchy whose subtree query cannot be represented.", "Do not request server data for visibility, order, pin, or width-only changes."],
+    do: ["Use continuous client mode for bounded local datasets.", "Use numbered server pagination for large or expensive remote results.", "Use cursor pagination when the API pages with opaque after/before cursors; return null cursors at the ends and label estimated or capped totals as such.", "Enable mobileLayout when a table must be functional on phones; tune its bounded continuous page size to row complexity.", "Supply full-query counts and aggregates when the server delegates grouping.", "Provide initialResult when server rendering already fetched the accepted page.", "Define row actions once so context, card overflow, and bulk paths cannot drift.", "Return complete server exports from onExport rather than walking pages in the component.", "Return explicit conflict results from onCellCommit instead of parsing transport error text.", "Change selection.resetKey, hierarchy.resetKey, export.resetKey, and editResetKey when the user's authorization or account boundary changes.", "Keep column controls enabled when users can drag, so every layout action has a keyboard path.", "Use createDataTable with only the features a table needs (filterBarFeature, groupingFeature, hierarchyFeature, cellEditingFeature) when bundle size matters; DataTable includes all of them."],
+    dont: ["Do not use pagination=false for an incomplete server response or infinite fetching.", "Do not fabricate page numbers or an exact total for cursor pagination.", "Do not render an unbounded phone card list; mobileLayout limits continuous pages to at most 100 cards.", "Do not calculate group totals from one server page.", "Do not paginate, sort, filter, or export one server page locally and present it as the complete query.", "Do not materialize all-matching selection by walking server pages or offer it for a hierarchy whose subtree query cannot be represented.", "Do not request server data for visibility, order, pin, or width-only changes.", "Do not pass filterBar, grouping, hierarchy, editors, or editing props to a createDataTable composition that omits their feature; it fails at compile time and render."],
   },
 });

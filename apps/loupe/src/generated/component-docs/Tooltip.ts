@@ -147,7 +147,8 @@ export const componentDoc = Object.freeze({
       "Provide a visible label or aria-label on the native trigger."
     ],
     "dont": [
-      "Do not nest a button inside Tooltip or put interactive controls in its content."
+      "Do not nest a button inside Tooltip; use TooltipTrigger to attach help to an existing element.",
+      "Do not put interactive controls in its content."
     ]
   },
   "source": "packages/ui/src/primitives/Tooltip.tsx",

@@ -3,3 +3,4 @@ import type { IconData } from "../../runtime.tsx";
 
 export const radixHeartFilled = Object.freeze({"set":"radix","body":"<path fill=\"currentColor\" d=\"M10.106 1.352a3.547 3.547 0 0 1 3.541 3.553c0 1.835-1.046 3.6-2.247 5.065c-1.137 1.386-2.478 2.58-3.394 3.396l-.173.154a.5.5 0 0 1-.666 0l-.173-.154c-.916-.815-2.257-2.01-3.394-3.396c-1.201-1.465-2.248-3.23-2.248-5.065a3.547 3.547 0 0 1 3.541-3.553c1.365 0 1.968.571 2.607 1.583c.64-1.012 1.242-1.582 2.606-1.583\"/>","width":15,"height":15}) satisfies IconData;
 export const phosphorHeartFilled = Object.freeze({"set":"phosphor","body":"<path fill=\"currentColor\" d=\"M240 102c0 70-103.79 126.66-108.21 129a8 8 0 0 1-7.58 0C119.79 228.66 16 172 16 102a62.07 62.07 0 0 1 62-62c20.65 0 38.73 8.88 50 23.89C139.27 48.88 157.35 40 178 40a62.07 62.07 0 0 1 62 62\"/>","width":256,"height":256}) satisfies IconData;
+export const glyphs: readonly IconData[] = [radixHeartFilled, phosphorHeartFilled];

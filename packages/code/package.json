@@ -32,6 +32,11 @@
       "solid": "./src/highlight.ts",
       "import": "./dist/highlight.js"
     },
+    "./languages": {
+      "types": "./dist/languages.d.ts",
+      "solid": "./src/languages.ts",
+      "import": "./dist/languages.js"
+    },
     "./diff-viewer": { "types": "./dist/DiffViewer.d.ts", "solid": "./src/DiffViewer.tsx", "import": "./dist/DiffViewer.js" },
     "./log-viewer": { "types": "./dist/LogViewer.d.ts", "solid": "./src/LogViewer.tsx", "import": "./dist/LogViewer.js" },
     "./json-viewer": { "types": "./dist/JSONViewer.d.ts", "solid": "./src/JSONViewer.tsx", "import": "./dist/JSONViewer.js" },

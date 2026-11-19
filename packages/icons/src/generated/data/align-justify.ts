@@ -3,3 +3,4 @@ import type { IconData } from "../../runtime.tsx";
 
 export const radixAlignJustify = Object.freeze({"set":"radix","body":"<path fill=\"currentColor\" d=\"M12.6 10.01a.5.5 0 0 1 0 .98l-.1.01h-10a.5.5 0 0 1 0-1h10zm0-3a.5.5 0 0 1 0 .98l-.1.01h-10a.5.5 0 0 1 0-1h10zm0-3a.5.5 0 0 1 0 .98l-.1.01h-10a.5.5 0 0 1 0-1h10z\"/>","width":15,"height":15}) satisfies IconData;
 export const phosphorAlignJustify = Object.freeze({"set":"phosphor","body":"<path fill=\"currentColor\" d=\"M32 64a8 8 0 0 1 8-8h176a8 8 0 0 1 0 16H40a8 8 0 0 1-8-8m184 32H40a8 8 0 0 0 0 16h176a8 8 0 0 0 0-16m0 40H40a8 8 0 0 0 0 16h176a8 8 0 0 0 0-16m0 40H40a8 8 0 0 0 0 16h176a8 8 0 0 0 0-16\"/>","width":256,"height":256}) satisfies IconData;
+export const glyphs: readonly IconData[] = [radixAlignJustify, phosphorAlignJustify];

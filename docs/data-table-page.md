@@ -11,7 +11,7 @@ Pagination and client/server processing are independent decisions:
 - Prefer numbered server pagination for large, expensive, frequently changing, or authorization-sensitive remote datasets. Filtering, sorting, totals, facets, and pagination must be evaluated together by the server.
 - Use `pagination={false}` in server mode only when one response is the complete bounded match set and `rows.length === total`. DataTable rejects a partial response and never walks hidden pages to assemble it.
 - Do not treat virtualization as a network or memory bound. It limits realized DOM only. Payload bytes, row width, client processing cost, freshness, and user navigation needs matter more than a universal row-count threshold.
-- Cursor-based infinite fetching is a separate deferred mode. It must not be represented as continuous complete data.
+- Use cursor server pagination (`{ kind: "cursor", pageSize, cursor: null }`) for APIs that page with opaque after/before cursors and may not know an exact total. DataTable renders first/previous/next controls only; see [Table pagination state](table-pagination.md#cursor-server-pagination). Infinite append-on-scroll fetching remains a separate unimplemented mode and must not be represented as continuous complete data.
 
 Pass the choice directly to `DataTable`; `DataTablePage` neither adds page controls nor changes the table state. The full state, including numbered pagination, can therefore round-trip through URL and saved-view adapters without a second page-level pagination owner.
 

@@ -2,17 +2,20 @@
 import { Show } from "solid-js";
 import type { ComponentProps } from "solid-js";
 import { Dynamic } from "solid-js/web";
-import { ThemeProvider, ThemeScope, useTheme, defaultThemeState, resolveThemeState, readThemeState, createThemeScript, createKeyboardHydrationScript, Button, buttonVariants, Input, Dialog, Drawer, Sheet, AlertDialog, ConfirmDialog, createConfirm, Tooltip, createShortcutRegistry, ShortcutProvider, useShortcut, useShortcutLabel, usePendingShortcut, useShortcutBindings, useShortcutCommands, formatShortcut, ShortcutSheet, ShortcutPending, ShortcutScope, LinkTooltip, Popover, DropdownMenu, ContextMenu, CommandPalette, commandPaletteFilter, cn, flashChange, useOnlineStatus, useIsWindowFocused, optimistic, createToaster, Toast, Toaster, englishMessages, useNumberFormatter, useDateFormatter, Stack, Row, Cluster, Grid, Container, Center, Spacer, Text, Heading, Code, Kbd, Prose, Glyph, glyphNames, createMediaQuery, useBreakpoint, breakpointNames, breakpointQuery, breakpoints, List, ListItem, NumberText, Badge, Tag, Surface, Card, Separator, Alert, Banner, Callout, DescriptionList, DescriptionTerm, DescriptionDetails, Skeleton, EmptyState, Spinner, Field, InputGroup, Form, FormSection, FormActions, SearchInput, Textarea, EditableTextField, Checkbox, Switch, CheckboxGroup, RadioGroup, SegmentedControl, TagInput, FileDropzone, ActivityTimeline, Stepper, Select, Combobox, MultiCombobox, Table, TableCaption, TableHead, TableBody, TableFoot, TableRow, TableHeaderCell, TableCell, Breadcrumb, Collapsible, Accordion, AccordionItem, Tabs, NavList, NavItem, ScrollArea, ButtonGroup, IconButton, Link, Pagination, Avatar, AvatarGroup, Progress, Meter, NumberField, Slider, RangeSlider, Tree, TreeItem, Resizable, ResizablePanel, ResizableHandle, PromptInput, Message, Conversation, StreamingText } from "@gemologic/sheen";
+import { ThemeProvider, ThemeScope, useTheme, defaultThemeState, resolveThemeState, readThemeState, createThemeScript, createKeyboardHydrationScript, Button, buttonVariants, Input, Dialog, Drawer, Sheet, AlertDialog, ConfirmDialog, createConfirm, Tooltip, createShortcutRegistry, ShortcutProvider, useShortcut, useShortcutLabel, usePendingShortcut, useShortcutBindings, useShortcutCommands, formatShortcut, ShortcutSheet, ShortcutPending, ShortcutScope, LinkTooltip, TooltipTrigger, Popover, DropdownMenu, ContextMenu, CommandPalette, commandPaletteFilter, cn, flashChange, useOnlineStatus, useIsWindowFocused, optimistic, createToaster, Toast, Toaster, englishMessages, useNumberFormatter, useDateFormatter, Stack, Row, Cluster, Grid, Container, Center, Spacer, Text, Heading, Code, Kbd, Prose, Glyph, glyphNames, createMediaQuery, useBreakpoint, breakpointNames, breakpointQuery, breakpoints, List, ListItem, NumberText, Badge, Tag, Surface, Card, Separator, Alert, Banner, Callout, DescriptionList, DescriptionTerm, DescriptionDetails, Skeleton, EmptyState, Spinner, Field, InputGroup, Form, FormSection, FormActions, SearchInput, Textarea, EditableTextField, Checkbox, Switch, CheckboxGroup, RadioGroup, SegmentedControl, TagInput, FileDropzone, ActivityTimeline, Stepper, Select, Combobox, MultiCombobox, Table, TableCaption, TableHead, TableBody, TableFoot, TableRow, TableHeaderCell, TableCell, Breadcrumb, Collapsible, Accordion, AccordionItem, Tabs, NavList, NavItem, ScrollArea, ButtonGroup, IconButton, Link, Pagination, Avatar, AvatarGroup, Progress, Meter, NumberField, Slider, RangeSlider, Tree, TreeItem, Resizable, ResizablePanel, ResizableHandle, PromptInput, Message, Conversation, StreamingText } from "@gemologic/sheen";
 
 import type { PlaygroundValue } from "../component-docs/index.ts";
 import type { ComponentExampleProps } from "./index.ts";
 
 function Playground(props: { readonly values: Readonly<Record<string, PlaygroundValue>> }) {
   return <Show keyed when={props.values}>{currentValues => {
-      const value0 = currentValues["placement"];
-      const controlled0 = value0 === "top" || value0 === "top-start" || value0 === "top-end" || value0 === "bottom" || value0 === "bottom-start" || value0 === "bottom-end" || value0 === "left" || value0 === "right" ? value0 : undefined;
+      const value0 = currentValues["disabled"];
+      const controlled0 = typeof value0 === "boolean" ? value0 : undefined;
+      const value1 = currentValues["placement"];
+      const controlled1 = value1 === "top" || value1 === "top-start" || value1 === "top-end" || value1 === "bottom" || value1 === "bottom-start" || value1 === "bottom-end" || value1 === "left" || value1 === "right" ? value1 : undefined;
     const controlledProps = {
-        ...(controlled0 === undefined ? {} : { "placement": controlled0 })
+        ...(controlled0 === undefined ? {} : { "disabled": controlled0 }),
+        ...(controlled1 === undefined ? {} : { "placement": controlled1 })
     } satisfies Partial<ComponentProps<typeof Popover>>;
     return (<Popover title="View options" trigger="View options" {...controlledProps}><Checkbox label="Show archived" /></Popover>);
   }}</Show>;
@@ -22,6 +25,10 @@ const examples = [
   function Example0() {
     
     return (<Popover title="View options" trigger="View options"><Checkbox label="Show archived" /></Popover>);
+  },
+  function Example1() {
+    
+    return (<Popover title="Export options" trigger="Export options" disabled>Choose a format.</Popover>);
   }
 ];
 

@@ -3,3 +3,4 @@ import type { IconData } from "../../runtime.tsx";
 
 export const radixBlocked = Object.freeze({"set":"radix","body":"<path fill=\"currentColor\" d=\"M7.5.877a6.623 6.623 0 1 1 0 13.246A6.623 6.623 0 0 1 7.5.877m-4.35 2.98a5.674 5.674 0 0 0 7.99 7.99zm4.35-2.03A5.65 5.65 0 0 0 3.857 3.15l7.99 7.99a5.674 5.674 0 0 0-4.349-9.314\"/>","width":15,"height":15}) satisfies IconData;
 export const phosphorBlocked = Object.freeze({"set":"phosphor","body":"<path fill=\"currentColor\" d=\"M128 24a104 104 0 1 0 104 104A104.11 104.11 0 0 0 128 24m88 104a87.56 87.56 0 0 1-20.41 56.28L71.72 60.4A88 88 0 0 1 216 128m-176 0a87.56 87.56 0 0 1 20.41-56.28L184.28 195.6A88 88 0 0 1 40 128\"/>","width":256,"height":256}) satisfies IconData;
+export const glyphs: readonly IconData[] = [radixBlocked, phosphorBlocked];

@@ -96,6 +96,22 @@ describe("AdminApp SSR", () => {
     expect(html).toContain('aria-label="Resize details panel"');
   });
 
+  it("renders any number of navigation sections inside the two semantic navigation zones", () => {
+    const section = (id: string, label: string, href: string): AdminNavigationModel => ({ id, label, items: [{ kind: "link", id: `${id}-link`, label: `${label} home`, href }] });
+    const sections = { primaryNavigation: [primary, section("data", "Data", "/data"), section("billing", "Billing", "/billing")], secondaryNavigation: [section("support", "Support", "/support"), section("developer", "Developer", "/developer")] };
+    const sidebar = render("standard", sections);
+    for (const label of ["Primary navigation", "Data", "Billing", "Support", "Developer"]) expect(sidebar).toContain(`aria-label="${label}"`);
+    expect(sidebar.indexOf('aria-label="Billing"')).toBeLessThan(sidebar.indexOf('aria-label="Support"'));
+    expect(sidebar.match(/data-admin-zone="primary-navigation"/g) ?? []).toHaveLength(0);
+    expect(sidebar.match(/aria-current="page"/g)).toHaveLength(1);
+
+    const topbar = render("horizontal", sections);
+    expect(topbar.match(/data-admin-zone="primary-navigation"/g)).toHaveLength(1);
+    expect(topbar.match(/<nav[^>]*class="sheen-admin-top-nav /g)).toHaveLength(5);
+
+    expect(() => render("standard", { primaryNavigation: [primary], secondaryNavigation: [section("primary", "Duplicate", "/duplicate")] })).toThrow(/duplicate navigation section ID "primary"/u);
+  });
+
   it("clears omitted account and details content at an authorization boundary", () => {
     const html = renderToString(() => <ThemeProvider><AdminApp label="Operations" pathname="/orders" preset="standard" authorizationKey="viewer"
       product={product} primaryNavigation={primary} workspace={workspace}><input value="Authorized viewer content" /></AdminApp></ThemeProvider>);

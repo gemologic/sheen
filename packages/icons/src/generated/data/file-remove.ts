@@ -3,3 +3,4 @@ import type { IconData } from "../../runtime.tsx";
 
 export const radixFileRemove = Object.freeze({"set":"radix","body":"<path fill=\"currentColor\" d=\"M9.598 1.01a.5.5 0 0 1 .256.136l2.926 2.927c.14.14.22.332.22.53V12.5a1.5 1.5 0 0 1-1.5 1.5h-8A1.5 1.5 0 0 1 2 12.5v-10A1.5 1.5 0 0 1 3.5 1h6zM3.5 2a.5.5 0 0 0-.5.5v10a.5.5 0 0 0 .5.5h8a.5.5 0 0 0 .5-.5V4.707L9.293 2zm6.25 5a.5.5 0 0 1 0 1h-4.5a.5.5 0 0 1 0-1z\"/>","width":15,"height":15}) satisfies IconData;
 export const phosphorFileRemove = Object.freeze({"set":"phosphor","body":"<path fill=\"currentColor\" d=\"m213.66 82.34l-56-56A8 8 0 0 0 152 24H56a16 16 0 0 0-16 16v176a16 16 0 0 0 16 16h144a16 16 0 0 0 16-16V88a8 8 0 0 0-2.34-5.66M160 51.31L188.69 80H160ZM200 216H56V40h88v48a8 8 0 0 0 8 8h48zm-40-64a8 8 0 0 1-8 8h-48a8 8 0 0 1 0-16h48a8 8 0 0 1 8 8\"/>","width":256,"height":256}) satisfies IconData;
+export const glyphs: readonly IconData[] = [radixFileRemove, phosphorFileRemove];

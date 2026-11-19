@@ -21,21 +21,33 @@ export const componentDoc = Object.freeze({
       "required": false
     },
     {
+      "name": "pagination",
+      "description": "False selects complete continuous results; { pageIndex, pageSize } selects numbered pagination; server-only { kind: \"cursor\", pageSize, cursor } selects opaque after/before cursor pages with a first/previous/next pager and no page count. Client defaults false and server requires an explicit choice.",
+      "type": "Pagination | TablePagination",
+      "required": false
+    },
+    {
+      "name": "onAcceptedStateChange",
+      "description": "Receives accepted query states, including the accepted cursor in cursor mode, and locally committed layout states; transient resize frames are excluded.",
+      "type": "((state: TableState) => void) | ((state: TableState<DataTableServerPagination<Pagination>>) => void)",
+      "required": false
+    },
+    {
       "name": "initialResult",
-      "description": "Optional authoritative server result used for SSR without a duplicate hydration request. Delegated grouping includes groups for the accepted page.",
-      "type": "DataTableResult<Row>",
+      "description": "Optional authoritative server result used for SSR without a duplicate hydration request. Delegated grouping includes groups for the accepted page. Cursor mode supplies one cursor page instead.",
+      "type": "DataTableServerResult<Row, Pagination>",
       "required": false
     },
     {
       "name": "onStateChange",
-      "description": "Server request adapter receiving complete state and an AbortSignal. Available only in server mode.",
-      "type": "(state: TableState, signal: AbortSignal) => Promise<DataTableResult<Row>>",
+      "description": "Server request adapter receiving complete state and an AbortSignal. Numbered and complete modes return { rows, total }; cursor mode returns { rows, nextCursor, previousCursor, total? } where either cursor may be null and total may be exact, an estimate, or a lower bound. Search, filter, and sort changes request the first page. Available only in server mode.",
+      "type": "(state: TableState<DataTableServerPagination<Pagination>>, signal: AbortSignal) => Promise<DataTableServerResult<Row, Pagination>>",
       "required": false
     },
     {
       "name": "onExport",
-      "description": "Optional server adapter returning a Blob for the captured accepted state and immutable selection. Server export UI is hidden without it.",
-      "type": "(request: TableExportRequest, signal: AbortSignal) => Promise<Blob>",
+      "description": "Optional server adapter returning a Blob for the captured accepted state and immutable selection. Server export UI is hidden without it. Cursor state is included but exports should cover the full query, not one cursor page.",
+      "type": "(request: TableExportRequest<DataTableServerPagination<Pagination>>, signal: AbortSignal) => Promise<Blob>",
       "required": false
     },
     {
@@ -72,12 +84,6 @@ export const componentDoc = Object.freeze({
       "name": "density",
       "description": "Optional table-local compact, comfortable, or spacious density. Omission inherits the surrounding application density.",
       "type": "DataTableDensity",
-      "required": false
-    },
-    {
-      "name": "pagination",
-      "description": "False selects complete continuous results; page state selects numbered pagination. Client defaults false and server requires an explicit choice.",
-      "type": "TablePagination",
       "required": false
     },
     {
@@ -124,12 +130,6 @@ export const componentDoc = Object.freeze({
       "name": "class",
       "description": "Optional class merged onto the table region.",
       "type": "string",
-      "required": false
-    },
-    {
-      "name": "onAcceptedStateChange",
-      "description": "Receives accepted query states and locally committed layout states; transient resize frames are excluded.",
-      "type": "(state: TableState) => void",
       "required": false
     },
     {
@@ -245,6 +245,7 @@ export const componentDoc = Object.freeze({
     "do": [
       "Use continuous client mode for bounded local datasets.",
       "Use numbered server pagination for large or expensive remote results.",
+      "Use cursor pagination when the API pages with opaque after/before cursors; return null cursors at the ends and label estimated or capped totals as such.",
       "Enable mobileLayout when a table must be functional on phones; tune its bounded continuous page size to row complexity.",
       "Supply full-query counts and aggregates when the server delegates grouping.",
       "Provide initialResult when server rendering already fetched the accepted page.",
@@ -252,15 +253,18 @@ export const componentDoc = Object.freeze({
       "Return complete server exports from onExport rather than walking pages in the component.",
       "Return explicit conflict results from onCellCommit instead of parsing transport error text.",
       "Change selection.resetKey, hierarchy.resetKey, export.resetKey, and editResetKey when the user's authorization or account boundary changes.",
-      "Keep column controls enabled when users can drag, so every layout action has a keyboard path."
+      "Keep column controls enabled when users can drag, so every layout action has a keyboard path.",
+      "Use createDataTable with only the features a table needs (filterBarFeature, groupingFeature, hierarchyFeature, cellEditingFeature) when bundle size matters; DataTable includes all of them."
     ],
     "dont": [
       "Do not use pagination=false for an incomplete server response or infinite fetching.",
+      "Do not fabricate page numbers or an exact total for cursor pagination.",
       "Do not render an unbounded phone card list; mobileLayout limits continuous pages to at most 100 cards.",
       "Do not calculate group totals from one server page.",
       "Do not paginate, sort, filter, or export one server page locally and present it as the complete query.",
       "Do not materialize all-matching selection by walking server pages or offer it for a hierarchy whose subtree query cannot be represented.",
-      "Do not request server data for visibility, order, pin, or width-only changes."
+      "Do not request server data for visibility, order, pin, or width-only changes.",
+      "Do not pass filterBar, grouping, hierarchy, editors, or editing props to a createDataTable composition that omits their feature; it fails at compile time and render."
     ]
   },
   "source": "packages/table/src/DataTable.tsx",
@@ -278,6 +282,14 @@ export const componentDoc = Object.freeze({
     {
       "title": "Summarize an accepted constant field",
       "code": "<DataTable data={rows} columns={columns} getRowId={row => row.id} caption=\"Active accounts\" summarizeColumns={[\"status\"]} filter={{ kind: \"enum\", column: \"status\", operator: \"in\", values: [\"Active\"] }} initialViewportHeight={160} />"
+    },
+    {
+      "title": "Cursor server pages",
+      "code": "<DataTable mode=\"server\" columns={columns} getRowId={row => row.id} caption=\"Accounts\" pagination={{ kind: \"cursor\", pageSize: 25, cursor: null }} onStateChange={async state => ({ rows: page, nextCursor: state.pagination.cursor ? null : \"a2\", previousCursor: state.pagination.cursor ? \"a1\" : null, total: { kind: \"estimate\", value: 2 } })} initialViewportHeight={160} />"
+    },
+    {
+      "title": "Light composition with only the filter bar",
+      "code": "<FilteredTable data={rows} columns={columns} getRowId={row => row.id} caption=\"Accounts\" pagination={false} initialViewportHeight={160} />"
     }
   ],
   "variants": []

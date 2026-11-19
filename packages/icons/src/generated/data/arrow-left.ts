@@ -3,3 +3,4 @@ import type { IconData } from "../../runtime.tsx";
 
 export const radixArrowLeft = Object.freeze({"set":"radix","body":"<path fill=\"currentColor\" d=\"M6.225 3.082a.5.5 0 0 1 .693.694l-.065.078L3.707 7H12.5a.5.5 0 0 1 0 1H3.707l3.146 3.147l.065.078a.5.5 0 0 1-.693.693l-.079-.064l-4-4a.5.5 0 0 1 0-.707l4-4z\"/>","width":15,"height":15}) satisfies IconData;
 export const phosphorArrowLeft = Object.freeze({"set":"phosphor","body":"<path fill=\"currentColor\" d=\"M224 128a8 8 0 0 1-8 8H59.31l58.35 58.34a8 8 0 0 1-11.32 11.32l-72-72a8 8 0 0 1 0-11.32l72-72a8 8 0 0 1 11.32 11.32L59.31 120H216a8 8 0 0 1 8 8\"/>","width":256,"height":256}) satisfies IconData;
+export const glyphs: readonly IconData[] = [radixArrowLeft, phosphorArrowLeft];

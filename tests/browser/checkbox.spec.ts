@@ -90,3 +90,30 @@ test("checkbox hydration retains native identity, associations, focus, and logic
     expect(errors).toEqual([]);
   } finally { release(); }
 });
+
+test("checkbox plain clicks hit the native input before and after hydration, and unlabeled inputs keep names", async ({ page }) => {
+  let release: () => void = () => {};
+  const barrier = new Promise<void>(resolve => { release = resolve; });
+  await page.route("**/*", async route => { if (route.request().resourceType() === "script") await barrier; await route.continue(); });
+  try {
+    await page.goto("/checkbox", { waitUntil: "commit" });
+    const controlled = page.getByRole("checkbox", { name: "Controlled alerts", exact: true });
+    const row = page.getByRole("checkbox", { name: "Invoice 1042", exact: true });
+    const all = page.getByRole("checkbox", { name: "Select all invoices", exact: true });
+    await expect(page.getByRole("group", { name: "Unlabeled row selectors" }).locator("label")).toHaveCount(0);
+    await row.click();
+    await expect(row).toBeChecked();
+    release();
+    await expect(page.locator('[data-sheen-portal="root"]')).toHaveAttribute("data-sheen-ready", "true");
+    await expect(row).toBeChecked();
+    await all.click();
+    await expect(all).toBeChecked();
+    await controlled.click();
+    await expect(controlled).toBeChecked();
+    await controlled.click();
+    await expect(controlled).not.toBeChecked();
+    await expect(page.getByRole("checkbox", { name: "Rejected change" })).not.toBeChecked();
+    await page.getByRole("checkbox", { name: "Rejected change" }).click();
+    await expect(page.getByRole("checkbox", { name: "Rejected change" })).not.toBeChecked();
+  } finally { release(); }
+});

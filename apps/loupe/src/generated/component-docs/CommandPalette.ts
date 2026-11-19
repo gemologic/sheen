@@ -9,7 +9,7 @@ export const componentDoc = Object.freeze({
   "props": [
     {
       "name": "sources",
-      "description": "Static and abortable remote command sources with stable IDs.",
+      "description": "Static and abortable remote command sources with stable IDs. Each command may add render functions for a decorative leading icon and trailing content, such as a Kbd hint or Badge, which becomes the option's description; its label remains the accessible name.",
       "type": "readonly CommandPaletteSource[]",
       "required": true
     },
@@ -82,7 +82,8 @@ export const componentDoc = Object.freeze({
   },
   "guidance": {
     "do": [
-      "Provide stable command IDs and server-known initial remote results."
+      "Provide stable command IDs and server-known initial remote results.",
+      "Keep trailing text short and supplementary to the label."
     ],
     "dont": [
       "Do not read recents on mount or blank accepted results during remote search."
@@ -98,6 +99,10 @@ export const componentDoc = Object.freeze({
   "examples": [
     {
       "title": "Application commands",
+      "code": "<ShortcutProvider development><CommandPalette sources={sources} /></ShortcutProvider>"
+    },
+    {
+      "title": "Icons and trailing hints",
       "code": "<ShortcutProvider development><CommandPalette sources={sources} /></ShortcutProvider>"
     }
   ],

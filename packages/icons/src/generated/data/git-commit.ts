@@ -3,3 +3,4 @@ import type { IconData } from "../../runtime.tsx";
 
 export const radixGitCommit = Object.freeze({"set":"radix","body":"<path fill=\"currentColor\" d=\"M7.676 4.105A3.4 3.4 0 0 1 10.863 7H14.5l.1.01a.5.5 0 0 1 0 .98l-.1.01h-3.637A3.4 3.4 0 0 1 7.5 10.9l-.175-.005A3.4 3.4 0 0 1 4.138 8H.5a.5.5 0 0 1 0-1h3.638A3.4 3.4 0 0 1 7.5 4.1zM7.5 5.05a2.45 2.45 0 1 0 0 4.9a2.45 2.45 0 0 0 0-4.9\"/>","width":15,"height":15}) satisfies IconData;
 export const phosphorGitCommit = Object.freeze({"set":"phosphor","body":"<path fill=\"currentColor\" d=\"M248 120h-64.58a56 56 0 0 0-110.84 0H8a8 8 0 0 0 0 16h64.58a56 56 0 0 0 110.84 0H248a8 8 0 0 0 0-16m-120 48a40 40 0 1 1 40-40a40 40 0 0 1-40 40\"/>","width":256,"height":256}) satisfies IconData;
+export const glyphs: readonly IconData[] = [radixGitCommit, phosphorGitCommit];

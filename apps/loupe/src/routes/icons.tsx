@@ -1,5 +1,5 @@
 import { Button, Dialog, ThemeScope, useTheme } from "@gemologic/sheen";
-import { DynamicIcon, Icon } from "@gemologic/sheen-icons";
+import { DynamicIcon, Icon, LazyIcon } from "@gemologic/sheen-icons";
 import { SearchIcon } from "@gemologic/sheen-icons/icons/search";
 
 function RootControls() {
@@ -19,6 +19,10 @@ export default function IconPreview() {
       <div><Icon id="root-literal-icon" name="search" decorative={false} label="Literal search" size="sm" /><span>Literal marker</span></div>
       <div><SearchIcon id="root-static-icon" size="md" /><span>Per-icon export</span></div>
       <div><DynamicIcon id="root-dynamic-icon" name="settings" size="lg" /><span>Dynamic registry</span></div>
+    </section>
+    <section class="loupe-icon-specimens" aria-label="Lazy icon specimens">
+      <div><LazyIcon id="lazy-known-icon" name="gitMerge" decorative={false} label="Lazy merge" /><span>Lazy by name</span></div>
+      <div><LazyIcon id="lazy-unknown-icon" name="not-a-sheen-icon" decorative={false} label="Unknown lazy icon" /><span>Unknown name</span></div>
     </section>
     <ThemeScope theme="vellum" class="loupe-icon-scope">
       <h2>Vellum scope</h2>

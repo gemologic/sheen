@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { assessServerPage, getPageRange, paginateClientRows, parsePagination, resetPagination, resizePagination, resolvePagination } from "./pagination.ts";
+import { assessCursorPage, assessServerPage, getPageRange, paginateClientRows, parseCursorPagination, parsePagination, parseServerPagination, resetPagination, resizePagination, resolvePagination } from "./pagination.ts";
+import type { CursorPageResult, CursorPagination } from "./pagination.ts";
 
 describe("table pagination contract", () => {
   it("defaults only the client to continuous display", () => {
@@ -51,5 +52,25 @@ describe("table pagination contract", () => {
     expect(assessServerPage({ pageIndex: 8, pageSize: 10 }, { rows: [], total: 23 })).toEqual({ kind: "refetch", pagination: { pageIndex: 2, pageSize: 10 }, total: 23 });
     expect(assessServerPage({ pageIndex: 8, pageSize: 10 }, { rows: [], total: 0 })).toMatchObject({ kind: "accepted", pagination: { pageIndex: 0, pageSize: 10 } });
     expect(() => assessServerPage({ pageIndex: 8, pageSize: 10 }, { rows: [1], total: 23 })).toThrow("Out-of-range");
+  });
+  it("validates cursor state and returns to the first page on reset or resize", () => {
+    const after: CursorPagination = { kind: "cursor", pageSize: 25, cursor: { direction: "after", value: "c25" } };
+    expect(parseServerPagination(after)).toEqual(after);
+    expect(Object.isFrozen(parseCursorPagination(after).cursor)).toBe(true);
+    for (const value of [{ kind: "cursor", pageSize: 0, cursor: null }, { kind: "cursor", pageSize: 5 }, { kind: "cursor", pageSize: 5, cursor: { direction: "sideways", value: "x" } }, { kind: "cursor", pageSize: 5, cursor: { direction: "after", value: "" } }, { kind: "cursor", pageSize: 5, cursor: null, pageIndex: 0 }]) expect(() => parseServerPagination(value)).toThrow();
+    expect(() => parsePagination(after)).toThrow();
+    expect(resetPagination(after)).toEqual({ kind: "cursor", pageSize: 25, cursor: null });
+    expect(resizePagination(after, 50)).toEqual({ kind: "cursor", pageSize: 50, cursor: null });
+  });
+  it("accepts bounded cursor pages and refetches the first page when a later page is empty", () => {
+    const first: CursorPagination = { kind: "cursor", pageSize: 2, cursor: null };
+    const later: CursorPagination = { kind: "cursor", pageSize: 2, cursor: { direction: "before", value: "c4" } };
+    const page: CursorPageResult<number> = { rows: [1, 2], nextCursor: "c2", previousCursor: null, total: { kind: "estimate", value: 40 } };
+    expect(assessCursorPage(first, page)).toEqual({ kind: "accepted", pagination: first, result: page });
+    expect(assessCursorPage(first, { rows: [], nextCursor: null, previousCursor: null }).kind).toBe("accepted");
+    expect(assessCursorPage(later, { rows: [], nextCursor: null, previousCursor: null })).toEqual({ kind: "refetch", pagination: first });
+    expect(() => assessCursorPage(first, { rows: [1, 2, 3], nextCursor: null, previousCursor: null })).toThrow("pageSize");
+    expect(() => assessCursorPage(first, { rows: [1], nextCursor: "", previousCursor: null })).toThrow("nextCursor");
+    expect(() => assessCursorPage(first, { rows: [1], nextCursor: null, previousCursor: null, total: { kind: "exact", value: -1 } })).toThrow("total");
   });
 });

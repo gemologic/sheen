@@ -237,6 +237,55 @@ importers:
         specifier: 8.3.8
         version: 8.3.8(@types/node@24.13.3)(jiti@2.7.0)(yaml@2.9.0)
 
+  examples/vite-spa:
+    dependencies:
+      '@gemologic/sheen':
+        specifier: workspace:*
+        version: link:../../packages/ui
+      '@gemologic/sheen-icons':
+        specifier: workspace:*
+        version: link:../../packages/icons
+      '@gemologic/sheen-patterns':
+        specifier: workspace:*
+        version: link:../../packages/patterns
+      '@gemologic/sheen-table':
+        specifier: workspace:*
+        version: link:../../packages/table
+      '@gemologic/sheen-tokens':
+        specifier: workspace:*
+        version: link:../../packages/tokens
+      '@solidjs/meta':
+        specifier: 0.29.4
+        version: 0.29.4(solid-js@1.9.19)
+      solid-js:
+        specifier: 1.9.19
+        version: 1.9.19
+    devDependencies:
+      '@eslint-community/eslint-plugin-eslint-comments':
+        specifier: 4.7.2
+        version: 4.7.2(eslint@10.10.0(jiti@2.7.0))
+      '@types/node':
+        specifier: 24.13.3
+        version: 24.13.3
+      eslint:
+        specifier: 10.10.0
+        version: 10.10.0(jiti@2.7.0)
+      eslint-plugin-sheen:
+        specifier: workspace:*
+        version: link:../../packages/eslint-plugin
+      typescript:
+        specifier: 6.0.3
+        version: 6.0.3
+      typescript-eslint:
+        specifier: 8.69.0
+        version: 8.69.0(eslint@10.10.0(jiti@2.7.0))(typescript@6.0.3)
+      vite:
+        specifier: 8.3.8
+        version: 8.3.8(@types/node@24.13.3)(jiti@2.7.0)(yaml@2.9.0)
+      vite-plugin-solid:
+        specifier: 2.11.14
+        version: 2.11.14(solid-js@1.9.19)(vite@8.3.8(@types/node@24.13.3)(jiti@2.7.0)(yaml@2.9.0))
+
   packages/charts:
     dependencies:
       d3-scale:

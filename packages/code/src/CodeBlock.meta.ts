@@ -31,7 +31,7 @@ export default defineMeta<CodeBlockProps>({
     code: '<CodeBlock code={source} language="ts" filename="ready.ts" label="Readiness example" lineNumbers showLanguage copyable wrapToggle highlightedLines={[1]} />',
   }],
   guidance: {
-    do: ["Precompute highlightCode in a server loader or build step when syntax color is required.", "Pass the exact accepted source to copy and highlight; retain the CodeBlock owner during refresh."],
+    do: ["Precompute highlightCode in a server loader or build step when syntax color is required, declaring only the grammars the page needs from @gemologic/sheen-code/languages.", "Pass the exact accepted source to copy and highlight; retain the CodeBlock owner during refresh."],
     dont: ["Do not run the highlighter during component render or replace accepted code while refreshing tokens.", "Do not use highlighted lines as the only indication of an error or status."],
   },
 });

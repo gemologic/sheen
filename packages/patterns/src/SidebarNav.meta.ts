@@ -3,7 +3,7 @@ import type { SidebarNavProps } from "./SidebarNav.tsx";
 export default defineMeta<SidebarNavProps>({
   name: "SidebarNav", package: "@gemologic/sheen-patterns", category: "application", summary: "Sectioned native navigation with nested disclosure groups and app-supplied active pathname.",
   props: {
-    sections: { description: "Named sections containing link/group entries with globally unique nonempty IDs. Links may supply a named action menu rendered beside the destination. Same-ID, same-kind entries retain mounted state across object replacement/reordering within their parent; moving between parents or changing kind creates a new owner." },
+    sections: { description: "Named sections containing link/group entries with globally unique nonempty IDs. Links may supply a named action menu rendered beside the destination. Groups start closed unless `defaultOpen` is true or they contain the current destination.Same-ID, same-kind entries retain mounted state across object replacement/reordering within their parent; moving between parents or changing kind creates a new owner." },
     pathname: { description: "Accepted router pathname. Exact matching is default; prefix matching respects path segments. Longest matching destination wins; ties use declaration order. External destinations are never automatically current." },
     headingLevel: { description: "Section heading level, default 3, independent of compact visual size." },
     collapsed: { description: "App-controlled icon rail. All nested destinations remain reachable; disclosure state returns when expanded. Labels remain accessible with tooltips. Supply icons; missing icons use the first label code point. Requires ThemeProvider in both modes." },

@@ -10,7 +10,7 @@ import { appendFilterCondition, listFilterConditions, removeFilterCondition, rep
 import type { FilterCondition, FilterConditionEntry } from "./filter-bar-state.ts";
 import { resolveTableMessages } from "./messages.ts";
 import type { TableMessages } from "./messages.ts";
-import type { DataTableFeatureContext, DataTableFeatureInstance } from "./data-table-features.tsx";
+import type { DataTableFeature, DataTableFeatureContext, DataTableFeatureInstance } from "./data-table-features.tsx";
 
 export interface FilterBarProps<Row extends object> {
   readonly columns: SheenColumns<Row>;
@@ -396,8 +396,7 @@ export function FilterBar<Row extends object>(props: FilterBarProps<Row>): JSX.E
   </div>;
 }
 
-/** DataTable toolbar integration for the filters declared by its column definitions. */
-export function filterBarFeature<Row extends object>(context: DataTableFeatureContext<Row>): DataTableFeatureInstance<Row> | undefined {
+function filterBar<Row extends object>(context: DataTableFeatureContext<Row>): DataTableFeatureInstance<Row> | undefined {
   if (context.filterColumns.length === 0) return undefined;
   const props = context.props;
   return {
@@ -408,3 +407,6 @@ export function filterBarFeature<Row extends object>(context: DataTableFeatureCo
     },
   };
 }
+
+/** DataTable toolbar integration for the filters declared by its column definitions, through the `filterBar` prop. */
+export const filterBarFeature: DataTableFeature<"filterBar"> = { id: "filterBar", create: filterBar };

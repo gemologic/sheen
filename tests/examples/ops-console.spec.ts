@@ -52,7 +52,11 @@ test("activating an account row opens its details pane", async ({ page }) => {
   page.on("pageerror", error => errors.push(error.message));
   await page.goto("/accounts");
   const row = page.locator('tbody tr[data-row-id="AC-0000001"]');
-  await row.locator("td").first().click();
+  // The live status only updates after hydration; activating before then reaches server markup with no handlers.
+  await expect(page.getByTestId("accounts-status")).toContainText("Live fields updated");
+  // A data cell, not the selection cell: clicking the checkbox focuses the checkbox rather than the row.
+  await row.getByRole("cell", { name: "Edsger Lamarr" }).click();
+  await expect(row).toBeFocused();
   await page.keyboard.press("Enter");
   await expect(page.getByRole("complementary").getByText("Owner")).toBeVisible();
   expect(errors).toEqual([]);

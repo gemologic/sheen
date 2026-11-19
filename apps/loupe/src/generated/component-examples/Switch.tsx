@@ -2,20 +2,20 @@
 import { Show } from "solid-js";
 import type { ComponentProps } from "solid-js";
 import { Dynamic } from "solid-js/web";
-import { ThemeProvider, ThemeScope, useTheme, defaultThemeState, resolveThemeState, readThemeState, createThemeScript, createKeyboardHydrationScript, Button, buttonVariants, Input, Dialog, Drawer, Sheet, AlertDialog, ConfirmDialog, createConfirm, Tooltip, createShortcutRegistry, ShortcutProvider, useShortcut, useShortcutLabel, usePendingShortcut, useShortcutBindings, useShortcutCommands, formatShortcut, ShortcutSheet, ShortcutPending, ShortcutScope, LinkTooltip, Popover, DropdownMenu, ContextMenu, CommandPalette, commandPaletteFilter, cn, flashChange, useOnlineStatus, useIsWindowFocused, optimistic, createToaster, Toast, Toaster, englishMessages, useNumberFormatter, useDateFormatter, Stack, Row, Cluster, Grid, Container, Center, Spacer, Text, Heading, Code, Kbd, Prose, Glyph, glyphNames, createMediaQuery, useBreakpoint, breakpointNames, breakpointQuery, breakpoints, List, ListItem, NumberText, Badge, Tag, Surface, Card, Separator, Alert, Banner, Callout, DescriptionList, DescriptionTerm, DescriptionDetails, Skeleton, EmptyState, Spinner, Field, InputGroup, Form, FormSection, FormActions, SearchInput, Textarea, EditableTextField, Checkbox, Switch, CheckboxGroup, RadioGroup, SegmentedControl, TagInput, FileDropzone, ActivityTimeline, Stepper, Select, Combobox, MultiCombobox, Table, TableCaption, TableHead, TableBody, TableFoot, TableRow, TableHeaderCell, TableCell, Breadcrumb, Collapsible, Accordion, AccordionItem, Tabs, NavList, NavItem, ScrollArea, ButtonGroup, IconButton, Link, Pagination, Avatar, AvatarGroup, Progress, Meter, NumberField, Slider, RangeSlider, Tree, TreeItem, Resizable, ResizablePanel, ResizableHandle, PromptInput, Message, Conversation, StreamingText } from "@gemologic/sheen";
+import { ThemeProvider, ThemeScope, useTheme, defaultThemeState, resolveThemeState, readThemeState, createThemeScript, createKeyboardHydrationScript, Button, buttonVariants, Input, Dialog, Drawer, Sheet, AlertDialog, ConfirmDialog, createConfirm, Tooltip, createShortcutRegistry, ShortcutProvider, useShortcut, useShortcutLabel, usePendingShortcut, useShortcutBindings, useShortcutCommands, formatShortcut, ShortcutSheet, ShortcutPending, ShortcutScope, LinkTooltip, TooltipTrigger, Popover, DropdownMenu, ContextMenu, CommandPalette, commandPaletteFilter, cn, flashChange, useOnlineStatus, useIsWindowFocused, optimistic, createToaster, Toast, Toaster, englishMessages, useNumberFormatter, useDateFormatter, Stack, Row, Cluster, Grid, Container, Center, Spacer, Text, Heading, Code, Kbd, Prose, Glyph, glyphNames, createMediaQuery, useBreakpoint, breakpointNames, breakpointQuery, breakpoints, List, ListItem, NumberText, Badge, Tag, Surface, Card, Separator, Alert, Banner, Callout, DescriptionList, DescriptionTerm, DescriptionDetails, Skeleton, EmptyState, Spinner, Field, InputGroup, Form, FormSection, FormActions, SearchInput, Textarea, EditableTextField, Checkbox, Switch, CheckboxGroup, RadioGroup, SegmentedControl, TagInput, FileDropzone, ActivityTimeline, Stepper, Select, Combobox, MultiCombobox, Table, TableCaption, TableHead, TableBody, TableFoot, TableRow, TableHeaderCell, TableCell, Breadcrumb, Collapsible, Accordion, AccordionItem, Tabs, NavList, NavItem, ScrollArea, ButtonGroup, IconButton, Link, Pagination, Avatar, AvatarGroup, Progress, Meter, NumberField, Slider, RangeSlider, Tree, TreeItem, Resizable, ResizablePanel, ResizableHandle, PromptInput, Message, Conversation, StreamingText } from "@gemologic/sheen";
 
 import type { PlaygroundValue } from "../component-docs/index.ts";
 import type { ComponentExampleProps } from "./index.ts";
 
 function Playground(props: { readonly values: Readonly<Record<string, PlaygroundValue>> }) {
   return <Show keyed when={props.values}>{currentValues => {
-      const value0 = currentValues["label"];
-      const controlled0 = typeof value0 === "string" ? value0 : undefined;
-      const value1 = currentValues["checked"];
-      const controlled1 = typeof value1 === "boolean" ? value1 : undefined;
+      const value0 = currentValues["checked"];
+      const controlled0 = typeof value0 === "boolean" ? value0 : undefined;
+      const value1 = currentValues["label"];
+      const controlled1 = typeof value1 === "string" ? value1 : undefined;
     const controlledProps = {
-        ...(controlled0 === undefined ? {} : { "label": controlled0 }),
-        ...(controlled1 === undefined ? {} : { "checked": controlled1 })
+        ...(controlled0 === undefined ? {} : { "checked": controlled0 }),
+        ...(controlled1 === undefined ? {} : { "label": controlled1 })
     } satisfies Partial<ComponentProps<typeof Switch>>;
     return (<Switch label="Live updates" defaultChecked description="Refresh this view automatically."  {...controlledProps}/>);
   }}</Show>;
@@ -25,6 +25,10 @@ const examples = [
   function Example0() {
     
     return (<Switch label="Live updates" defaultChecked description="Refresh this view automatically." />);
+  },
+  function Example1() {
+    
+    return (<Switch aria-label="Enable alerts for Production" defaultChecked />);
   }
 ];
 

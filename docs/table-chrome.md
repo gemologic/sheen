@@ -43,7 +43,7 @@ Pagination and data ownership are independent:
 - Use client pagination when page landmarks, shareable page state, or deliberate review batches help even though all data is local.
 - Prefer numbered server pagination for large, expensive, frequently changing, or authorization-sensitive remote results. Apply filtering and a deterministic total order on the server before slicing each page.
 - Use continuous server mode only when one response is complete and explicitly bounded. `rows.length` must equal `total`; DataTable never crawls hidden pages.
-- Treat cursor/infinite loading as a separate future contract, not as `pagination={false}`.
+- Use cursor server pagination for after/before cursor APIs. Treat infinite loading as a separate future contract, not as `pagination={false}`.
 
 There is no honest universal row-count cutoff. Decide from serialized payload size, row width, browser transformation cost, freshness, interaction design, and backend cost. Stable row IDs are mandatory in every mode. Client export and client footers operate over the complete accepted transformed view, not the visible page. Server export and full-query aggregates remain app/server responsibilities.
 

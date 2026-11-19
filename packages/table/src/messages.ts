@@ -1,6 +1,6 @@
 export const englishTableMessages = Object.freeze({
   loading: "Loading", refreshing: "Refreshing, showing existing results", noResults: "No results", retry: "Retry", retryFailed: "Retry failed. Try again.", serverError: "Something went wrong",
-  searchTable: "Search {caption}", searchMatchMode: "Search match mode", searchRanked: "Smart", searchExact: "Exact", tableShortcuts: "Tables", tableControls: "{caption} table controls", resultCountOne: "{count} result", resultCount: "{count} results",
+  searchTable: "Search {caption}", searchMatchMode: "Search match mode", searchRanked: "Smart", searchExact: "Exact", tableShortcuts: "Tables", tableControls: "{caption} table controls", resultCountOne: "{count} result", resultCount: "{count} results", resultCountEstimate: "About {count} results", resultCountAtLeast: "{count}+ results", cursorPageRows: "Rows on this page: {count}",
   previousResults: "Previous results", clearFilters: "Clear filters", clearSearchAndFilters: "Clear search and filters", selectAll: "Select all matching", selectPage: "Select this page", selectRow: "Select row {id}", clearSelection: "Clear selection", selectionActions: "Selection actions", selectedCount: "{count} selected",
   cardView: "{caption}, card view", rowActions: "Actions for row {id}",
   sort: "Sort", sortColumn: "Sort by {column}", sortedAscending: "ascending", sortedDescending: "descending", notSorted: "not sorted", sortPriority: "priority {position} of {count}",

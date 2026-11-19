@@ -2,7 +2,7 @@
 import { Show } from "solid-js";
 import type { ComponentProps } from "solid-js";
 import { Dynamic } from "solid-js/web";
-import { DataTable, FilterBar, QueryBuilder, parsePagination, resolvePagination, resetPagination, resizePagination, getPageRange, paginateClientRows, assessServerPage, createTableRequests, parseFilter, serializeFilter, deserializeFilter, queryBuilderFilterColumns, defaultQueryRule, queryNodeAt, replaceQueryNode, appendQueryChild, removeQueryNode, moveQueryNode, toggleQueryNegation, listFilterConditions, replaceFilterCondition, removeFilterCondition, appendFilterCondition, removeFilterColumnConditions, compileFilter, filterClientRows, parseSorting, sortClientRows, countClientFacets, formatSearchQuery, parseSearchQuery, searchClientRows, createDebouncedSearch, createClientView, parseClientViewState, changeClientViewState, parseTableState, serializeState, deserializeState, changeTableState, orderColumnStates, placeColumn, moveColumn, canMoveColumn, createTableSelection, createClientExport, selectClientRows, createServerExport, createCellEdit, defineColumns, createRowIdentity, groupClientRows, normalizeServerGroups, createRowHierarchy, createTableUrlState, createSavedViews, englishTableMessages, resolveTableMessages } from "@gemologic/sheen-table";
+import { DataTable, createDataTable, groupingFeature, hierarchyFeature, cellEditingFeature, FilterBar, filterBarFeature, QueryBuilder, parsePagination, parseCursorPagination, parseServerPagination, resolvePagination, resetPagination, resizePagination, getPageRange, paginateClientRows, assessServerPage, assessCursorPage, createTableRequests, parseFilter, serializeFilter, deserializeFilter, queryBuilderFilterColumns, defaultQueryRule, queryNodeAt, replaceQueryNode, appendQueryChild, removeQueryNode, moveQueryNode, toggleQueryNegation, listFilterConditions, replaceFilterCondition, removeFilterCondition, appendFilterCondition, removeFilterColumnConditions, compileFilter, filterClientRows, parseSorting, sortClientRows, countClientFacets, formatSearchQuery, parseSearchQuery, searchClientRows, createDebouncedSearch, createClientView, parseClientViewState, changeClientViewState, parseTableState, serializeState, deserializeState, changeTableState, orderColumnStates, placeColumn, moveColumn, canMoveColumn, createTableSelection, createClientExport, selectClientRows, createServerExport, createCellEdit, defineColumns, createRowIdentity, groupClientRows, normalizeServerGroups, createRowHierarchy, createTableUrlState, createSavedViews, englishTableMessages, resolveTableMessages } from "@gemologic/sheen-table";
 
 import type { PlaygroundValue } from "../component-docs/index.ts";
 import type { ComponentExampleProps } from "./index.ts";
@@ -32,6 +32,22 @@ const rows = [{ id: "one", name: "Alpha", amount: 12 }, { id: "two", name: "Beta
 ]);
 const rows = [{ id: "one", name: "Alpha", status: "Active" }, { id: "two", name: "Beta", status: "Paused" }];
     return (<DataTable data={rows} columns={columns} getRowId={row => row.id} caption="Active accounts" summarizeColumns={["status"]} filter={{ kind: "enum", column: "status", operator: "in", values: ["Active"] }} initialViewportHeight={160} />);
+  },
+  function Example2() {
+    const columns = defineColumns<{ readonly id: string; readonly name: string }>([
+  { id: "name", header: "Name", accessor: row => row.name, sort: "text" },
+]);
+const page = [{ id: "a1", name: "Alpha" }, { id: "a2", name: "Beta" }];
+    return (<DataTable mode="server" columns={columns} getRowId={row => row.id} caption="Accounts" pagination={{ kind: "cursor", pageSize: 25, cursor: null }} onStateChange={async state => ({ rows: page, nextCursor: state.pagination.cursor ? null : "a2", previousCursor: state.pagination.cursor ? "a1" : null, total: { kind: "estimate", value: 2 } })} initialViewportHeight={160} />);
+  },
+  function Example3() {
+    const FilteredTable = createDataTable([filterBarFeature]);
+const columns = defineColumns<{ readonly id: string; readonly name: string; readonly status: string }>([
+  { id: "name", header: "Name", accessor: row => row.name, search: true },
+  { id: "status", header: "Status", accessor: row => row.status, filter: { type: "enum", options: ["Active", "Paused"] } },
+]);
+const rows = [{ id: "one", name: "Alpha", status: "Active" }, { id: "two", name: "Beta", status: "Paused" }];
+    return (<FilteredTable data={rows} columns={columns} getRowId={row => row.id} caption="Accounts" pagination={false} initialViewportHeight={160} />);
   }
 ];
 

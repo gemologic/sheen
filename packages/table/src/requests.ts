@@ -1,7 +1,7 @@
-import { assessServerPage, resolvePagination } from "./pagination.ts";
-import type { PageResult, TablePagination } from "./pagination.ts";
+import { assessCursorPage, assessServerPage, parseServerPagination } from "./pagination.ts";
+import type { CursorPageAssessment, CursorPageResult, PageResult, ServerPageAssessment, ServerPagination } from "./pagination.ts";
 
-export interface TableRequestState { readonly pagination: TablePagination }
+export interface TableRequestState { readonly pagination: ServerPagination }
 export interface TableRequestSnapshot<State, Result> {
   readonly accepted: { readonly state: State; readonly result: Result } | null;
   readonly requested: State | null;
@@ -11,16 +11,30 @@ export interface TableRequestSnapshot<State, Result> {
 export type TableRequestOutcome = "accepted" | "failed" | "superseded" | "disposed";
 export interface InitialTableResult<State, Result> { readonly state: State; readonly result: Result }
 
+function cursorResult(result: PageResult<unknown> | CursorPageResult<unknown>): result is CursorPageResult<unknown> {
+  return "nextCursor" in result && "previousCursor" in result;
+}
+
+/** The pagination kind selects the response contract; a mismatched shape fails instead of being coerced. */
+function assess(pagination: ServerPagination, result: PageResult<unknown> | CursorPageResult<unknown>): ServerPageAssessment<unknown> | CursorPageAssessment<unknown> {
+  const parsed = parseServerPagination(pagination);
+  if (parsed !== false && "kind" in parsed) {
+    if (!cursorResult(result)) throw new Error("Cursor pagination results require nextCursor and previousCursor");
+    return assessCursorPage(parsed, result);
+  }
+  if (cursorResult(result)) throw new Error("Numbered and complete server results must report total instead of cursors");
+  return assessServerPage(parsed, result);
+}
+
 /** Framework-neutral request ownership. Read snapshots before/after awaiting request in the UI adapter. */
-export function createTableRequests<State extends TableRequestState, Result extends PageResult<unknown>>(
+export function createTableRequests<State extends TableRequestState, Result extends PageResult<unknown> | CursorPageResult<unknown>>(
   onStateChange: (state: State, signal: AbortSignal) => Promise<Result>,
   initial?: InitialTableResult<State, Result>,
 ) {
   let snapshot: TableRequestSnapshot<State, Result> = { accepted: null, requested: null, pending: false, error: null };
   if (initial) {
     const state = structuredClone(initial.state);
-    resolvePagination("server", state.pagination);
-    const assessment = assessServerPage(state.pagination, initial.result);
+    const assessment = assess(state.pagination, initial.result);
     if (assessment.kind !== "accepted") throw new Error("Initial table results must describe a valid accepted page, not a page requiring refetch");
     snapshot = { accepted: { state: { ...state, pagination: assessment.pagination }, result: initial.result }, requested: null, pending: false, error: null };
   }
@@ -42,13 +56,13 @@ export function createTableRequests<State extends TableRequestState, Result exte
     try {
       // Separate transport state from both the caller and the publicly readable snapshot.
       let state: State = structuredClone(value);
-      resolvePagination("server", state.pagination);
+      parseServerPagination(state.pagination);
       snapshot = { ...snapshot, requested: structuredClone(state), pending: true, error: null };
       for (let attempt = 0; attempt < 4; attempt++) {
         const result = await onStateChange(structuredClone(state), current.signal);
         if (disposed) return "disposed";
         if (token !== sequence) return "superseded";
-        const assessment = assessServerPage(state.pagination, result);
+        const assessment = assess(state.pagination, result);
         state = { ...state, pagination: assessment.pagination };
         if (assessment.kind === "accepted") {
           snapshot = { accepted: { state, result }, requested: null, pending: false, error: null };

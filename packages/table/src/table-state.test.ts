@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { deserializeState, parseTableState, serializeState } from "./table-state.ts";
-import type { TableState, TableStateSchema } from "./table-state.ts";
+import type { CursorTableStateSchema, TableState, TableStateSchema } from "./table-state.ts";
+import type { CursorPagination } from "./pagination.ts";
 
 const schema: TableStateSchema = { columns: ["name", "amount"], filterColumns: [{ id: "name", type: "text" }], sortColumns: [{ id: "amount", type: "number" }] };
 const state: TableState = {
@@ -9,7 +10,22 @@ const state: TableState = {
   columns: [{ id: "amount", visible: false, width: 123.5, pin: "end" }, { id: "name", visible: true, width: null, pin: "start" }],
 };
 
+const cursorSchema: CursorTableStateSchema = { ...schema, pagination: "cursor" };
+const cursorState: TableState<CursorPagination> = { ...state, pagination: { kind: "cursor", pageSize: 50, cursor: { direction: "after", value: "token-7" } } };
+
 describe("versioned table state", () => {
+  it("persists cursor state as its first page and never stores the live token", () => {
+    const serialized = serializeState(cursorState, cursorSchema);
+    expect(serialized).not.toContain("token-7");
+    expect(deserializeState(serialized, cursorSchema)).toEqual({ ...cursorState, pagination: { kind: "cursor", pageSize: 50, cursor: null } });
+    expect(parseTableState(cursorState, cursorSchema)).toEqual(cursorState);
+  });
+  it("fails closed on stored cursor tokens and mismatched pagination kinds", () => {
+    const stored = JSON.stringify({ version: 1, state: cursorState });
+    expect(() => deserializeState(stored, cursorSchema)).toThrow("cursor: null");
+    expect(() => deserializeState(serializeState(state, schema), cursorSchema)).toThrow();
+    expect(() => deserializeState(serializeState(cursorState, cursorSchema), schema)).toThrow();
+  });
   it("round trips complete query and column layout through a URL parameter", () => {
     const serialized = serializeState(state, schema);
     const parameters = new URLSearchParams({ table: serialized });

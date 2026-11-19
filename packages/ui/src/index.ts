@@ -35,6 +35,8 @@ export type { ShortcutProviderProps } from "./primitives/ShortcutProvider.tsx";
 export type { PendingShortcut, ShortcutAction, ShortcutBinding, ShortcutDefinition, ShortcutInput, ShortcutRegistryOptions } from "./utils/shortcut-registry.ts";
 export { LinkTooltip } from "./primitives/LinkTooltip.tsx";
 export type { LinkTooltipProps } from "./primitives/LinkTooltip.tsx";
+export { TooltipTrigger } from "./primitives/TooltipTrigger.tsx";
+export type { TooltipTriggerProps, TooltipTriggerBindings } from "./primitives/TooltipTrigger.tsx";
 export type { TooltipProps } from "./primitives/Tooltip.tsx";
 export { Popover } from "./primitives/Popover.tsx";
 export type { PopoverProps } from "./primitives/Popover.tsx";

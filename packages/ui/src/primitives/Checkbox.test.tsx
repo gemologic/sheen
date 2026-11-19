@@ -24,4 +24,16 @@ describe("Checkbox server contract", () => {
     expect(html).toContain('data-owner="table"');
     expect(input).toContain('name=""');
   });
+  it("names an unlabeled native input with aria-label or aria-labelledby and renders no empty label", () => {
+    const named = renderToString(() => <Checkbox aria-label="Select invoice 1042" />);
+    expect(named.match(/<input\b[^>]*>/)?.[0]).toContain('aria-label="Select invoice 1042"');
+    expect(named).not.toContain("<label");
+    const referenced = renderToString(() => <Checkbox aria-labelledby="invoice-1042" />);
+    expect(referenced.match(/<input\b[^>]*>/)?.[0]).toContain('aria-labelledby="invoice-1042"');
+    // @ts-expect-error An accessible name source is required.
+    const unnamed = () => <Checkbox name="selected" />;
+    // @ts-expect-error Naming sources are mutually exclusive.
+    const ambiguous = () => <Checkbox label="Visible" aria-label="Hidden" />;
+    expect([unnamed, ambiguous]).toHaveLength(2);
+  });
 });

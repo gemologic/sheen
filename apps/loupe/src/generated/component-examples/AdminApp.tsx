@@ -22,6 +22,10 @@ const examples = [
   function Example0() {
     
     return (<ThemeProvider><AdminApp label="Operations" pathname="/orders" product={{ name: "Northstar", href: "/" }} primaryNavigation={{ id: "primary", label: "Primary", items: [{ kind: "link", id: "orders", label: "Orders", href: "/orders" }] }}><p>Application content</p></AdminApp></ThemeProvider>);
+  },
+  function Example1() {
+    
+    return (<ThemeProvider><AdminApp label="Operations" pathname="/orders" primaryNavigation={[{ id: "work", label: "Work", items: [{ kind: "link", id: "orders", label: "Orders", href: "/orders" }] }, { id: "data", label: "Data", items: [{ kind: "link", id: "exports", label: "Exports", href: "/exports" }] }, { id: "billing", label: "Billing", items: [{ kind: "link", id: "invoices", label: "Invoices", href: "/invoices" }] }]} secondaryNavigation={{ id: "support", label: "Support", items: [{ kind: "link", id: "help", label: "Help", href: "/help" }] }}><p>Application content</p></AdminApp></ThemeProvider>);
   }
 ];
 

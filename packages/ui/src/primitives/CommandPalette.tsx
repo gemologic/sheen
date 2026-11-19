@@ -12,6 +12,10 @@ export interface CommandPaletteCommand {
   readonly group: string;
   readonly keywords?: readonly string[];
   readonly disabled?: boolean;
+  /** Renders decorative leading content, hidden from assistive technology. */
+  readonly icon?: () => JSX.Element;
+  /** Renders trailing content such as a shortcut hint or badge, exposed as the option's description. */
+  readonly trailing?: () => JSX.Element;
   readonly run: () => void | Promise<void>;
 }
 
@@ -208,9 +212,14 @@ export function CommandPalette(props: CommandPaletteProps): JSX.Element {
   };
   const item = (command: CommandPaletteCommand) => {
     const binding = () => shortcuts.bindings().find(value => `shortcut:${value.id}` === command.id);
+    const id = createUniqueId();
+    const described = () => command.trailing !== undefined || binding() !== undefined;
     return <Command.Item value={`${command.id} ${command.label}`} keywords={[...(command.keywords ?? [])]}
-      {...(command.disabled === undefined ? {} : { disabled: command.disabled })} onSelect={() => select(command)}>
-      <span>{command.label}</span><Show when={binding()}>{value => <Kbd>{value().displayKeys}</Kbd>}</Show>
+      {...(command.disabled === undefined ? {} : { disabled: command.disabled })} onSelect={() => select(command)}
+      aria-labelledby={`${id}-label`} aria-describedby={described() ? `${id}-trailing` : undefined}>
+      <Show when={command.icon !== undefined}><span class="sheen-command-icon" aria-hidden="true">{command.icon?.()}</span></Show>
+      <span id={`${id}-label`} class="sheen-command-label">{command.label}</span>
+      <Show when={described()}><span id={`${id}-trailing`} class="sheen-command-trailing">{command.trailing?.()}<Show when={binding()}>{value => <Kbd>{value().displayKeys}</Kbd>}</Show></span></Show>
     </Command.Item>;
   };
 

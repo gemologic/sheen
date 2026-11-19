@@ -7,11 +7,15 @@ export default defineMeta<PopoverProps>({
     description: { description: "Optional associated supporting text." }, open: { description: "App-owned open state." },
     defaultOpen: { description: "Uncontrolled initial state; portal content mounts when its theme target is ready.", default: false },
     onOpenChange: { description: "Requested open-state changes; controlled owners may reject them." },
+    disabled: { description: "Natively disables the trigger, like Button, so it leaves the tab order and cannot request opening. An already open popover still closes normally.", default: false, control: { kind: "boolean" } },
     class: { description: "Additional content classes." },
     placement: { description: "Preferred logical side and alignment, with viewport collision handling.", default: "bottom", control: { kind: "select", values: ["top", "top-start", "top-end", "bottom", "bottom-start", "bottom-end", "left", "right"] } },
   },
   tokens: ["--sheen-color-bg-raised", "--sheen-color-focus-ring", "--sheen-duration-fast", "--sheen-elevation-overlay"],
   a11y: { role: "dialog", keyboard: ["Tab", "Shift+Tab", "Enter", "Space", "Escape"] },
-  examples: [{ title: "View options", code: '<Popover title="View options" trigger="View options"><Checkbox label="Show archived" /></Popover>' }],
+  examples: [
+    { title: "View options", code: '<Popover title="View options" trigger="View options"><Checkbox label="Show archived" /></Popover>' },
+    { title: "Unavailable options", code: '<Popover title="Export options" trigger="Export options" disabled>Choose a format.</Popover>' },
+  ],
   guidance: { do: ["Use a stable title and retain owner data while refreshing content."], dont: ["Do not use a popover when the workflow requires a modal decision."] },
 });

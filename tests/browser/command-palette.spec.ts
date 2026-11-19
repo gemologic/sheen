@@ -37,3 +37,25 @@ test("CommandPalette retains accepted remote results until an abortable refresh 
     await expect(page.getByRole("option", { name: "Remote remote result" })).toBeVisible();
   } finally { release(); }
 });
+
+test("CommandPalette entries name options by label, hide icons, and describe trailing content", async ({ page }) => {
+  await page.goto("/command-palette");
+  await expect(page.locator('[data-sheen-portal="root"]')).toHaveAttribute("data-sheen-ready", "true");
+  await page.getByRole("button", { name: "Open palette" }).click();
+  const search = page.getByRole("combobox", { name: "Command palette" });
+  await search.fill("create");
+  const create = page.getByRole("option", { name: "Create project", exact: true });
+  await expect(create).toHaveAccessibleDescription("New");
+  await expect(create.locator(".sheen-command-icon")).toHaveAttribute("aria-hidden", "true");
+  await expect(create.locator(".sheen-command-icon svg")).toHaveCount(1);
+  await search.fill("open settings");
+  const settings = page.getByRole("option", { name: "Open settings", exact: true });
+  await expect(settings).toHaveAccessibleDescription("G S");
+  await search.fill("");
+  const jump = page.getByRole("option", { name: "Jump to inbox", exact: true });
+  await expect(jump).toHaveAccessibleDescription(/\+J$/);
+  await search.fill("create project");
+  await expect(create).toHaveAttribute("aria-selected", "true");
+  await page.keyboard.press("Enter");
+  await expect(page.getByRole("status", { name: "Selected command" })).toHaveText("new-project");
+});

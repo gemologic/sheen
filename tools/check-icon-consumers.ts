@@ -39,7 +39,7 @@ try {
   const searchBody = "m229.66 218.34l-50.07-50.06";
   const settingsBody = "M128 80a48 48 0 1 0 48 48";
 
-  async function buildFixture(name: "icon-literal" | "icon-static" | "icon-dynamic", plugin = false): Promise<{ readonly code: string; readonly retained: readonly string[] }> {
+  async function buildFixture(name: "icon-literal" | "icon-static" | "icon-dynamic" | "icon-lazy", plugin = false): Promise<{ readonly code: string; readonly entry: string; readonly chunks: number; readonly retained: readonly string[] }> {
     const entry = join(temporary, `${name}.tsx`);
     await cp(new URL(`tests/consumers/${name}.tsx`, root), entry);
     const output = await build({
@@ -53,6 +53,8 @@ try {
     const outputChunks = (Array.isArray(output) ? output : [output]).flatMap(result => "output" in result ? result.output : []).filter(item => item.type === "chunk");
     return {
       code: outputChunks.map(chunk => chunk.code).join("\n"),
+      entry: outputChunks.filter(chunk => chunk.isEntry).map(chunk => chunk.code).join("\n"),
+      chunks: outputChunks.length,
       retained: outputChunks.flatMap(chunk => Object.entries(chunk.modules).filter(([, details]) => details.renderedLength > 0).map(([id]) => id)),
     };
   }
@@ -71,6 +73,13 @@ try {
   assert.ok(dynamic.code.includes(searchBody) && dynamic.code.includes(settingsBody), "DynamicIcon must make its full-registry cost explicit");
   assert.ok(dynamic.code.length > literal.code.length * 5, "dynamic registry should be materially larger than one literal icon");
 
+  // LazyIcon keeps every glyph behind its own dynamic import; only the loader map and runtime reach the entry chunk.
+  const lazy = await buildFixture("icon-lazy");
+  assert.ok(!lazy.entry.includes(searchBody) && !lazy.entry.includes(settingsBody), "LazyIcon entry must not inline glyph data");
+  assert.ok(lazy.code.includes(searchBody) && lazy.code.includes(settingsBody), "LazyIcon must emit a split chunk per glyph");
+  assert.ok(lazy.chunks > 257, "LazyIcon must split one chunk per semantic name");
+  assert.ok(!lazy.retained.some(id => /\/generated\/catalog\.js$|\/registry\.js$/.test(id)), "LazyIcon must not retain the generated catalog or registry");
+
   const invalid = join(temporary, "icon-unknown.tsx");
   await cp(new URL("tests/consumers/icon-unknown.tsx", root), invalid);
   await assert.rejects(() => build({
@@ -82,11 +91,12 @@ try {
   }), /Unknown semantic icon/);
 
   const gzip = (code: string): number => gzipSync(code).byteLength;
-  const sizes = { literal: gzip(literal.code), static: gzip(staticIcon.code), dynamic: gzip(dynamic.code) };
+  const sizes = { literal: gzip(literal.code), static: gzip(staticIcon.code), dynamic: gzip(dynamic.code), lazy: gzip(lazy.entry) };
   assert.ok(sizes.literal < 1_500 && sizes.static < 1_500, "a single icon import must stay under 1,500 bytes gzip");
   assert.ok(sizes.dynamic < 65_000, "DynamicIcon with the complete registry must stay under 65,000 bytes gzip");
+  assert.ok(sizes.lazy < 9_000, "LazyIcon entry with the loader map and lucide aliases must stay under 9,000 bytes gzip");
 
-  process.stdout.write(`Icon consumers passed (gzip): literal=${sizes.literal}B, static=${sizes.static}B, dynamic=${sizes.dynamic}B\n`);
+  process.stdout.write(`Icon consumers passed (gzip): literal=${sizes.literal}B, static=${sizes.static}B, dynamic=${sizes.dynamic}B, lazy entry=${sizes.lazy}B\n`);
 } finally {
   process.chdir(originalWorkingDirectory);
   await rm(temporary, { recursive: true, force: true });

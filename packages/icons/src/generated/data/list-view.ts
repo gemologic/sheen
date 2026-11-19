@@ -3,3 +3,4 @@ import type { IconData } from "../../runtime.tsx";
 
 export const radixListView = Object.freeze({"set":"radix","body":"<path fill=\"currentColor\" d=\"M14 12.85v1.3H1v-1.3zm0-4v1.3H1v-1.3zm0-4v1.3H1v-1.3zm0-4v1.3H1V.85z\"/>","width":15,"height":15}) satisfies IconData;
 export const phosphorListView = Object.freeze({"set":"phosphor","body":"<path fill=\"currentColor\" d=\"M88 64a8 8 0 0 1 8-8h120a8 8 0 0 1 0 16H96a8 8 0 0 1-8-8m128 56H96a8 8 0 0 0 0 16h120a8 8 0 0 0 0-16m0 64H96a8 8 0 0 0 0 16h120a8 8 0 0 0 0-16M56 56H40a8 8 0 0 0 0 16h16a8 8 0 0 0 0-16m0 64H40a8 8 0 0 0 0 16h16a8 8 0 0 0 0-16m0 64H40a8 8 0 0 0 0 16h16a8 8 0 0 0 0-16\"/>","width":256,"height":256}) satisfies IconData;
+export const glyphs: readonly IconData[] = [radixListView, phosphorListView];

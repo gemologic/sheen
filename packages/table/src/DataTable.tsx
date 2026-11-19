@@ -1,10 +1,11 @@
 import { Button, Checkbox, ContextMenu, DropdownMenu, EmptyState, Glyph, Pagination, SearchInput, Skeleton, flashChange, useTheme } from "@gemologic/sheen";
-import type { MenuItem, ShortcutAction } from "@gemologic/sheen";
+import type { GlyphName, MenuItem, ShortcutAction } from "@gemologic/sheen";
 import { createVirtualizer } from "@tanstack/solid-virtual";
 import type { VirtualItem } from "@tanstack/solid-virtual";
 import { For, Index, Show, createComputed, createEffect, createMemo, createSignal, createUniqueId, on, onCleanup, onMount, untrack } from "solid-js";
 import type { Accessor, JSX, Signal } from "solid-js";
-import { changeTableState } from "./table-state-changes.ts";
+import { changeTableStateWith } from "./table-state-changes.ts";
+import type { TableStateChange } from "./table-state-changes.ts";
 import { canMoveColumn, moveColumn, orderColumnStates, placeColumn } from "./column-layout.ts";
 import { constrainedColumnValues, summarizedColumns } from "./constrained-columns.ts";
 import type { ColumnDropPlacement, ColumnMoveDirection } from "./column-layout.ts";
@@ -14,14 +15,14 @@ import { createClientView } from "./client-view.ts";
 import type { ClientView } from "./client-view.ts";
 import { formatSearchQuery, parseSearchQuery } from "./search.ts";
 import type { SearchMode } from "./search.ts";
-import { getPageRange, resolvePagination } from "./pagination.ts";
-import type { PageResult, TablePagination } from "./pagination.ts";
+import { getPageRange, parseServerPagination, resetPagination, resolvePagination } from "./pagination.ts";
+import type { CursorPageResult, CursorPagination, CursorPosition, CursorTotal, PageResult, ServerPagination, TablePagination } from "./pagination.ts";
 import type { ServerRowGroup } from "./grouping.ts";
 import { createTableRequests } from "./requests.ts";
 import type { TableRequestOutcome } from "./requests.ts";
 import { createTableSelection } from "./selection.ts";
 import type { BulkSelection } from "./selection.ts";
-import { parseTableState, serializeState } from "./table-state.ts";
+import { parseTableStateWith } from "./table-state.ts";
 import type { ColumnState, TableState } from "./table-state.ts";
 import { filterBarFeature } from "./FilterBar.tsx";
 import { DataTableToolbar } from "./DataTableToolbar.tsx";
@@ -30,18 +31,27 @@ import { parseFilter, serializeFilter } from "./filter.ts";
 import type { FilterNode } from "./filter.ts";
 import type { FilterDateEditor } from "./FilterBar.tsx";
 import { selectClientRows } from "./selection-client.ts";
-import { createServerExport } from "./server-export.ts";
+import { createServerExportWith } from "./server-export.ts";
 import type { ServerExportOutcome, TableExportRequest } from "./server-export.ts";
 import type { CellCommitRequest, CellCommitResult } from "./cell-edit.ts";
 import { resolveTableMessages } from "./messages.ts";
 import { cellEditingFeature, createSnapshotSignal, createStableRows, defaultCell, groupingFeature, hierarchyFeature } from "./data-table-features.tsx";
-import type { DataTableCellAttributes, DataTableCellBinding, DataTableFeature, DataTableFeatureContext, DataTablePresentation, DisplayDataRow, DisplayGroupRow, DisplayRow, StableRow } from "./data-table-features.tsx";
+import type { DataTableCellAttributes, DataTableCellBinding, DataTableFeature, DataTableFeatureContext, DataTableFeatureId, DataTablePresentation, DisplayDataRow, DisplayGroupRow, DisplayRow, StableRow } from "./data-table-features.tsx";
 
 export interface DataTableResult<Row extends object> extends PageResult<Row> {
   readonly facets?: Readonly<Record<string, Readonly<Record<string, number>>>>;
   /** Required for delegated server grouping; describes the accepted page with full-group totals. */
   readonly groups?: readonly ServerRowGroup[];
 }
+
+/** One cursor page. Either cursor may be null; total is optional and may be an estimate or lower bound. */
+export interface DataTableCursorResult<Row extends object> extends CursorPageResult<Row> {
+  readonly facets?: Readonly<Record<string, Readonly<Record<string, number>>>>;
+}
+
+/** The request state for a pagination prop: cursor props produce cursor state, everything else numbered or complete state. */
+type DataTableServerPagination<Pagination extends ServerPagination> = Pagination extends CursorPagination ? CursorPagination : TablePagination;
+type DataTableServerResult<Row extends object, Pagination extends ServerPagination> = Pagination extends CursorPagination ? DataTableCursorResult<Row> : DataTableResult<Row>;
 
 export interface DataTableInitialState {
   readonly search?: string;
@@ -150,7 +160,6 @@ interface DataTableBaseProps<Row extends object> {
   readonly variant?: DataTableVariant;
   /** Optional local density for table chrome and rows. Omission inherits the surrounding application density. */
   readonly density?: DataTableDensity;
-  readonly pagination?: TablePagination;
   readonly initialState?: DataTableInitialState;
   /** Reactively applies an app-owned accepted filter. Use onAcceptedStateChange to keep table-authored changes synchronized. */
   readonly filter?: FilterNode;
@@ -160,7 +169,6 @@ interface DataTableBaseProps<Row extends object> {
   readonly estimatedRowHeight?: number;
   readonly initialViewportHeight?: number;
   readonly class?: string;
-  readonly onAcceptedStateChange?: (state: TableState) => void;
   readonly onRowActivate?: (row: Row) => void;
   readonly selection?: DataTableSelectionOptions<Row>;
   /** One action model rendered in both the selection bar and each row context menu. */
@@ -188,25 +196,48 @@ interface DataTableBaseProps<Row extends object> {
 export interface ClientDataTableProps<Row extends object> extends DataTableBaseProps<Row> {
   readonly mode?: "client";
   readonly data: readonly Row[];
+  readonly pagination?: TablePagination;
+  readonly onAcceptedStateChange?: (state: TableState) => void;
   readonly initialResult?: never;
   readonly onStateChange?: never;
   readonly onExport?: never;
   readonly refreshKey?: never;
 }
 
-export interface ServerDataTableProps<Row extends object> extends DataTableBaseProps<Row> {
+/** Pagination is false, numbered `{ pageIndex, pageSize }`, or `{ kind: "cursor", pageSize, cursor }`; its kind selects the result contract. */
+export interface ServerDataTableProps<Row extends object, Pagination extends ServerPagination = TablePagination> extends DataTableBaseProps<Row> {
   readonly mode: "server";
-  readonly pagination: TablePagination;
+  readonly pagination: Pagination;
+  readonly onAcceptedStateChange?: (state: TableState<DataTableServerPagination<Pagination>>) => void;
   readonly data?: never;
-  readonly initialResult?: DataTableResult<Row>;
-  readonly onStateChange: (state: TableState, signal: AbortSignal) => Promise<DataTableResult<Row>>;
+  readonly initialResult?: DataTableServerResult<Row, Pagination>;
+  readonly onStateChange: (state: TableState<DataTableServerPagination<Pagination>>, signal: AbortSignal) => Promise<DataTableServerResult<Row, Pagination>>;
   /** Change to revalidate the latest requested/accepted query without resetting layout or scroll. Initial value does not fetch. */
   readonly refreshKey?: string | number;
   /** Creates a complete server-side export for the captured accepted query and selection. Without this adapter, export UI is hidden. */
-  readonly onExport?: (request: TableExportRequest, signal: AbortSignal) => Promise<Blob>;
+  readonly onExport?: (request: TableExportRequest<DataTableServerPagination<Pagination>>, signal: AbortSignal) => Promise<Blob>;
 }
 
-export type DataTableProps<Row extends object> = ClientDataTableProps<Row> | ServerDataTableProps<Row>;
+export type DataTableProps<Row extends object, Pagination extends ServerPagination = TablePagination> = ClientDataTableProps<Row> | ServerDataTableProps<Row, Pagination>;
+
+/**
+ * The composition root erases the server pagination kind. Method signatures accept every public pairing;
+ * parseServerPagination and per-response assessment enforce that state and results keep the configured kind.
+ */
+interface ErasedClientProps<Row extends object> extends Omit<ClientDataTableProps<Row>, "onAcceptedStateChange"> {
+  onAcceptedStateChange?(state: TableState<ServerPagination>): void;
+}
+interface ErasedServerProps<Row extends object> extends DataTableBaseProps<Row> {
+  readonly mode: "server";
+  readonly pagination: ServerPagination;
+  readonly data?: never;
+  readonly initialResult?: DataTableResult<Row> | DataTableCursorResult<Row>;
+  readonly refreshKey?: string | number;
+  onAcceptedStateChange?(state: TableState<ServerPagination>): void;
+  onStateChange(state: TableState<ServerPagination>, signal: AbortSignal): Promise<DataTableResult<Row> | DataTableCursorResult<Row>>;
+  onExport?(request: TableExportRequest<ServerPagination>, signal: AbortSignal): Promise<Blob>;
+}
+export type DataTableInternalProps<Row extends object> = ErasedClientProps<Row> | ErasedServerProps<Row>;
 
 interface ScrollAnchor {
   readonly id: string;
@@ -346,17 +377,32 @@ function clientFacetRecord<Row>(view: ClientView<Row>): Readonly<Record<string, 
   return Object.freeze(result);
 }
 
-function initialTableState<Row extends object>(props: DataTableProps<Row>): TableState {
+function cursorPagination(value: ServerPagination): value is CursorPagination {
+  return value !== false && "kind" in value;
+}
+
+function cursorResult<Row extends object>(value: DataTableResult<Row> | DataTableCursorResult<Row>): value is DataTableCursorResult<Row> {
+  return "nextCursor" in value;
+}
+
+/** Client processing runs only on numbered or complete state. */
+function numberedState(state: TableState<ServerPagination>): TableState {
+  const pagination = state.pagination;
+  if (cursorPagination(pagination)) throw new Error("Cursor pagination requires server mode");
+  return { ...state, pagination };
+}
+
+function initialTableState<Row extends object>(props: DataTableInternalProps<Row>): TableState<ServerPagination> {
   const schema = columnStateSchema(props.columns);
   const definitions = readColumnDefinitions(props.columns);
-  const pagination = resolvePagination(props.mode ?? "client", props.pagination);
-  const state = parseTableState({
+  const pagination = props.mode === "server" ? parseServerPagination(props.pagination) : resolvePagination("client", props.pagination);
+  const state = parseTableStateWith({
     search: props.initialState?.search ?? "",
     filter: props.filter ?? props.initialState?.filter ?? { kind: "and", children: [] },
     sorting: props.initialState?.sorting ?? [],
     pagination,
     columns: props.initialState?.columns ?? definitions.map(column => ({ id: column.id, visible: column.visible, width: typeof column.width === "number" ? column.width : null, pin: column.pin })),
-  }, schema);
+  }, schema, parseServerPagination);
   for (const columnState of state.columns) {
     const definition = definitions.find(column => column.id === columnState.id);
     if (!definition) throw new Error(`Unknown table column: ${columnState.id}`);
@@ -374,6 +420,16 @@ function samePagination(left: TablePagination, right: TablePagination): boolean 
   return left === false ? right === false : right !== false && left.pageIndex === right.pageIndex && left.pageSize === right.pageSize;
 }
 
+function cursorKey(cursor: CursorPosition): string {
+  return `${cursor.direction}:${cursor.value}`;
+}
+
+interface CursorStep {
+  readonly label: "firstPage" | "previousPage" | "nextPage";
+  readonly glyph: GlyphName;
+  readonly target: CursorPosition | null | undefined;
+}
+
 function columnTrack(width: number | "fill" | "content", minimum: number | null, maximum: number | null): string {
   const min = minimum ?? 80;
   if (typeof width === "number") return `${width}px`;
@@ -385,12 +441,48 @@ function clampColumnWidth(value: number, minimum: number | null, maximum: number
   return Math.min(maximum ?? 4096, Math.max(minimum ?? 80, Math.round(value)));
 }
 
-export function DataTable<Row extends object>(props: DataTableProps<Row>): JSX.Element {
+export function DataTable<Row extends object, Pagination extends ServerPagination = TablePagination>(props: DataTableProps<Row, Pagination>): JSX.Element {
   return renderDataTable(props, [filterBarFeature, groupingFeature, hierarchyFeature, cellEditingFeature]);
 }
 
-/** Internal composition root. Features own their props, state, and rendering hooks; omitted features are not bundled. */
-export function renderDataTable<Row extends object>(props: DataTableProps<Row>, features: readonly DataTableFeature[]): JSX.Element {
+/** Props owned by each opt-in feature. A composition without the feature rejects them at compile time and at render. */
+interface DataTableFeatureProps {
+  readonly filterBar: "filterBar";
+  readonly grouping: "grouping";
+  readonly hierarchy: "hierarchy";
+  readonly cellEditing: "onCellCommit" | "editResetKey";
+}
+/** DataTable props for a composition that includes only the features named by `Id`. */
+export type ComposedDataTableProps<Row extends object, Id extends DataTableFeatureId, Pagination extends ServerPagination = TablePagination> =
+  DataTableProps<Row, Pagination> & { readonly [Key in DataTableFeatureProps[Exclude<DataTableFeatureId, Id>]]?: never };
+export type ComposedDataTable<Id extends DataTableFeatureId> = <Row extends object, Pagination extends ServerPagination = TablePagination>(props: ComposedDataTableProps<Row, Id, Pagination>) => JSX.Element;
+
+/**
+ * A DataTable that bundles only the listed features. `createDataTable([])` is the lightest table; `DataTable`
+ * is the same composition with every feature.
+ */
+export function createDataTable<const Features extends readonly DataTableFeature[]>(features: Features): ComposedDataTable<Features[number]["id"]> {
+  const composed: DataTableFeature[] = [];
+  for (const feature of features) {
+    if (typeof feature !== "object" || feature === null || typeof feature.create !== "function") throw new Error("createDataTable accepts only Sheen DataTable features");
+    if (composed.some(existing => existing.id === feature.id)) throw new Error(`DataTable feature ${feature.id} is listed more than once`);
+    composed.push(feature);
+  }
+  return props => renderDataTable(props, composed);
+}
+
+function requireFeatures<Row extends object>(props: DataTableInternalProps<Row>, definitions: readonly { readonly editor: unknown }[], features: readonly DataTableFeature[]): void {
+  const missing = (id: DataTableFeatureId, used: boolean, prop: string): void => {
+    if (used && !features.some(feature => feature.id === id)) throw new Error(`DataTable ${prop} requires the ${id}Feature; add it to createDataTable or use DataTable`);
+  };
+  missing("filterBar", props.filterBar !== undefined && props.filterBar !== false, "filterBar");
+  missing("grouping", props.grouping !== undefined, "grouping");
+  missing("hierarchy", props.hierarchy !== undefined, "hierarchy");
+  missing("cellEditing", props.onCellCommit !== undefined || props.editResetKey !== undefined || definitions.some(column => column.editor !== null), "cell editing");
+}
+
+/** Internal composition root behind DataTable and createDataTable. Features own their props, state, and rendering hooks; omitted features are not bundled. */
+export function renderDataTable<Row extends object>(props: DataTableInternalProps<Row>, features: readonly DataTableFeature[]): JSX.Element {
   if (props.mode === "server" && typeof props.onStateChange !== "function") throw new Error("Server mode requires onStateChange");
   if (props.mode !== "server" && !Array.isArray(props.data)) throw new Error("Client mode requires a complete data array");
   if (props.mode !== "server" && props.initialResult !== undefined) throw new Error("initialResult is available only in server mode");
@@ -418,6 +510,7 @@ export function renderDataTable<Row extends object>(props: DataTableProps<Row>, 
   const locale = createMemo(() => theme.state().locale);
   const messages = createMemo(() => resolveTableMessages(theme.messages()));
   const definitions = readColumnDefinitions(props.columns);
+  requireFeatures(props, definitions, features);
   const definitionById = new Map(definitions.map(column => [column.id, column]));
   const searchableDefinitions = definitions.filter(column => column.search !== null);
   const searchableDefinitionById = new Map(searchableDefinitions.map(column => [column.id, column]));
@@ -425,6 +518,11 @@ export function renderDataTable<Row extends object>(props: DataTableProps<Row>, 
   const mobileLayout = resolveMobileLayout(props.mobileLayout);
   if (mobileLayout?.titleColumn && !definitions.some(column => column.id === mobileLayout.titleColumn)) throw new Error(`Unknown mobileLayout title column: ${mobileLayout.titleColumn}`);
   const initialState = initialTableState(props);
+  const cursorMode = cursorPagination(initialState.pagination);
+  if (cursorMode && props.grouping) throw new Error("DataTable grouping requires numbered or complete pagination; cursor pages carry no full-query group metadata");
+  if (cursorMode && props.summarizeColumns?.length) throw new Error("DataTable summarizeColumns requires numbered or complete pagination with full-query counts");
+  const parseState = (value: unknown): TableState<ServerPagination> => parseTableStateWith(value, schema, parseServerPagination);
+  const changeState = (value: TableState<ServerPagination>, change: TableStateChange<ServerPagination>): TableState<ServerPagination> => changeTableStateWith(value, change, schema, parseServerPagination);
   const selection = props.selection ? createTableSelection(initialState.filter, schema.filterColumns) : undefined;
   let selectionAnchorId: string | undefined;
   let selectionSearch = initialState.search;
@@ -445,11 +543,11 @@ export function renderDataTable<Row extends object>(props: DataTableProps<Row>, 
   let searchTimer: number | undefined;
   let searchComposing = false;
 
-  const requests = props.mode === "server" && props.onStateChange
-    ? createTableRequests<TableState, DataTableResult<Row>>(props.onStateChange, props.initialResult ? { state: initialState, result: props.initialResult } : undefined)
+  const requests = props.mode === "server"
+    ? createTableRequests<TableState<ServerPagination>, DataTableResult<Row> | DataTableCursorResult<Row>>((state, signal) => props.onStateChange(state, signal), props.initialResult ? { state: initialState, result: props.initialResult } : undefined)
     : undefined;
   const serverExports = props.mode === "server" && props.onExport
-    ? createServerExport<Blob>(schema, async (request, signal) => {
+    ? createServerExportWith<Blob, ServerPagination>(schema, parseServerPagination, async (request, signal) => {
       const artifact = await props.onExport?.(request, signal);
       if (!(artifact instanceof Blob)) throw new Error("DataTable onExport must resolve to a Blob");
       return artifact;
@@ -470,7 +568,7 @@ export function renderDataTable<Row extends object>(props: DataTableProps<Row>, 
     const column = searchableDefinitionById.get(columnId);
     return column?.search?.(row) ?? null;
   };
-  const clientView = createMemo<ClientView<Row> | undefined>(() => props.mode === "server" ? undefined : createClientView(props.data ?? [], clientState(), {
+  const clientView = createMemo<ClientView<Row> | undefined>(() => props.mode === "server" ? undefined : createClientView(props.data ?? [], numberedState(clientState()), {
     locale: locale(),
     searchColumns: searchableDefinitions.map(column => column.id),
     exactMatch: searchOptions?.exactMatch ?? false,
@@ -482,8 +580,8 @@ export function renderDataTable<Row extends object>(props: DataTableProps<Row>, 
 
   createEffect(() => {
     const view = clientView();
-    if (!view || samePagination(clientState().pagination, view.pagination)) return;
-    setClientState(state => parseTableState({ ...state, pagination: view.pagination }, schema));
+    if (!view || samePagination(numberedState(clientState()).pagination, view.pagination)) return;
+    setClientState(state => parseState({ ...state, pagination: view.pagination }));
   });
 
   onMount(() => {
@@ -512,15 +610,25 @@ export function renderDataTable<Row extends object>(props: DataTableProps<Row>, 
     if (download) URL.revokeObjectURL(download.href);
   });
 
-  const acceptedState = createMemo<TableState>(() => {
+  const acceptedState = createMemo<TableState<ServerPagination>>(() => {
     const state = serverSnapshot()?.accepted?.state ?? clientState();
     return Object.freeze({ ...state, columns: layoutColumns() });
   });
-  const result = (): DataTableResult<Row> => {
+  const result = (): DataTableResult<Row> | DataTableCursorResult<Row> => {
     const accepted = serverSnapshot()?.accepted?.result;
     if (accepted) return accepted;
     const view = clientView();
     return view ? { rows: view.rows, total: view.total, facets: clientFacetRecord(view) } : { rows: [], total: 0 };
+  };
+  const acceptedCursorPage = (): DataTableCursorResult<Row> | undefined => {
+    const current = result();
+    return cursorResult(current) ? current : undefined;
+  };
+  /** Full-query count when known exactly. Cursor pages may omit, cap, or estimate it. */
+  const exactTotal = (): number | undefined => {
+    const current = result();
+    if (!cursorResult(current)) return current.total;
+    return current.total?.kind === "exact" ? current.total.value : undefined;
   };
   const acceptedAvailable = (): boolean => props.mode !== "server" || serverSnapshot()?.accepted !== null;
   const busy = (): boolean => searchScheduled() || (serverSnapshot()?.pending ?? false);
@@ -543,7 +651,7 @@ export function renderDataTable<Row extends object>(props: DataTableProps<Row>, 
     });
   });
 
-  async function transition(next: TableState): Promise<TableRequestOutcome | "client"> {
+  async function transition(next: TableState<ServerPagination>): Promise<TableRequestOutcome | "client"> {
     if (!requests || !server) {
       setClientState(next);
       props.onAcceptedStateChange?.(Object.freeze({ ...next, columns: layoutColumns() }));
@@ -560,8 +668,7 @@ export function renderDataTable<Row extends object>(props: DataTableProps<Row>, 
     const parsed = parseFilter(filter, schema.filterColumns);
     const current = serverSnapshot()?.requested ?? acceptedState();
     if (serializeFilter(parsed, schema.filterColumns) === serializeFilter(current.filter, schema.filterColumns)) return;
-    const pagination = current.pagination === false ? false : { ...current.pagination, pageIndex: 0 };
-    const next = parseTableState({ ...current, filter: parsed, pagination }, schema);
+    const next = parseState({ ...current, filter: parsed, pagination: resetPagination(current.pagination) });
     setMobilePageIndex(0);
     void transition(next).then(outcome => {
       if (outcome === "accepted" || outcome === "client") viewport?.scrollTo({ top: 0 });
@@ -622,7 +729,7 @@ export function renderDataTable<Row extends object>(props: DataTableProps<Row>, 
       setSearchScheduled(false);
       const requested = serverSnapshot()?.requested;
       const basis = requested ? Object.freeze({ ...requested, columns: layoutColumns() }) : acceptedState();
-      const next = changeTableState(basis, { kind: "query", change: { kind: "search", value: query } }, schema);
+      const next = changeState(basis, { kind: "query", change: { kind: "search", value: query } });
       setMobilePageIndex(0);
       void transition(next).then(outcome => {
         if (outcome === "accepted" || outcome === "client") viewport?.scrollTo({ top: 0 });
@@ -652,10 +759,9 @@ export function renderDataTable<Row extends object>(props: DataTableProps<Row>, 
     scheduleSearch(query);
   }
 
-  function requestPage(pageIndex: number): void {
-    const current = acceptedState();
-    if (current.pagination === false || pending()) return;
-    const next = changeTableState(current, { kind: "query", change: { kind: "pagination", value: { ...current.pagination, pageIndex } } }, schema);
+  function requestPagination(pagination: ServerPagination): void {
+    if (pending()) return;
+    const next = changeState(acceptedState(), { kind: "query", change: { kind: "pagination", value: pagination } });
     void transition(next).then(outcome => {
       if (outcome !== "accepted" && outcome !== "client") return;
       viewport?.scrollTo({ top: 0 });
@@ -663,17 +769,27 @@ export function renderDataTable<Row extends object>(props: DataTableProps<Row>, 
     });
   }
 
+  function requestPage(pageIndex: number): void {
+    const current = acceptedState().pagination;
+    if (current !== false && !cursorPagination(current)) requestPagination({ ...current, pageIndex });
+  }
+
+  function requestCursor(cursor: CursorPosition | null): void {
+    const current = acceptedState().pagination;
+    if (cursorPagination(current)) requestPagination({ ...current, cursor });
+  }
+
   function requestSort(column: string, multiple: boolean): void {
     const requested = serverSnapshot()?.requested;
     const basis = requested ? Object.freeze({ ...requested, columns: layoutColumns() }) : acceptedState();
-    const next = changeTableState(basis, { kind: "sortCycle", column, multiple }, schema);
+    const next = changeState(basis, { kind: "sortCycle", column, multiple });
     setMobilePageIndex(0);
     void transition(next);
   }
 
   function requestFilter(filter: FilterNode): void {
     if (pending()) return;
-    const next = changeTableState(acceptedState(), { kind: "query", change: { kind: "filter", value: filter } }, schema);
+    const next = changeState(acceptedState(), { kind: "query", change: { kind: "filter", value: filter } });
     setMobilePageIndex(0);
     void transition(next).then(outcome => { if (outcome === "accepted" || outcome === "client") viewport?.scrollTo({ top: 0 }); });
   }
@@ -684,8 +800,7 @@ export function renderDataTable<Row extends object>(props: DataTableProps<Row>, 
     setSearchScheduled(false);
     setSearchDraft("");
     const current = acceptedState();
-    const pagination = current.pagination === false ? false : { ...current.pagination, pageIndex: 0 };
-    const next = parseTableState({ ...current, search: "", filter: { kind: "and", children: [] }, pagination }, schema);
+    const next = parseState({ ...current, search: "", filter: { kind: "and", children: [] }, pagination: resetPagination(current.pagination) });
     setMobilePageIndex(0);
     void transition(next).then(outcome => {
       if (outcome === "accepted" || outcome === "client") queueMicrotask(() => {
@@ -729,7 +844,7 @@ export function renderDataTable<Row extends object>(props: DataTableProps<Row>, 
     rowIndex,
     focusRow,
   });
-  const extensions = features.flatMap(feature => feature(featureContext) ?? []);
+  const extensions = features.flatMap(feature => feature.create(featureContext) ?? []);
   const presentations = extensions.flatMap(extension => extension.presentation ? [extension.presentation] : []);
   if (presentations.length > 1) throw new Error("DataTable grouping and hierarchy are separate presentation modes");
   const presentation: DataTablePresentation<Row> | undefined = presentations[0];
@@ -893,7 +1008,7 @@ export function renderDataTable<Row extends object>(props: DataTableProps<Row>, 
   const selectionCount = createMemo(() => {
     const payload = selectionPayload();
     if (!payload) return 0;
-    return payload.kind === "query" ? Math.max(0, result().total - payload.excluded.length) : payload.ids.length;
+    return payload.kind === "query" ? Math.max(0, (exactTotal() ?? 0) - payload.excluded.length) : payload.ids.length;
   });
   const [selectionBarPresent, setSelectionBarPresent] = createSignal(false);
   const [selectionBarOpen, setSelectionBarOpen] = createSignal(false);
@@ -960,7 +1075,7 @@ export function renderDataTable<Row extends object>(props: DataTableProps<Row>, 
     const value = typeof summary.value === "number"
       ? summary.kind === "date" ? new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeZone: "UTC" }).format(summary.value) : new Intl.NumberFormat(locale).format(summary.value)
       : summary.value;
-    return messages().constrainedColumn.replace(/\{(column|value|count)\}/gu, (_match: string, key: string) => key === "column" ? definition.header : key === "value" ? value : new Intl.NumberFormat(locale).format(result().total));
+    return messages().constrainedColumn.replace(/\{(column|value|count)\}/gu, (_match: string, key: string) => key === "column" ? definition.header : key === "value" ? value : new Intl.NumberFormat(locale).format(exactTotal() ?? 0));
   };
   const restoreSummary = (id: string): void => {
     setRestoredSummaries(previous => new Set([...previous, id]));
@@ -1060,9 +1175,13 @@ export function renderDataTable<Row extends object>(props: DataTableProps<Row>, 
   const resultNumber = createMemo(() => new Intl.NumberFormat(locale()));
   const resultCount = () => {
     if (!acceptedAvailable()) return undefined;
-    const total = result().total;
-    const template = total === 1 ? messages().resultCountOne : messages().resultCount;
-    return template.replace("{count}", resultNumber().format(total));
+    const current = result();
+    const total: CursorTotal | undefined = cursorResult(current) ? current.total : { kind: "exact", value: current.total };
+    if (!total) return undefined;
+    const template = total.kind === "estimate" ? messages().resultCountEstimate
+      : total.kind === "atLeast" ? messages().resultCountAtLeast
+      : total.value === 1 ? messages().resultCountOne : messages().resultCount;
+    return template.replace("{count}", resultNumber().format(total.value));
   };
   function downloadLastExport(): void {
     const download = lastDownload();
@@ -1076,14 +1195,14 @@ export function renderDataTable<Row extends object>(props: DataTableProps<Row>, 
   const selectionTrack = "var(--sheen-table-selection-column, 2.75rem)";
   const template = createMemo(() => [...(selection ? [selectionTrack] : []), ...visibleDefinitions().map(track)].join(" "));
 
-  function commitLayout(next: TableState): void {
+  function commitLayout(next: TableState<ServerPagination>): void {
     setLayoutColumns(next.columns);
     const base = serverSnapshot()?.accepted?.state ?? clientState();
     props.onAcceptedStateChange?.(Object.freeze({ ...base, columns: next.columns }));
   }
 
-  function changeLayout(change: Parameters<typeof changeTableState>[1]): void {
-    commitLayout(changeTableState(acceptedState(), change, schema));
+  function changeLayout(change: TableStateChange<ServerPagination>): void {
+    commitLayout(changeState(acceptedState(), change));
   }
 
   function currentColumnWidth(column: (typeof columnRecords)[number]): number {
@@ -1117,9 +1236,9 @@ export function renderDataTable<Row extends object>(props: DataTableProps<Row>, 
   function setColumnPin(column: (typeof columnRecords)[number], pin: ColumnState["pin"]): void {
     let next = acceptedState();
     if (pin !== false && column.state().width === null && typeof column.definition.width !== "number") {
-      next = changeTableState(next, { kind: "columnWidth", column: column.definition.id, width: currentColumnWidth(column) }, schema);
+      next = changeState(next, { kind: "columnWidth", column: column.definition.id, width: currentColumnWidth(column) });
     }
-    next = changeTableState(next, { kind: "columnPin", column: column.definition.id, pin }, schema);
+    next = changeState(next, { kind: "columnPin", column: column.definition.id, pin });
     commitLayout(next);
   }
 
@@ -1168,7 +1287,8 @@ export function renderDataTable<Row extends object>(props: DataTableProps<Row>, 
   });
   const toolbarActions = createMemo<readonly DataTableToolbarAction[]>(() => {
     const next: DataTableToolbarAction[] = [];
-    if (selection && (presentation?.allowSelectAll ?? true) && acceptedState().search.length === 0) next.push({ kind: "action", id: "select-all", label: messages().selectAll, disabled: pending(), onSelect: selectAllMatchingRows });
+    // An all-matching payload is displayed with a full-query count, so cursor pages without an exact total cannot offer it.
+    if (selection && (presentation?.allowSelectAll ?? true) && acceptedState().search.length === 0 && exactTotal() !== undefined) next.push({ kind: "action", id: "select-all", label: messages().selectAll, disabled: pending(), onSelect: selectAllMatchingRows });
     if (availableExportFormats().length > 0) next.push({ kind: "menu", id: "export", label: messages().export, disabled: pending() || exportPending(), items: exportMenuItems() });
     if (lastDownload()) next.push({ kind: "action", id: "download", label: messages().downloadLastExport, onSelect: downloadLastExport });
     if (props.columnControls !== false) next.push({ kind: "menu", id: "columns", label: messages().columns, items: columnMenuItems() });
@@ -1549,10 +1669,10 @@ export function renderDataTable<Row extends object>(props: DataTableProps<Row>, 
   onCleanup(() => { if (anchorFrame !== undefined) cancelAnimationFrame(anchorFrame); });
   const currentRowCollection = (): readonly DisplayRow<Row>[] | readonly Row[] => presentation ? presentation.rows() : flatResultRows();
   let previousRows = currentRowCollection();
-  let previousState = serializeState(acceptedState(), schema);
+  let previousState = JSON.stringify(acceptedState());
   createEffect(() => {
     const nextRows = currentRowCollection();
-    const nextState = serializeState(acceptedState(), schema);
+    const nextState = JSON.stringify(acceptedState());
     const anchor = scrollAnchor;
     if (viewport && anchor && nextRows !== previousRows && nextState === previousState) {
       const index = rowIndex(anchor.id, anchor.index);
@@ -1565,8 +1685,38 @@ export function renderDataTable<Row extends object>(props: DataTableProps<Row>, 
 
   const range = createMemo(() => {
     const pagination = acceptedState().pagination;
-    return pagination === false ? undefined : getPageRange(pagination, result().total);
+    return pagination === false || cursorPagination(pagination) ? undefined : getPageRange(pagination, exactTotal() ?? 0);
   });
+  /** Each step's target is undefined when the accepted page has nothing in that direction. */
+  const cursorSteps = createMemo<readonly CursorStep[] | undefined>(() => {
+    const pagination = acceptedState().pagination;
+    if (!cursorPagination(pagination)) return undefined;
+    const previous = acceptedCursorPage()?.previousCursor ?? null;
+    const next = acceptedCursorPage()?.nextCursor ?? null;
+    return [
+      { label: "firstPage", glyph: "chevrons-left", target: pagination.cursor === null || previous === null ? undefined : null },
+      { label: "previousPage", glyph: "chevron-left", target: previous === null ? undefined : { direction: "before", value: previous } },
+      { label: "nextPage", glyph: "chevron-right", target: next === null ? undefined : { direction: "after", value: next } },
+    ];
+  });
+  /** Cursor APIs expose no page index, so the ordinal is derived from accepted navigation and resets to 1 at the first page. */
+  const cursorPageNumber = createMemo<{ readonly key: string | null; readonly page: number | undefined }>(previous => {
+    const pagination = acceptedState().pagination;
+    const page = acceptedCursorPage();
+    if (!cursorPagination(pagination) || !page) return { key: null, page: undefined };
+    if (pagination.cursor === null || page.previousCursor === null) return { key: null, page: 1 };
+    const key = cursorKey(pagination.cursor);
+    if (key === previous.key) return previous;
+    const prior = previous.page;
+    return { key, page: prior === undefined ? undefined : pagination.cursor.direction === "after" ? prior + 1 : Math.max(2, prior - 1) };
+  }, { key: null, page: undefined });
+  const cursorStatus = (): string => {
+    if (!acceptedCursorPage()) return "";
+    const page = cursorPageNumber().page;
+    return page === undefined
+      ? messages().cursorPageRows.replaceAll("{count}", resultNumber().format(result().rows.length))
+      : theme.messages().pageLabel.replaceAll("{page}", resultNumber().format(page));
+  };
   const mobileRange = createMemo(() => {
     if (!mobileLayout || acceptedState().pagination !== false) return undefined;
     return getPageRange({ pageIndex: mobilePageIndex(), pageSize: mobileLayout.pageSize }, rowCount());
@@ -1678,13 +1828,14 @@ export function renderDataTable<Row extends object>(props: DataTableProps<Row>, 
   }
   function logicalRowIndex(index: number): number {
     const pagination = acceptedState().pagination;
-    if (treePresentation || pagination === false) return index + 2;
-    return getPageRange(pagination, result().total).start + index + 2;
+    if (treePresentation || pagination === false || cursorPagination(pagination)) return index + 2;
+    return getPageRange(pagination, exactTotal() ?? 0).start + index + 2;
   }
+  // Cursor pages have no known absolute offset, so they report an unknown row count like tree presentations.
   const logicalRowCount = (): number | undefined => rowCount() === 0
     ? undefined
-    : treePresentation ? -1 : result().total + 1 + (hasFooter() ? 1 : 0);
-  const footerRowIndex = (): number => treePresentation ? rowCount() + 2 : result().total + 2;
+    : treePresentation || cursorMode ? -1 : (exactTotal() ?? 0) + 1 + (hasFooter() ? 1 : 0);
+  const footerRowIndex = (): number => treePresentation || cursorMode ? rowCount() + 2 : (exactTotal() ?? 0) + 2;
   function bindCell(row: () => DisplayDataRow<Row> | undefined, column: (typeof columnRecords)[number]): DataTableCellBinding<Row> | undefined {
     for (const extension of cellExtensions) {
       const binding = extension(row, column.definition);
@@ -1958,6 +2109,15 @@ export function renderDataTable<Row extends object>(props: DataTableProps<Row>, 
       </div></Show>
     </div>
     <Show when={range()}>{page => <Pagination class="sheen-data-table-pagination" pageIndex={page().pageIndex} pageCount={page().pageCount} pending={busy()} disabled={previous()} onPageChange={requestPage} />}</Show>
+    <Show when={cursorSteps()}>{steps => <nav class="sheen-pagination sheen-data-table-pagination" aria-label={theme.messages().pagination} aria-busy={busy() || undefined} aria-disabled={previous() || undefined} data-pending={busy() ? "" : undefined}>
+      <Index each={steps()}>{step => {
+        // Index keeps each button node, so focus survives the accepted page change. aria-disabled keeps it in Tab order.
+        const unavailable = () => step().target === undefined || busy() || previous() || undefined;
+        return <Button variant="ghost" class="sheen-pagination-step" aria-label={theme.messages()[step().label]} aria-disabled={unavailable()}
+          onClick={() => { const target = step().target; if (target !== undefined && !unavailable()) requestCursor(target); }}><Glyph name={step().glyph} /></Button>;
+      }}</Index>
+      <output aria-live="polite" aria-atomic="true">{cursorStatus()}</output>
+    </nav>}</Show>
     <For each={overlays}>{overlay => overlay()}</For>
   </section>;
 }

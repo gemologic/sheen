@@ -2,9 +2,11 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createServer } from "node:http";
 import { createTableRequests } from "./requests.ts";
 import type { TableRequestOutcome } from "./requests.ts";
-import type { TablePagination } from "./pagination.ts";
+import type { CursorPageResult, CursorPagination, TablePagination } from "./pagination.ts";
 
 interface Query { pagination: TablePagination; key: string }
+interface CursorQuery { pagination: CursorPagination; key: string }
+const cursorItems = ["a", "b", "c", "d", "e"];
 interface Result { rows: string[]; total: number }
 let origin = "";
 const arrivals: string[] = [];
@@ -15,6 +17,17 @@ const server = createServer((request, response) => {
   setTimeout(() => {
     if (key.endsWith("reject")) { response.writeHead(503); response.end("Unavailable"); return; }
     response.setHeader("content-type", "application/json");
+    if (key === "cursor") {
+      const limit = Number(parameters.get("limit"));
+      const after = parameters.get("after");
+      const before = parameters.get("before");
+      const anchor = cursorItems.indexOf(after ?? before ?? "");
+      const start = after === null && before === null ? 0 : anchor < 0 ? cursorItems.length : after !== null ? anchor + 1 : Math.max(0, anchor - limit);
+      const rows = cursorItems.slice(start, before !== null && anchor >= 0 ? anchor : start + limit);
+      const last = start + rows.length;
+      response.end(JSON.stringify({ rows, next_cursor: rows.length && last < cursorItems.length ? rows.at(-1) : null, prev_cursor: rows.length && start > 0 ? rows[0] : null }));
+      return;
+    }
     if (key === "empty") { response.end(JSON.stringify({ rows: [], total: 0 })); return; }
     if (key === "clamp") { response.end(JSON.stringify({ rows: Number(parameters.get("page")) > 1 ? [] : ["last"], total: 3 })); return; }
     if (key === "moving") { response.end(JSON.stringify({ rows: [], total: Number(parameters.get("page")) * 2 })); return; }
@@ -39,7 +52,38 @@ async function fetchRows(state: Query, signal?: AbortSignal): Promise<Result> {
   return { rows: data.rows, total: data.total };
 }
 
+async function fetchCursor(state: CursorQuery, signal: AbortSignal): Promise<CursorPageResult<string>> {
+  const parameters = new URLSearchParams({ key: state.key, limit: String(state.pagination.pageSize) });
+  if (state.pagination.cursor) parameters.set(state.pagination.cursor.direction, state.pagination.cursor.value);
+  const response = await fetch(`${origin}/?${parameters}`, { signal });
+  const data: unknown = await response.json();
+  if (typeof data !== "object" || !data || !("rows" in data) || !Array.isArray(data.rows) || !data.rows.every(value => typeof value === "string") || !("next_cursor" in data) || !("prev_cursor" in data)) throw new Error("Invalid cursor fixture response");
+  const cursor = (value: unknown): string | null => typeof value === "string" ? value : null;
+  return { rows: data.rows, nextCursor: cursor(data.next_cursor), previousCursor: cursor(data.prev_cursor) };
+}
+
 describe("real server table requests", () => {
+  it("pages opaque after/before cursors and refetches the first page when a cursor page empties", async () => {
+    const requested: (string | null)[] = [];
+    const requests = createTableRequests<CursorQuery, CursorPageResult<string>>((state, signal) => { requested.push(state.pagination.cursor && `${state.pagination.cursor.direction}:${state.pagination.cursor.value}`); return fetchCursor(state, signal); });
+    const page = (cursor: CursorPagination["cursor"]): CursorQuery => ({ key: "cursor", pagination: { kind: "cursor", pageSize: 2, cursor } });
+    expect(await requests.request(page(null))).toBe("accepted");
+    expect(requests.getSnapshot().accepted?.result).toEqual({ rows: ["a", "b"], nextCursor: "b", previousCursor: null });
+    expect(await requests.request(page({ direction: "after", value: "b" }))).toBe("accepted");
+    expect(requests.getSnapshot().accepted?.result).toEqual({ rows: ["c", "d"], nextCursor: "d", previousCursor: "c" });
+    expect(await requests.request(page({ direction: "before", value: "c" }))).toBe("accepted");
+    expect(requests.getSnapshot().accepted?.result).toEqual({ rows: ["a", "b"], nextCursor: "b", previousCursor: null });
+    expect(await requests.request(page({ direction: "after", value: "deleted" }))).toBe("accepted");
+    expect(requests.getSnapshot().accepted?.state.pagination).toEqual({ kind: "cursor", pageSize: 2, cursor: null });
+    expect(requested).toEqual([null, "after:b", "before:c", "after:deleted", null]);
+    requests.dispose();
+  });
+  it("fails a cursor request whose transport returns a numbered result", async () => {
+    const requests = createTableRequests<CursorQuery, CursorPageResult<string> | Result>((_state, signal) => fetchRows({ pagination: false, key: "numbered" }, signal));
+    expect(await requests.request({ key: "cursor", pagination: { kind: "cursor", pageSize: 2, cursor: null } })).toBe("failed");
+    expect(requests.getSnapshot()).toMatchObject({ accepted: null, error: new Error("Cursor pagination results require nextCursor and previousCursor") });
+    requests.dispose();
+  });
   it("adopts validated initial results without dispatching and isolates initial query state", () => {
     let dispatched = 0;
     const state: Query = { pagination: false, key: "initial" };

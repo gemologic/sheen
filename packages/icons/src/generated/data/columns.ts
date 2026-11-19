@@ -3,3 +3,4 @@ import type { IconData } from "../../runtime.tsx";
 
 export const radixColumns = Object.freeze({"set":"radix","body":"<path fill=\"currentColor\" d=\"M2.15 14H.85V1h1.3zm4 0h-1.3V1h1.3zm4 0h-1.3V1h1.3zm4 0h-1.3V1h1.3z\"/>","width":15,"height":15}) satisfies IconData;
 export const phosphorColumns = Object.freeze({"set":"phosphor","body":"<path fill=\"currentColor\" d=\"M104 32H64a16 16 0 0 0-16 16v160a16 16 0 0 0 16 16h40a16 16 0 0 0 16-16V48a16 16 0 0 0-16-16m0 176H64V48h40Zm88-176h-40a16 16 0 0 0-16 16v160a16 16 0 0 0 16 16h40a16 16 0 0 0 16-16V48a16 16 0 0 0-16-16m0 176h-40V48h40Z\"/>","width":256,"height":256}) satisfies IconData;
+export const glyphs: readonly IconData[] = [radixColumns, phosphorColumns];

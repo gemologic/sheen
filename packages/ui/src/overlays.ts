@@ -12,6 +12,8 @@ export { Tooltip } from "./primitives/Tooltip.tsx";
 export type { TooltipProps } from "./primitives/Tooltip.tsx";
 export { LinkTooltip } from "./primitives/LinkTooltip.tsx";
 export type { LinkTooltipProps } from "./primitives/LinkTooltip.tsx";
+export { TooltipTrigger } from "./primitives/TooltipTrigger.tsx";
+export type { TooltipTriggerProps, TooltipTriggerBindings } from "./primitives/TooltipTrigger.tsx";
 export { Popover } from "./primitives/Popover.tsx";
 export type { PopoverProps } from "./primitives/Popover.tsx";
 export { DropdownMenu } from "./primitives/DropdownMenu.tsx";

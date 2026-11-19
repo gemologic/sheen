@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { changeClientViewState, parseClientViewState } from "./client-state.ts";
-import type { ClientStateChange, ClientStateSchema } from "./client-state.ts";
+import { changeClientViewState, changeQueryState, parseClientViewState } from "./client-state.ts";
+import { parseServerPagination } from "./pagination.ts";
+import type { ServerPagination } from "./pagination.ts";
+import type { ClientStateChange, ClientStateSchema, QueryState } from "./client-state.ts";
 import type { ClientViewState } from "./client-view.ts";
 
 const schema: ClientStateSchema = { filterColumns: [{ id: "name", type: "text" }], sortColumns: [{ id: "name", type: "text" }] };
@@ -39,5 +41,15 @@ describe("client query state", () => {
     expect(changeClientViewState(state, { kind: "pagination", value: { pageIndex: 4, pageSize: 50 } }, schema).pagination).toEqual({ pageIndex: 0, pageSize: 50 });
     expect(() => changeClientViewState(state, { kind: "pageSize", value: 0 }, schema)).toThrow();
     expect(() => changeClientViewState({ ...state, pagination: false }, { kind: "pageSize", value: 50 }, schema)).toThrow();
+  });
+  it("returns cursor state to the first page for search, filter, and sort changes", () => {
+    const cursorState: QueryState<ServerPagination> = { ...state, pagination: { kind: "cursor", pageSize: 20, cursor: { direction: "after", value: "c40" } } };
+    const changes: readonly ClientStateChange<ServerPagination>[] = [{ kind: "search", value: "new query" }, { kind: "filter", value: { kind: "empty", column: "name" } }, { kind: "sorting", value: [{ column: "name", direction: "desc" }] }];
+    for (const change of changes) {
+      expect(changeQueryState(cursorState, change, schema, parseServerPagination).pagination).toEqual({ kind: "cursor", pageSize: 20, cursor: null });
+    }
+    const next = changeQueryState(cursorState, { kind: "pagination", value: { kind: "cursor", pageSize: 20, cursor: { direction: "before", value: "c41" } } }, schema, parseServerPagination);
+    expect(next.pagination).toEqual({ kind: "cursor", pageSize: 20, cursor: { direction: "before", value: "c41" } });
+    expect(() => parseClientViewState(cursorState, schema)).toThrow();
   });
 });

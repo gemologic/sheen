@@ -2,7 +2,7 @@
 import { Show } from "solid-js";
 import type { ComponentProps } from "solid-js";
 import { Dynamic } from "solid-js/web";
-import { ThemeProvider, ThemeScope, useTheme, defaultThemeState, resolveThemeState, readThemeState, createThemeScript, createKeyboardHydrationScript, Button, buttonVariants, Input, Dialog, Drawer, Sheet, AlertDialog, ConfirmDialog, createConfirm, Tooltip, createShortcutRegistry, ShortcutProvider, useShortcut, useShortcutLabel, usePendingShortcut, useShortcutBindings, useShortcutCommands, formatShortcut, ShortcutSheet, ShortcutPending, ShortcutScope, LinkTooltip, Popover, DropdownMenu, ContextMenu, CommandPalette, commandPaletteFilter, cn, flashChange, useOnlineStatus, useIsWindowFocused, optimistic, createToaster, Toast, Toaster, englishMessages, useNumberFormatter, useDateFormatter, Stack, Row, Cluster, Grid, Container, Center, Spacer, Text, Heading, Code, Kbd, Prose, Glyph, glyphNames, createMediaQuery, useBreakpoint, breakpointNames, breakpointQuery, breakpoints, List, ListItem, NumberText, Badge, Tag, Surface, Card, Separator, Alert, Banner, Callout, DescriptionList, DescriptionTerm, DescriptionDetails, Skeleton, EmptyState, Spinner, Field, InputGroup, Form, FormSection, FormActions, SearchInput, Textarea, EditableTextField, Checkbox, Switch, CheckboxGroup, RadioGroup, SegmentedControl, TagInput, FileDropzone, ActivityTimeline, Stepper, Select, Combobox, MultiCombobox, Table, TableCaption, TableHead, TableBody, TableFoot, TableRow, TableHeaderCell, TableCell, Breadcrumb, Collapsible, Accordion, AccordionItem, Tabs, NavList, NavItem, ScrollArea, ButtonGroup, IconButton, Link, Pagination, Avatar, AvatarGroup, Progress, Meter, NumberField, Slider, RangeSlider, Tree, TreeItem, Resizable, ResizablePanel, ResizableHandle, PromptInput, Message, Conversation, StreamingText } from "@gemologic/sheen";
+import { ThemeProvider, ThemeScope, useTheme, defaultThemeState, resolveThemeState, readThemeState, createThemeScript, createKeyboardHydrationScript, Button, buttonVariants, Input, Dialog, Drawer, Sheet, AlertDialog, ConfirmDialog, createConfirm, Tooltip, createShortcutRegistry, ShortcutProvider, useShortcut, useShortcutLabel, usePendingShortcut, useShortcutBindings, useShortcutCommands, formatShortcut, ShortcutSheet, ShortcutPending, ShortcutScope, LinkTooltip, TooltipTrigger, Popover, DropdownMenu, ContextMenu, CommandPalette, commandPaletteFilter, cn, flashChange, useOnlineStatus, useIsWindowFocused, optimistic, createToaster, Toast, Toaster, englishMessages, useNumberFormatter, useDateFormatter, Stack, Row, Cluster, Grid, Container, Center, Spacer, Text, Heading, Code, Kbd, Prose, Glyph, glyphNames, createMediaQuery, useBreakpoint, breakpointNames, breakpointQuery, breakpoints, List, ListItem, NumberText, Badge, Tag, Surface, Card, Separator, Alert, Banner, Callout, DescriptionList, DescriptionTerm, DescriptionDetails, Skeleton, EmptyState, Spinner, Field, InputGroup, Form, FormSection, FormActions, SearchInput, Textarea, EditableTextField, Checkbox, Switch, CheckboxGroup, RadioGroup, SegmentedControl, TagInput, FileDropzone, ActivityTimeline, Stepper, Select, Combobox, MultiCombobox, Table, TableCaption, TableHead, TableBody, TableFoot, TableRow, TableHeaderCell, TableCell, Breadcrumb, Collapsible, Accordion, AccordionItem, Tabs, NavList, NavItem, ScrollArea, ButtonGroup, IconButton, Link, Pagination, Avatar, AvatarGroup, Progress, Meter, NumberField, Slider, RangeSlider, Tree, TreeItem, Resizable, ResizablePanel, ResizableHandle, PromptInput, Message, Conversation, StreamingText } from "@gemologic/sheen";
 
 import type { PlaygroundValue } from "../component-docs/index.ts";
 import type { ComponentExampleProps } from "./index.ts";
@@ -17,17 +17,17 @@ function Playground(props: { readonly values: Readonly<Record<string, Playground
       const controlled2 = typeof value2 === "string" ? value2 : undefined;
       const value3 = currentValues["description"];
       const controlled3 = typeof value3 === "string" ? value3 : undefined;
-      const value4 = currentValues["label"];
+      const value4 = currentValues["error"];
       const controlled4 = typeof value4 === "string" ? value4 : undefined;
-      const value5 = currentValues["error"];
+      const value5 = currentValues["label"];
       const controlled5 = typeof value5 === "string" ? value5 : undefined;
     const controlledProps = {
         ...(controlled0 === undefined ? {} : { "value": controlled0 }),
         ...(controlled1 === undefined ? {} : { "defaultValue": controlled1 }),
         ...(controlled2 === undefined ? {} : { "clearLabel": controlled2 }),
         ...(controlled3 === undefined ? {} : { "description": controlled3 }),
-        ...(controlled4 === undefined ? {} : { "label": controlled4 }),
-        ...(controlled5 === undefined ? {} : { "error": controlled5 })
+        ...(controlled4 === undefined ? {} : { "error": controlled4 }),
+        ...(controlled5 === undefined ? {} : { "label": controlled5 })
     } satisfies Partial<ComponentProps<typeof SearchInput>>;
     return (<SearchInput label="Search orders" defaultValue="BTC"  {...controlledProps}/>);
   }}</Show>;

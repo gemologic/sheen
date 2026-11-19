@@ -1,5 +1,6 @@
-import { deserializeState, serializeState } from "./table-state.ts";
-import type { TableState, TableStateSchema } from "./table-state.ts";
+import type { CursorPagination, ServerPagination, TablePagination } from "./pagination.ts";
+import { deserializeState, schemaPagination, serializeState } from "./table-state.ts";
+import type { CursorTableStateSchema, TableState, TableStateSchema } from "./table-state.ts";
 
 export interface SavedViewRecord { readonly id: string; readonly name: string; readonly state: string }
 export interface SavedViewSave { readonly id: string | null; readonly name: string; readonly state: string }
@@ -19,8 +20,8 @@ export interface SavedViewsSnapshot {
   readonly error: unknown;
 }
 export type SavedViewOutcome = "accepted" | "failed" | "superseded" | "disposed";
-export type SavedViewRestore =
-  | { readonly kind: "accepted"; readonly state: TableState }
+export type SavedViewRestore<Pagination extends ServerPagination = TablePagination> =
+  | { readonly kind: "accepted"; readonly state: TableState<Pagination> }
   | { readonly kind: "missing" }
   | { readonly kind: "invalid"; readonly error: unknown };
 
@@ -56,8 +57,29 @@ function operation(value: SavedViewOperation): SavedViewOperation {
   return Object.freeze({ ...value });
 }
 
-/** Async saved-view ownership. Persistence and authorization stay in the app adapter. */
-export function createSavedViews(adapter: SavedViewsAdapter, schema: TableStateSchema) {
+export interface SavedViews<Pagination extends ServerPagination = TablePagination> {
+  readonly getSnapshot: () => SavedViewsSnapshot;
+  readonly list: () => Promise<SavedViewOutcome>;
+  readonly save: (name: string, state: TableState<Pagination>, id?: string | null) => Promise<SavedViewOutcome>;
+  readonly delete: (id: string) => Promise<SavedViewOutcome>;
+  readonly restore: (id: string) => SavedViewRestore<Pagination>;
+  readonly retry: () => Promise<SavedViewOutcome>;
+  readonly clear: () => void;
+  readonly dispose: () => void;
+}
+
+/** Async saved-view ownership. Persistence and authorization stay in the app adapter. Cursor schemas save and restore only the first page. */
+export function createSavedViews(adapter: SavedViewsAdapter, schema: CursorTableStateSchema): SavedViews<CursorPagination>;
+export function createSavedViews(adapter: SavedViewsAdapter, schema: TableStateSchema): SavedViews;
+export function createSavedViews(adapter: SavedViewsAdapter, schema: TableStateSchema | CursorTableStateSchema): SavedViews<CursorPagination> | SavedViews {
+  schemaPagination(schema);
+  if (schema.pagination === "cursor") {
+    return savedViews<CursorPagination>(adapter, state => serializeState(state, schema), value => deserializeState(value, schema));
+  }
+  return savedViews<TablePagination>(adapter, state => serializeState(state, schema), value => deserializeState(value, schema));
+}
+
+function savedViews<Pagination extends ServerPagination>(adapter: SavedViewsAdapter, serialize: (state: TableState<Pagination>) => string, deserialize: (value: string) => TableState<Pagination>): SavedViews<Pagination> {
   let snapshot: SavedViewsSnapshot = Object.freeze({ accepted: null, pending: null, failed: null, error: null });
   let sequence = 0n;
   let controller: AbortController | undefined;
@@ -89,7 +111,7 @@ export function createSavedViews(adapter: SavedViewsAdapter, schema: TableStateS
         if (disposed) return "disposed";
         if (token !== sequence) return "superseded";
         if (requested.view.id !== null && requested.view.id !== saved.id) throw new Error("Saved view adapter changed the requested ID");
-        deserializeState(saved.state, schema);
+        deserialize(saved.state);
         const existing = snapshot.accepted ?? [];
         const index = existing.findIndex(view => view.id === saved.id);
         const accepted = index < 0 ? [...existing, saved] : existing.map(view => view.id === saved.id ? saved : view);
@@ -108,16 +130,16 @@ export function createSavedViews(adapter: SavedViewsAdapter, schema: TableStateS
       return "failed";
     } finally { if (token === sequence) controller = undefined; }
   }
-  function save(name: string, state: TableState, id: string | null = null): Promise<SavedViewOutcome> {
-    const view = Object.freeze({ id: id === null ? null : text(id, "Saved view ID"), name: text(name, "Saved view name"), state: serializeState(state, schema) });
+  function save(name: string, state: TableState<Pagination>, id: string | null = null): Promise<SavedViewOutcome> {
+    const view = Object.freeze({ id: id === null ? null : text(id, "Saved view ID"), name: text(name, "Saved view name"), state: serialize(state) });
     return run({ kind: "save", view });
   }
-  function restore(id: string): SavedViewRestore {
+  function restore(id: string): SavedViewRestore<Pagination> {
     try {
       const checked = text(id, "Saved view ID");
       const view = snapshot.accepted?.find(candidate => candidate.id === checked);
       if (!view) return Object.freeze({ kind: "missing" });
-      return Object.freeze({ kind: "accepted", state: deserializeState(view.state, schema) });
+      return Object.freeze({ kind: "accepted", state: deserialize(view.state) });
     } catch (error) { return Object.freeze({ kind: "invalid", error }); }
   }
   function clear(): void {

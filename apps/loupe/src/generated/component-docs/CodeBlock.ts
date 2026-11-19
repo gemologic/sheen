@@ -117,7 +117,7 @@ export const componentDoc = Object.freeze({
   },
   "guidance": {
     "do": [
-      "Precompute highlightCode in a server loader or build step when syntax color is required.",
+      "Precompute highlightCode in a server loader or build step when syntax color is required, declaring only the grammars the page needs from @gemologic/sheen-code/languages.",
       "Pass the exact accepted source to copy and highlight; retain the CodeBlock owner during refresh."
     ],
     "dont": [

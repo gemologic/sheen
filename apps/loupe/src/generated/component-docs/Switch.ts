@@ -22,23 +22,14 @@ export const componentDoc = Object.freeze({
     {
       "name": "ref",
       "description": "Root container reference; inputRef targets the native input.",
-      "type": "HTMLDivElement | ((element: HTMLDivElement) => void) | undefined",
+      "type": "HTMLDivElement | ((element: HTMLDivElement) => void)",
       "required": false
     },
     {
       "name": "onPointerDown",
       "description": "Native root pointer-down handler composed with focus behavior.",
-      "type": "NonNullable<JSX.EventHandlerUnion<HTMLDivElement, PointerEvent, JSX.EventHandler<HTMLDivElement, PointerEvent>> | undefined> | undefined",
+      "type": "NonNullable<JSX.EventHandlerUnion<HTMLDivElement, PointerEvent, JSX.EventHandler<HTMLDivElement, PointerEvent>> | undefined>",
       "required": false
-    },
-    {
-      "name": "label",
-      "description": "Required visible label, unchanged between on and off.",
-      "type": "string",
-      "required": true,
-      "control": {
-        "kind": "text"
-      }
     },
     {
       "name": "error",
@@ -65,7 +56,7 @@ export const componentDoc = Object.freeze({
     {
       "name": "onCheckedChange",
       "description": "Receives the requested boolean state, not a DOM event.",
-      "type": "((checked: boolean) => void) | undefined",
+      "type": "(checked: boolean) => void",
       "required": false
     },
     {
@@ -111,7 +102,28 @@ export const componentDoc = Object.freeze({
     {
       "name": "inputRef",
       "description": "Receives the native input.",
-      "type": "((element: HTMLInputElement) => void) | undefined",
+      "type": "(element: HTMLInputElement) => void",
+      "required": false
+    },
+    {
+      "name": "label",
+      "description": "Visible label, unchanged between on and off. Supply exactly one of label, aria-label, or aria-labelledby.",
+      "type": "string",
+      "required": false,
+      "control": {
+        "kind": "text"
+      }
+    },
+    {
+      "name": "aria-label",
+      "description": "Accessible name on the native input when no visible label fits.",
+      "type": "string",
+      "required": false
+    },
+    {
+      "name": "aria-labelledby",
+      "description": "ID of existing visible text that names the native input.",
+      "type": "string",
       "required": false
     }
   ],
@@ -148,6 +160,10 @@ export const componentDoc = Object.freeze({
     {
       "title": "Live updates",
       "code": "<Switch label=\"Live updates\" defaultChecked description=\"Refresh this view automatically.\" />"
+    },
+    {
+      "title": "Row setting",
+      "code": "<Switch aria-label=\"Enable alerts for Production\" defaultChecked />"
     }
   ],
   "variants": []

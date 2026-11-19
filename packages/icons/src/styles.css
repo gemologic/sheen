@@ -10,6 +10,7 @@
 .sheen-icon > svg[data-sheen-icon-default] { display: var(--sheen-icon-default-display, block); }
 .sheen-icon > svg[data-sheen-icon-set-value="radix"] { display: var(--sheen-icon-radix-display, none); }
 .sheen-icon > svg[data-sheen-icon-set-value="phosphor"] { display: var(--sheen-icon-phosphor-display, none); }
+.sheen-icon:is([data-sheen-icon-state="unknown"], [data-sheen-icon-state="error"]) { outline: 1px dashed var(--sheen-color-border-control); outline-offset: -1px; border-radius: var(--sheen-control-radius); }
 .sheen-button:has(> .sheen-icon) { display: inline-flex; align-items: center; gap: var(--sheen-space-inline-sm); }
 .sheen-button > .sheen-icon { color: currentColor; margin-inline-start: -1px; }
 .sheen-icon-button-glyph > .sheen-icon { color: currentColor; }

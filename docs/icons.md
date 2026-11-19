@@ -60,7 +60,29 @@ The transform rejects unknown literal names and embeds only the selected variant
 import { SearchIcon } from "@gemologic/sheen-icons/icons/search";
 ```
 
-Use `DynamicIcon` only when the name genuinely arrives at runtime. It validates the name and intentionally retains the complete registry, about 58KB gzip for 257 names, making that bundle cost visible in source. When runtime data selects from a known handful of icons, map the values to per-icon components instead.
+When runtime data selects from a known handful of icons, map the values to per-icon components. When the name genuinely arrives at runtime, from a server or a schema, use `LazyIcon`:
+
+```tsx
+import { LazyIcon, preloadIcons } from "@gemologic/sheen-icons/lazy";
+
+<LazyIcon name={field.icon} />
+```
+
+`LazyIcon` resolves one name at a time. A generated loader map holds one dynamic import per name, pointing at that name's glyph data module, so only the map and the shared icon runtime reach the entry chunk: about 5.7KB gzip, or 8.0KB with the lucide aliases below, against about 58KB for `DynamicIcon`. Each glyph is its own small chunk, fetched once and cached. The loader map's keys are also the validation set, so the check needs no registry data and rejects inherited object names such as `constructor`.
+
+Server markup is deterministic. A name that has not been preloaded renders the normal icon root with `data-sheen-icon-state="loading"` and no SVG; CSS reserves the icon size, so nothing shifts when the glyph arrives. After mount the client imports the glyph and fills that same root, keeping its node identity, id, and accessible name. To paint the glyph on first render, `await preloadIcons(names)` with the same names on the server and in the client entry before `hydrate`; both sides then render the resolved glyph. Preloading on one side only produces mismatched hydration markup. An unknown name never throws: it renders a sized dashed marker with `data-sheen-icon-state="unknown"`, keeps any supplied label, and loads nothing. A failed chunk request shows the same marker with `data-sheen-icon-state="error"`, and a later mount retries. A name change rerenders from the current name, so a late response for an old name only fills the cache.
+
+`DynamicIcon` remains the explicit full-registry path: it renders synchronously with no loading state, throws on unknown names, and retains about 58KB gzip for 257 names.
+
+## Lucide names
+
+Apps migrating from lucide often have stored lucide names. `resolveLucideIconName(name)` from `@gemologic/sheen-icons/lucide` (also the root entry) maps a lucide kebab-case name to the Sheen name with the same intent, or returns `undefined`; `lucideIconAliases` is the typed map itself:
+
+```tsx
+<LazyIcon name={resolveLucideIconName(stored) ?? stored} />
+```
+
+The repository has no lucide data, so the map is explicit rather than generated. It has 292 aliases, current names plus common legacy ones such as `alert-triangle` and `edit`, covering 246 of the 257 Sheen names. The filled variants, `filePdf`, `donutChart`, `hierarchy`, `organization`, and the Google, Apple, Windows, and Discord logos have no lucide counterpart. Lucide names without a Sheen intent, such as spinners, shapes, and most brand marks, resolve to `undefined`. A test checks that every target is a registry name; the alias keys come from the lucide catalog as of late 2026 and are not checked against lucide's data. PascalCase component names such as `Trash2` are not accepted; convert them to lucide's kebab-case names first.
 
 ## Accessibility and sizing
 
@@ -74,4 +96,4 @@ Both selected SVGs are present in deterministic server markup. CSS displays exac
 
 Client hydration stamps the root icon set in the blocking prepaint script from the stored theme. Cookie hydration emits it from the authoritative request state. `ThemeScope` stamps the same value on its wrapper and contextual portal before hydration, then keeps both reactive. This prevents the default set from flashing during refresh, hydration, or scoped overlay mounting.
 
-The isolated consumer gate proves literal imports exclude unrelated glyphs, per-icon imports tree-shake unrelated data, and `DynamicIcon` includes the full registry, each against the gzip ceilings in [bundle budgets](bundle-budgets.md). Browser coverage samples every animation frame during a live set change and delays application JavaScript to inspect the pre-hydration result.
+The isolated consumer gate proves literal imports exclude unrelated glyphs, per-icon imports tree-shake unrelated data, `LazyIcon` keeps every glyph and the registry out of its entry chunk, and `DynamicIcon` includes the full registry, each against the gzip ceilings in [bundle budgets](bundle-budgets.md). Browser coverage samples every animation frame during a live set change and delays application JavaScript to inspect the pre-hydration result.

@@ -3,3 +3,4 @@ import type { IconData } from "../../runtime.tsx";
 
 export const radixMail = Object.freeze({"set":"radix","body":"<path fill=\"currentColor\" d=\"M14 2a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H1a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1zM7.741 8.88a.45.45 0 0 1-.426.03l-.056-.03L1 4.907V12h13V4.907zM1 3.925q.08 0 .16.03l.081.04L7.5 7.967l6.259-3.972a.45.45 0 0 1 .241-.07V3H1z\"/>","width":15,"height":15}) satisfies IconData;
 export const phosphorMail = Object.freeze({"set":"phosphor","body":"<path fill=\"currentColor\" d=\"M224 48H32a8 8 0 0 0-8 8v136a16 16 0 0 0 16 16h176a16 16 0 0 0 16-16V56a8 8 0 0 0-8-8m-20.57 16L128 133.15L52.57 64ZM216 192H40V74.19l82.59 75.71a8 8 0 0 0 10.82 0L216 74.19z\"/>","width":256,"height":256}) satisfies IconData;
+export const glyphs: readonly IconData[] = [radixMail, phosphorMail];

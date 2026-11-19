@@ -9,7 +9,7 @@ export const componentDoc = Object.freeze({
   "props": [
     {
       "name": "sections",
-      "description": "Named sections containing link/group entries with globally unique nonempty IDs. Links may supply a named action menu rendered beside the destination. Same-ID, same-kind entries retain mounted state across object replacement/reordering within their parent; moving between parents or changing kind creates a new owner.",
+      "description": "Named sections containing link/group entries with globally unique nonempty IDs. Links may supply a named action menu rendered beside the destination. Groups start closed unless `defaultOpen` is true or they contain the current destination.Same-ID, same-kind entries retain mounted state across object replacement/reordering within their parent; moving between parents or changing kind creates a new owner.",
       "type": "readonly SidebarNavSection[]",
       "required": true
     },

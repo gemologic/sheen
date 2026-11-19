@@ -56,19 +56,19 @@ export const componentDoc = Object.freeze({
       }
     },
     {
-      "name": "label",
-      "description": "Required visible label.",
+      "name": "error",
+      "description": "App-owned validation message.",
       "type": "string",
-      "required": true,
+      "required": false,
       "control": {
         "kind": "text"
       }
     },
     {
-      "name": "error",
-      "description": "App-owned validation message.",
+      "name": "label",
+      "description": "Required visible label.",
       "type": "string",
-      "required": false,
+      "required": true,
       "control": {
         "kind": "text"
       }

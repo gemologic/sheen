@@ -24,6 +24,8 @@ export interface SidebarNavGroup {
   readonly id: string;
   readonly label: string;
   readonly items: readonly SidebarNavEntry[];
+  /** Initial disclosure state. A group containing the current destination always opens. */
+  readonly defaultOpen?: boolean;
 }
 export type SidebarNavEntry = SidebarNavLink | SidebarNavGroup;
 export interface SidebarNavSection {
@@ -84,7 +86,7 @@ function Entries(props: { items: readonly SidebarNavEntry[]; activeId: string | 
 function Group(props: { group: SidebarNavGroup; activeId: string | undefined; ancestors: readonly string[]; collapsed: boolean }): JSX.Element {
   const containsActive = createMemo(() => props.ancestors.includes(props.group.id));
   const activeId = createMemo(() => props.activeId);
-  const [open, setOpen] = createSignal(containsActive());
+  const [open, setOpen] = createSignal(containsActive() || props.group.defaultOpen === true);
   createEffect(on([activeId, containsActive], () => { if (containsActive()) setOpen(true); }));
   return <Collapsible label={props.group.label} open={props.collapsed || open()} onOpenChange={setOpen} class="sheen-sidebar-group">
     <NavList label={props.group.label}><Entries items={props.group.items} activeId={props.activeId} ancestors={props.ancestors} collapsed={props.collapsed} /></NavList>

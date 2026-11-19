@@ -166,6 +166,9 @@
 
   .sheen-date-time-picker { display: grid; gap: var(--sheen-space-block-sm); min-inline-size: 0; margin: 0; padding: var(--sheen-space-block-md); border: 1px solid var(--sheen-color-border); border-radius: var(--sheen-surface-radius); }
   .sheen-date-time-grid { display: grid; grid-template-columns: minmax(10rem, 1fr) minmax(8rem, auto) minmax(12rem, 1fr); align-items: end; gap: var(--sheen-space-block-md) var(--sheen-space-inline-md); }
+  .sheen-native-date-time-field { display: grid; gap: var(--sheen-space-block-xs); min-inline-size: 0; }
+  .sheen-native-date-field { font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; }
+  .sheen-native-date-field::-webkit-calendar-picker-indicator { color: var(--sheen-color-fg-muted); cursor: pointer; }
   .sheen-date-time-resolution { display: grid; gap: var(--sheen-space-block-sm); padding: var(--sheen-space-block-sm); border: 1px solid var(--sheen-color-warning-border); border-radius: var(--sheen-control-radius); color: var(--sheen-color-warning-fg); }
   .sheen-date-time-resolution p,
   .sheen-date-time-stale { margin: 0; overflow-wrap: anywhere; }

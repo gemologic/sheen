@@ -1,0 +1,53 @@
+import { expect, test } from "@playwright/test";
+
+test("TooltipTrigger attaches help to an existing button without nesting or replacing its handlers", async ({ page }) => {
+  await page.goto("/overlay-triggers");
+  await expect(page.locator('[data-sheen-portal="root"]')).toHaveAttribute("data-sheen-ready", "true");
+  const archive = page.getByRole("button", { name: "Archive rows", exact: true });
+  await expect(page.locator("button button")).toHaveCount(0);
+  await archive.focus();
+  const tooltip = page.getByRole("tooltip");
+  await expect(tooltip).toContainText("Archive the selected rows");
+  await expect(tooltip.locator("kbd")).toHaveCount(1);
+  await expect(archive).toHaveAccessibleDescription(/^Archived rows stay restorable\. Archive the selected rows/);
+  await page.keyboard.press("Escape");
+  await expect(tooltip).toHaveCount(0);
+  await expect(archive).toHaveAccessibleDescription("Archived rows stay restorable.");
+  await expect(archive).toBeFocused();
+  await page.keyboard.press("Enter");
+  await expect(page.getByLabel("Archived count")).toHaveText("1");
+  await page.keyboard.press("Tab");
+  const copy = page.getByRole("button", { name: "Copy link", exact: true });
+  await expect(copy).toBeFocused();
+  await expect(tooltip).toHaveText("Copy the row link");
+  await expect(copy).toHaveAccessibleDescription("Copy the row link");
+  await page.getByRole("heading").hover();
+  await copy.blur();
+  await expect(tooltip).toHaveCount(0);
+  await archive.hover();
+  await expect(tooltip).toContainText("Archive the selected rows");
+  await archive.click();
+  await expect(page.getByLabel("Archived count")).toHaveText("2");
+});
+
+test("Popover disabled trigger is natively disabled, skipped by Tab, and opens once enabled", async ({ page }) => {
+  await page.goto("/overlay-triggers");
+  await expect(page.locator('[data-sheen-portal="root"]')).toHaveAttribute("data-sheen-ready", "true");
+  const trigger = page.getByRole("button", { name: "Export options", exact: true });
+  await expect(trigger).toBeDisabled();
+  await expect(trigger).not.toHaveAttribute("aria-disabled", "true");
+  await expect(trigger).toHaveAttribute("aria-expanded", "false");
+  const toggle = page.getByRole("button", { name: "Toggle export lock", exact: true });
+  await toggle.focus();
+  await page.keyboard.press("Tab");
+  await expect(trigger).not.toBeFocused();
+  await expect(page.getByRole("dialog", { name: "Export options" })).toHaveCount(0);
+  await toggle.click();
+  await expect(trigger).toBeEnabled();
+  await toggle.focus();
+  await page.keyboard.press("Tab");
+  await expect(trigger).toBeFocused();
+  await page.keyboard.press("Enter");
+  await expect(page.getByRole("dialog", { name: "Export options" })).toBeVisible();
+  await expect(trigger).toHaveAttribute("aria-expanded", "true");
+});

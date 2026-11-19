@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { renderToString } from "solid-js/web";
 import { ThemeProvider, ThemeScope } from "@gemologic/sheen";
-import { DataTable } from "./DataTable.tsx";
-import type { DataTableAction } from "./DataTable.tsx";
+import { DataTable, createDataTable } from "./DataTable.tsx";
+import { groupingFeature } from "./data-table-features.tsx";
+import type { DataTableAction, DataTableCursorResult } from "./DataTable.tsx";
+import type { CursorPagination } from "./pagination.ts";
 import { defineColumns } from "./columns.ts";
 
 interface Row { readonly id: string; readonly name: string; readonly amount: number }
@@ -36,6 +38,8 @@ const chromeColumns = defineColumns<Row>([
   { id: "name", header: "Name", accessor: row => row.name, filter: { type: "text" }, footer: "Total" },
   { id: "amount", header: "Amount", accessor: row => row.amount, numeric: true, footer: values => values.reduce((sum, row) => sum + row.amount, 0) },
 ]);
+const LightTable = createDataTable([]);
+const GroupedTable = createDataTable([groupingFeature]);
 const rows = Array.from({ length: 40 }, (_, index): Row => ({ id: `row-${index}`, name: `Row ${index}`, amount: index }));
 
 describe("DataTable SSR", () => {
@@ -183,6 +187,36 @@ describe("DataTable SSR", () => {
     expect(html).toContain('class="sheen-pagination');
     expect(html).toContain('data-row-id="row-10"');
     expect(html).not.toContain('data-row-id="row-0"');
+  });
+
+  it("server-renders a cursor pager from accepted cursors without assuming a page count", () => {
+    const pagination = { kind: "cursor", pageSize: 10, cursor: null } satisfies CursorPagination;
+    const firstPage = { rows: rows.slice(0, 10), nextCursor: "row-9", previousCursor: null, total: { kind: "estimate", value: 1200 } } satisfies DataTableCursorResult<Row>;
+    const html = renderToString(() => <ThemeProvider><DataTable mode="server" columns={columns} getRowId={row => row.id} caption="Cursor rows" pagination={pagination}
+      initialResult={firstPage} onStateChange={async () => firstPage} /></ThemeProvider>);
+    expect(html.match(/data-row-id="row-/gu)).toHaveLength(10);
+    expect(html).toContain('aria-rowcount="-1"');
+    expect(html).toMatch(/aria-label="First page" aria-disabled="true"/u);
+    expect(html).toMatch(/aria-label="Previous page" aria-disabled="true"/u);
+    expect(html).not.toMatch(/aria-label="Next page" aria-disabled/u);
+    expect(html).toContain("Page 1</output>");
+    expect(html).toContain("About 1,200 results");
+    expect(html).not.toContain('aria-label="Last page"');
+
+    const lastPage = { rows: rows.slice(30), nextCursor: null, previousCursor: "row-30" } satisfies DataTableCursorResult<Row>;
+    const restored = renderToString(() => <ThemeProvider><DataTable mode="server" columns={columns} getRowId={row => row.id} caption="Restored cursor rows"
+      pagination={{ kind: "cursor", pageSize: 10, cursor: { direction: "after", value: "row-29" } }} initialResult={lastPage} onStateChange={async () => lastPage} /></ThemeProvider>);
+    expect(restored).toMatch(/aria-label="Next page" aria-disabled="true"/u);
+    expect(restored).not.toMatch(/aria-label="Previous page" aria-disabled/u);
+    expect(restored).toContain("Rows on this page: 10</output>");
+    expect(restored).not.toContain("results</output>");
+  });
+
+  it("rejects cursor contracts that need full-query metadata or exceed the page size", () => {
+    const pagination = { kind: "cursor", pageSize: 10, cursor: null } satisfies CursorPagination;
+    const page = { rows: rows.slice(0, 10), nextCursor: null, previousCursor: null } satisfies DataTableCursorResult<Row>;
+    expect(() => renderToString(() => <ThemeProvider><DataTable mode="server" columns={aggregateColumns} getRowId={row => row.id} caption="Cursor groups" pagination={pagination} initialResult={page} onStateChange={async () => page} grouping={{ by: "name" }} /></ThemeProvider>)).toThrow("grouping requires numbered");
+    expect(() => renderToString(() => <ThemeProvider><DataTable mode="server" columns={columns} getRowId={row => row.id} caption="Oversized cursor page" pagination={pagination} initialResult={{ ...page, rows }} onStateChange={async () => page} /></ThemeProvider>)).toThrow("more rows than pageSize");
   });
 
   it("rejects incomplete continuous server initial results", () => {
@@ -371,6 +405,17 @@ describe("DataTable SSR", () => {
     expect(html).toContain('aria-expanded="true"');
     expect(html).toContain('aria-level="2"');
     expect(loads).toBe(0);
+  });
+
+  it("composes only the listed features and rejects props owned by omitted ones", () => {
+    const light = renderToString(() => <ThemeProvider><LightTable data={rows} columns={chromeColumns} getRowId={row => row.id} caption="Light rows" pagination={false} /></ThemeProvider>);
+    expect(light).toContain('data-row-id="row-0"');
+    expect(light).not.toContain("sheen-filter-add");
+    expect(renderToString(() => <ThemeProvider><DataTable data={rows} columns={chromeColumns} getRowId={row => row.id} caption="Full rows" pagination={false} /></ThemeProvider>)).toContain("sheen-filter-add");
+    const grouped = renderToString(() => <ThemeProvider><GroupedTable data={rows} columns={aggregateColumns} getRowId={row => row.id} caption="Grouped" pagination={false} grouping={{ by: "name" }} /></ThemeProvider>);
+    expect(grouped).toContain('role="treegrid"');
+    expect(() => renderToString(() => <ThemeProvider><LightTable data={rows} columns={editableColumns} getRowId={row => row.id} caption="Editors" pagination={false} /></ThemeProvider>)).toThrow("cellEditingFeature");
+    expect(() => createDataTable([groupingFeature, groupingFeature])).toThrow("more than once");
   });
 
   it("rejects ambiguous grouping, paging, and async hierarchy contracts", () => {

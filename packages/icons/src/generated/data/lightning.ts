@@ -3,3 +3,4 @@ import type { IconData } from "../../runtime.tsx";
 
 export const radixLightning = Object.freeze({"set":"radix","body":"<path fill=\"currentColor\" d=\"M8.156.137a.5.5 0 0 1 .837.445L8.09 6h4.41a.5.5 0 0 1 .4.8l-6 8a.5.5 0 0 1-.893-.382L6.91 9H2.5a.5.5 0 0 1-.4-.8l6-8zM3.5 8h4a.5.5 0 0 1 .493.582l-.663 3.977L11.5 7h-4a.5.5 0 0 1-.493-.582l.662-3.977z\"/>","width":15,"height":15}) satisfies IconData;
 export const phosphorLightning = Object.freeze({"set":"phosphor","body":"<path fill=\"currentColor\" d=\"M215.79 118.17a8 8 0 0 0-5-5.66L153.18 90.9l14.66-73.33a8 8 0 0 0-13.69-7l-112 120a8 8 0 0 0 3 13l57.63 21.61l-14.62 73.25a8 8 0 0 0 13.69 7l112-120a8 8 0 0 0 1.94-7.26M109.37 214l10.47-52.38a8 8 0 0 0-5-9.06L62 132.71l84.62-90.66l-10.46 52.38a8 8 0 0 0 5 9.06l52.8 19.8Z\"/>","width":256,"height":256}) satisfies IconData;
+export const glyphs: readonly IconData[] = [radixLightning, phosphorLightning];

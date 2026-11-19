@@ -25,6 +25,11 @@ export default function CheckboxFixture() {
             <Checkbox label="Partial selection" indeterminate={mixed()} onCheckedChange={() => setMixed(false)} />
             <Checkbox label="Disabled choice" defaultChecked disabled name="disabled" />
             <Checkbox label="Read-only choice" defaultChecked readOnly name="readonly" />
+            <div role="group" aria-label="Unlabeled row selectors">
+              <span id="checkbox-invoice-1042">Invoice 1042</span>
+              <Checkbox aria-labelledby="checkbox-invoice-1042" />
+              <Checkbox aria-label="Select all invoices" />
+            </div>
             <Button type="submit">Inspect form</Button>
             <Button type="reset">Reset choices</Button>
           </Stack>

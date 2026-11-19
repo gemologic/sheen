@@ -21,7 +21,7 @@ Phone paging never changes the data contract.
 
 - A continuous table still owns one complete bounded accepted result. The card page is local presentation state over that result. It resets after filter or sort changes and clamps when the accepted result shrinks. Client export, footer callbacks, all-matching selection, and URL state continue to use the complete result.
 - A numbered table already has the right bound. Cards render its accepted page directly and the existing Pagination requests another accepted page. `mobileLayout.pageSize` is intentionally ignored in this case.
-- Cursor/infinite loading remains a separate deferred contract. The component never walks a server or silently turns a partial response into a continuous result.
+- Cursor tables use the accepted cursor page directly, like numbered tables. Infinite loading remains a separate deferred contract. The component never walks a server or silently turns a partial response into a continuous result.
 
 ## Equivalent interaction
 

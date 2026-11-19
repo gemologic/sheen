@@ -4,7 +4,7 @@ import type { Accessor, JSX } from "solid-js";
 import type { ColumnEditor, ColumnValue, ResolvedColumn } from "./columns.ts";
 import { createCellEdit } from "./cell-edit.ts";
 import type { CellCommitOutcome, CellEditSnapshot } from "./cell-edit.ts";
-import type { DataTableCellCommitRequest, DataTableProps, DataTableResult } from "./DataTable.tsx";
+import type { DataTableCellCommitRequest, DataTableInternalProps, DataTableResult } from "./DataTable.tsx";
 import type { FilterColumn, FilterNode } from "./filter.ts";
 import { groupClientRows, normalizeServerGroups } from "./grouping.ts";
 import type { ClientRowGroup } from "./grouping.ts";
@@ -52,15 +52,15 @@ export type DisplayRow<Row extends object> = DisplayDataRow<Row> | DisplayGroupR
 
 /** What a feature may read from, and ask of, the table that composes it. */
 export interface DataTableFeatureContext<Row extends object> {
-  readonly props: DataTableProps<Row>;
+  readonly props: DataTableInternalProps<Row>;
   readonly definitions: readonly ResolvedColumn<Row>[];
   readonly filterColumns: readonly FilterColumn[];
   readonly messages: Accessor<TableMessages>;
   readonly locale: Accessor<string>;
   /** A query is unsettled. Structural changes wait for accepted state. */
   readonly pending: Accessor<boolean>;
-  /** Accepted rows, total, facets, and server groups. */
-  readonly result: Accessor<DataTableResult<Row>>;
+  /** Accepted rows, facets, and server groups. Totals stay with the table because cursor pages may not know them. */
+  readonly result: Accessor<Pick<DataTableResult<Row>, "rows" | "facets" | "groups">>;
   readonly accepted: Accessor<boolean>;
   readonly acceptedFilter: Accessor<FilterNode>;
   readonly requestFilter: (filter: FilterNode) => void;
@@ -110,11 +110,17 @@ export interface DataTableFeatureInstance<Row extends object> {
   readonly overlay?: () => JSX.Element;
 }
 
+export type DataTableFeatureId = "filterBar" | "grouping" | "hierarchy" | "cellEditing";
+
 /**
- * Internal composition contract. A feature validates the props it owns and returns undefined when inactive.
- * Features are row-agnostic so a later public `features` list can type-check against any DataTable.
+ * An opt-in DataTable capability for `createDataTable`. Only Sheen's exported features are supported; the
+ * context contract is internal. A feature validates the props it owns and returns undefined when inactive.
+ * Features are row-agnostic so one list type-checks against any DataTable.
  */
-export type DataTableFeature = <Row extends object>(context: DataTableFeatureContext<Row>) => DataTableFeatureInstance<Row> | undefined;
+export interface DataTableFeature<Id extends DataTableFeatureId = DataTableFeatureId> {
+  readonly id: Id;
+  readonly create: <Row extends object>(context: DataTableFeatureContext<Row>) => DataTableFeatureInstance<Row> | undefined;
+}
 
 export function defaultCell(value: ColumnValue): JSX.Element {
   if (value === null) return "";
@@ -200,7 +206,7 @@ function plainKey(event: KeyboardEvent): boolean {
 }
 
 /** First-seen groups over complete client data or delegated server groups for the accepted page. */
-export function groupingFeature<Row extends object>(context: DataTableFeatureContext<Row>): DataTableFeatureInstance<Row> | undefined {
+function grouping<Row extends object>(context: DataTableFeatureContext<Row>): DataTableFeatureInstance<Row> | undefined {
   const props = context.props;
   const options = props.grouping;
   if (!options) return undefined;
@@ -287,7 +293,7 @@ export function groupingFeature<Row extends object>(context: DataTableFeatureCon
 }
 
 /** Expandable parent rows with synchronous children or independently loaded subtrees. */
-export function hierarchyFeature<Row extends object>(context: DataTableFeatureContext<Row>): DataTableFeatureInstance<Row> | undefined {
+function hierarchy<Row extends object>(context: DataTableFeatureContext<Row>): DataTableFeatureInstance<Row> | undefined {
   const props = context.props;
   const options = props.hierarchy;
   if (!options) return undefined;
@@ -388,7 +394,7 @@ interface CellEditRecord {
 }
 
 /** Inline editing for columns that declare an editor. Drafts survive virtualization until the reset boundary changes. */
-export function cellEditingFeature<Row extends object>(context: DataTableFeatureContext<Row>): DataTableFeatureInstance<Row> | undefined {
+function cellEditing<Row extends object>(context: DataTableFeatureContext<Row>): DataTableFeatureInstance<Row> | undefined {
   const props = context.props;
   const editable = context.definitions.filter(column => column.editor !== null);
   if (editable.length > 0 && !props.onCellCommit) throw new Error("DataTable editable columns require onCellCommit");
@@ -577,3 +583,10 @@ export function cellEditingFeature<Row extends object>(context: DataTableFeature
     overlay: () => <Toaster controller={toaster} />,
   };
 }
+
+/** Client or delegated server grouping through the `grouping` prop. */
+export const groupingFeature: DataTableFeature<"grouping"> = { id: "grouping", create: grouping };
+/** Expandable row trees through the `hierarchy` prop. */
+export const hierarchyFeature: DataTableFeature<"hierarchy"> = { id: "hierarchy", create: hierarchy };
+/** Inline editing for columns that declare an editor, through `onCellCommit` and `editResetKey`. */
+export const cellEditingFeature: DataTableFeature<"cellEditing"> = { id: "cellEditing", create: cellEditing };

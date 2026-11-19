@@ -16,5 +16,5 @@ export default defineMeta<TooltipProps>({
   a11y: { role: "tooltip", keyboard: ["Tab", "Shift+Tab", "Escape", "Enter", "Space"] },
   tokens: [...button.tokens, "--sheen-color-bg-raised", "--sheen-elevation-raised", "--sheen-duration-fast"],
   examples: [{ title: "Save hint", code: '<Tooltip content="Save the workspace" shortcut={{ keys: "mod+s", scope: "global", label: "Save workspace", group: "Editing" }} variant="outline">Save</Tooltip>' }],
-  guidance: { do: ["Provide a visible label or aria-label on the native trigger."], dont: ["Do not nest a button inside Tooltip or put interactive controls in its content."] },
+  guidance: { do: ["Provide a visible label or aria-label on the native trigger."], dont: ["Do not nest a button inside Tooltip; use TooltipTrigger to attach help to an existing element.", "Do not put interactive controls in its content."] },
 });

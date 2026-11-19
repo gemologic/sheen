@@ -79,14 +79,14 @@ export const componentDoc = Object.freeze({
     },
     {
       "name": "primaryNavigation",
-      "description": "Optional app-owned primary navigation tree. Links may expose named sibling action menus without nesting controls inside destinations.",
-      "type": "AdminNavigationModel | undefined",
+      "description": "Optional app-owned primary navigation tree, or an ordered array of trees that each render as one labeled section. Links may expose named sibling action menus without nesting controls inside destinations.",
+      "type": "AdminNavigationModel | readonly AdminNavigationModel[] | undefined",
       "required": false
     },
     {
       "name": "secondaryNavigation",
-      "description": "Optional app-owned secondary navigation tree. Links may expose named sibling action menus without changing link semantics.",
-      "type": "AdminNavigationModel | undefined",
+      "description": "Optional app-owned secondary navigation tree, or an ordered array of trees that each render as one labeled section. Section IDs are unique across both navigation zones.",
+      "type": "AdminNavigationModel | readonly AdminNavigationModel[] | undefined",
       "required": false
     },
     {
@@ -121,7 +121,7 @@ export const componentDoc = Object.freeze({
     },
     {
       "name": "commandPalette",
-      "description": "Optional scoped command sources, state, persistence, and error hooks.",
+      "description": "Optional scoped command sources, state, persistence, and error hooks. The trigger renders on the server; the palette body is a client chunk that preloads on idle or trigger intent, and a first Ctrl/Cmd+K is queued until it arrives.",
       "type": "AdminCommandPaletteModel | undefined",
       "required": false
     },
@@ -189,7 +189,7 @@ export const componentDoc = Object.freeze({
     },
     {
       "name": "shortcutHelp",
-      "description": "Enable the shared question-mark shortcut sheet and pending shortcut status.",
+      "description": "Enable the shared question-mark shortcut sheet and pending shortcut status. The sheet body loads on idle or intent; its trigger renders on the server.",
       "type": "boolean",
       "required": false,
       "default": true
@@ -273,6 +273,10 @@ export const componentDoc = Object.freeze({
     {
       "title": "Standard admin baseline",
       "code": "<ThemeProvider><AdminApp label=\"Operations\" pathname=\"/orders\" product={{ name: \"Northstar\", href: \"/\" }} primaryNavigation={{ id: \"primary\", label: \"Primary\", items: [{ kind: \"link\", id: \"orders\", label: \"Orders\", href: \"/orders\" }] }}><p>Application content</p></AdminApp></ThemeProvider>"
+    },
+    {
+      "title": "Multiple navigation sections",
+      "code": "<ThemeProvider><AdminApp label=\"Operations\" pathname=\"/orders\" primaryNavigation={[{ id: \"work\", label: \"Work\", items: [{ kind: \"link\", id: \"orders\", label: \"Orders\", href: \"/orders\" }] }, { id: \"data\", label: \"Data\", items: [{ kind: \"link\", id: \"exports\", label: \"Exports\", href: \"/exports\" }] }, { id: \"billing\", label: \"Billing\", items: [{ kind: \"link\", id: \"invoices\", label: \"Invoices\", href: \"/invoices\" }] }]} secondaryNavigation={{ id: \"support\", label: \"Support\", items: [{ kind: \"link\", id: \"help\", label: \"Help\", href: \"/help\" }] }}><p>Application content</p></AdminApp></ThemeProvider>"
     }
   ],
   "variants": [

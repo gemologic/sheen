@@ -577,7 +577,7 @@ Keyboard: Tab focuses copy, wrap, and scroll controls, Enter or Space activates 
 Tokens: `--sheen-color-bg-raised`, `--sheen-color-border`, `--sheen-color-fg`, `--sheen-color-fg-muted`, `--sheen-color-accent`, `--sheen-color-focus-ring`, `--sheen-color-focus-ring-offset`, `--sheen-font-mono`, `--sheen-text-code-size`
 
 Do:
-- Precompute highlightCode in a server loader or build step when syntax color is required.
+- Precompute highlightCode in a server loader or build step when syntax color is required, declaring only the grammars the page needs from @gemologic/sheen-code/languages.
 - Pass the exact accepted source to copy and highlight; retain the CodeBlock owner during refresh.
 
 Do not:
@@ -912,6 +912,122 @@ Do not:
 Example, Maintenance start:
 ```tsx
 <DateTimePicker label="Maintenance start" name="startsAt" timeZoneOptions={[{ id: "UTC", label: "UTC" }, { id: "America/New_York", label: "New York" }]} defaultValue={createDateTime(1788897600000, createTimeZone("UTC"))} />
+```
+
+### NativeDateField
+
+A lightweight Sheen-styled native date input with a CalendarDate value and an ISO form projection.
+
+Category: date and time
+
+Props:
+- `label: string` (required). Required visible field label.
+- `value: T|null` (optional). App-owned Sheen CalendarDate, or null.
+- `defaultValue: T|null` (optional). Initial uncontrolled value, restored on form reset.
+- `onValueChange: (value:T|null)=>void` (optional). Receives complete valid dates and explicit clearing; partial native input is never published.
+- `minValue: T` (optional). Minimum valid date, applied as the native min.
+- `maxValue: T` (optional). Maximum valid date, applied as the native max.
+- `name: string` (optional). Form field name for the YYYY-MM-DD projection.
+- `form: string` (optional). Optional external form owner.
+- `description: string` (optional). Associated supporting text.
+- `error: string` (optional). Associated app validation error; marks the input invalid.
+- `required: boolean` (optional; default false). Native required validation.
+- `disabled: boolean` (optional; default false). Disables editing and form projection.
+- `readOnly: boolean` (optional; default false). Retains focus and the submitted value while rejecting edits.
+
+Accessibility role: native date input
+Keyboard: Tab, ArrowUp, ArrowDown, ArrowLeft, ArrowRight, numeric keys, Alt+ArrowDown
+Tokens: `--sheen-color-border-control`, `--sheen-color-bg-inset`, `--sheen-color-danger-border`, `--sheen-color-focus-ring`
+
+Do:
+- Use when bundle size matters more than locale-ordered segments, calendars, or presets.
+- Submit the ISO projection rather than reading the rendered value.
+
+Do not:
+- Do not expect a locale or calendar prop; the browser formats native date inputs.
+
+Example, Invoice date:
+```tsx
+<NativeDateField label="Invoice date" name="invoiceDate" defaultValue={createCalendarDate(2026, 9, 8)} />
+```
+
+### NativeDateTimeField
+
+A lightweight native datetime-local input that enters wall time in an explicit IANA zone and commits a DateTime instant.
+
+Category: date and time
+
+Props:
+- `timeZone: TimeZone` (required). Required IANA zone in which the wall time is entered, displayed, and resolved. Never inferred from the browser.
+- `disambiguation: DateTimeDisambiguation` (optional; default "reject"). Policy for repeated or skipped local times; reject keeps the previous value and offers both instants.
+- `onResolution: (resolution:DateTimeResolution)=>void` (optional). Observes every exact, ambiguous, or nonexistent wall-time resolution.
+- `granularity: "minute"|"second"` (optional; default "minute"). Smallest native segment; second sets step=1.
+- `locale: string` (optional). Explicit BCP 47 locale for the DST choice labels, defaulting to theme context.
+- `label: string` (required). Required visible field label.
+- `value: T|null` (optional). App-owned Sheen DateTime instant, or null; displayed as wall time in timeZone.
+- `defaultValue: T|null` (optional). Initial uncontrolled instant, restored on form reset.
+- `onValueChange: (value:T|null)=>void` (optional). Receives exact or explicitly disambiguated instants and clearing.
+- `minValue: T` (optional). Minimum valid instant, applied as native min wall time in timeZone.
+- `maxValue: T` (optional). Maximum valid instant, applied as native max wall time in timeZone.
+- `name: string` (optional). Form field name for the ISO instant with bracketed IANA zone.
+- `form: string` (optional). Optional external form owner.
+- `description: string` (optional). Associated supporting text.
+- `error: string` (optional). Associated app validation error; marks the input invalid.
+- `required: boolean` (optional; default false). Native required validation.
+- `disabled: boolean` (optional; default false). Disables editing and form projection.
+- `readOnly: boolean` (optional; default false). Retains focus and the submitted value while rejecting edits.
+
+Accessibility role: native datetime-local input, alert for DST choices
+Keyboard: Tab, ArrowUp, ArrowDown, ArrowLeft, ArrowRight, numeric keys, Enter, Space
+Tokens: `--sheen-color-border-control`, `--sheen-color-bg-inset`, `--sheen-color-danger-border`, `--sheen-color-warning-border`, `--sheen-color-focus-ring`
+
+Do:
+- Pass the zone the user means; show it in the label or description.
+- Keep reject when repeated or skipped local times must be chosen explicitly.
+
+Do not:
+- Do not substitute the browser timezone or submit the zone-less native value.
+
+Example, Maintenance start:
+```tsx
+<NativeDateTimeField label="Maintenance start" name="startsAt" timeZone={createTimeZone("America/New_York")} defaultValue={createDateTime(1788897600000, createTimeZone("UTC"))} />
+```
+
+### NativeTimeField
+
+A lightweight Sheen-styled native time input with a wall-clock Time value and an ISO form projection.
+
+Category: date and time
+
+Props:
+- `granularity: "minute"|"second"` (optional; default "minute"). Smallest native segment; second sets step=1.
+- `label: string` (required). Required visible field label.
+- `value: T|null` (optional). App-owned Sheen Time, or null.
+- `defaultValue: T|null` (optional). Initial uncontrolled value, restored on form reset.
+- `onValueChange: (value:T|null)=>void` (optional). Receives complete valid times and explicit clearing; partial native input is never published.
+- `minValue: T` (optional). Minimum valid time, applied as the native min.
+- `maxValue: T` (optional). Maximum valid time, applied as the native max.
+- `name: string` (optional). Form field name for the HH:mm:ss.SSS projection.
+- `form: string` (optional). Optional external form owner.
+- `description: string` (optional). Associated supporting text.
+- `error: string` (optional). Associated app validation error; marks the input invalid.
+- `required: boolean` (optional; default false). Native required validation.
+- `disabled: boolean` (optional; default false). Disables editing and form projection.
+- `readOnly: boolean` (optional; default false). Retains focus and the submitted value while rejecting edits.
+
+Accessibility role: native time input
+Keyboard: Tab, ArrowUp, ArrowDown, ArrowLeft, ArrowRight, numeric keys
+Tokens: `--sheen-color-border-control`, `--sheen-color-bg-inset`, `--sheen-color-danger-border`, `--sheen-color-focus-ring`
+
+Do:
+- Use for wall-clock times with no date or zone.
+
+Do not:
+- Do not use an hour cycle prop; the browser chooses the native presentation.
+
+Example, Daily cutoff:
+```tsx
+<NativeTimeField label="Daily cutoff" name="cutoff" defaultValue={createTime(17, 30)} />
 ```
 
 ### TimeField
@@ -4762,6 +4878,42 @@ Example, layout action:
 <LayoutIcon decorative={false} label="layout" />
 ```
 
+### LazyIcon
+
+Resolves one semantic icon by runtime name through a per-icon dynamic import, without retaining the complete registry.
+
+Category: icons
+
+Props:
+- `decorative: boolean` (optional; default true). Decorative by default; set false together with a nonempty label for meaningful imagery. The label is present while loading and for unknown names.
+- `label: string` (optional). Required accessible name when decorative is false.
+- `size: "sm"|"md"|"lg"` (optional; default "md"). Token-sized icon dimensions, also reserved by the loading placeholder.
+- `tone: "muted"|"inherit"` (optional; default "muted"). Muted at rest or inherited from an interactive parent.
+- `name: string` (required). Runtime semantic name. Unknown names render a visible dashed marker instead of throwing; map lucide names first with resolveLucideIconName.
+
+Accessibility role: img when meaningful; hidden when decorative
+Keyboard: native behavior
+Tokens: `--sheen-icon-size-sm`, `--sheen-icon-size-md`, `--sheen-icon-size-lg`, `--sheen-color-fg-muted`, `--sheen-color-border-control`, `--sheen-control-radius`
+
+Do:
+- Use for names that arrive from a server or schema at runtime.
+- Await preloadIcons with the same names on the server and before client hydration when the first paint must show the glyph.
+
+Do not:
+- Do not use for names known in source; the literal Icon transform or a per-icon import has no loading state.
+- Do not treat an unknown-name marker as an error the user can fix.
+
+Example, Server-supplied name:
+```tsx
+<LazyIcon name="gitBranch" decorative={false} label="Branch" />
+```
+
+Example, Lucide migration:
+```tsx
+const stored = "trash-2";
+<LazyIcon name={resolveLucideIconName(stored) ?? stored} />
+```
+
 ### LegalIcon
 
 The statically importable legal semantic icon with Phosphor artwork in every icon set.
@@ -8075,14 +8227,14 @@ Props:
 - `router: RouterAdapter` (optional). Optional app-injected navigation and unsaved-change adapter.
 - `product: AdminProductModel` (optional). Optional app-owned product identity.
 - `workspace: AdminWorkspaceModel` (optional). Optional app-owned workspace selector model.
-- `primaryNavigation: AdminNavigationModel` (optional). Optional app-owned primary navigation tree. Links may expose named sibling action menus without nesting controls inside destinations.
-- `secondaryNavigation: AdminNavigationModel` (optional). Optional app-owned secondary navigation tree. Links may expose named sibling action menus without changing link semantics.
+- `primaryNavigation: AdminNavigationModel|readonly AdminNavigationModel[]` (optional). Optional app-owned primary navigation tree, or an ordered array of trees that each render as one labeled section. Links may expose named sibling action menus without nesting controls inside destinations.
+- `secondaryNavigation: AdminNavigationModel|readonly AdminNavigationModel[]` (optional). Optional app-owned secondary navigation tree, or an ordered array of trees that each render as one labeled section. Section IDs are unique across both navigation zones.
 - `currentView: JSX.Element` (optional). Optional breadcrumb or accepted current-view label.
 - `globalSearch: JSX.Element` (optional). Optional app-owned search control. Sheen does not perform the search.
 - `actionGroups: readonly AdminActionGroup[]` (optional). Semantic primary, utility, and help action groups with native Button or Link behavior. Optional group presentation='overflow' puts infrequent controls in a scoped, keyboard-operable popover; use icon factories for deferred rendering there.
 - `notifications: AdminNotificationModel` (optional). Optional app-owned notification model.
 - `account: AdminAccountModel` (optional). Optional app-owned account identity and menu. Sheen does not authenticate.
-- `commandPalette: AdminCommandPaletteModel` (optional). Optional scoped command sources, state, persistence, and error hooks.
+- `commandPalette: AdminCommandPaletteModel` (optional). Optional scoped command sources, state, persistence, and error hooks. The trigger renders on the server; the palette body is a client chunk that preloads on idle or trigger intent, and a first Ctrl/Cmd+K is queued until it arrives.
 - `details: AdminDetailsModel` (optional). Optional controlled or URL-backed details identity and its single content owner.
 - `statusBar: JSX.Element` (optional). Optional fixed application status content.
 - `refreshing: boolean` (optional; default false). Marks accepted page content busy without replacing or remounting it.
@@ -8093,7 +8245,7 @@ Props:
 - `sidebarPersistence: AdminSidebarPersistence` (optional). Explicit server-resolved initial preference plus app-owned save and safe error handling. No localStorage read occurs.
 - `mobileSidebarOpen: boolean` (optional). Optional app-owned phone drawer state, independent of desktop collapse.
 - `onMobileSidebarOpenChange: (open:boolean)=>void` (optional). Phone drawer visibility proposals.
-- `shortcutHelp: boolean` (optional; default true). Enable the shared question-mark shortcut sheet and pending shortcut status.
+- `shortcutHelp: boolean` (optional; default true). Enable the shared question-mark shortcut sheet and pending shortcut status. The sheet body loads on idle or intent; its trigger renders on the server.
 - `development: boolean` (optional; default false). Enable development-only shortcut diagnostics.
 - `authorizationKey: string` (optional). Optional diagnostic boundary identity. Apps must clear unauthorized models and content synchronously when it changes.
 - `class: string` (optional). Additional class on the low-level AppShell root.
@@ -8119,6 +8271,12 @@ Example, Standard admin baseline:
 ```tsx
 import { ThemeProvider } from "@gemologic/sheen";
 <ThemeProvider><AdminApp label="Operations" pathname="/orders" product={{ name: "Northstar", href: "/" }} primaryNavigation={{ id: "primary", label: "Primary", items: [{ kind: "link", id: "orders", label: "Orders", href: "/orders" }] }}><p>Application content</p></AdminApp></ThemeProvider>
+```
+
+Example, Multiple navigation sections:
+```tsx
+import { ThemeProvider } from "@gemologic/sheen";
+<ThemeProvider><AdminApp label="Operations" pathname="/orders" primaryNavigation={[{ id: "work", label: "Work", items: [{ kind: "link", id: "orders", label: "Orders", href: "/orders" }] }, { id: "data", label: "Data", items: [{ kind: "link", id: "exports", label: "Exports", href: "/exports" }] }, { id: "billing", label: "Billing", items: [{ kind: "link", id: "invoices", label: "Invoices", href: "/invoices" }] }]} secondaryNavigation={{ id: "support", label: "Support", items: [{ kind: "link", id: "help", label: "Help", href: "/help" }] }}><p>Application content</p></AdminApp></ThemeProvider>
 ```
 
 ### AdminTopbar
@@ -8168,7 +8326,7 @@ Props:
 - `statusBar: JSX.Element` (optional). Fixed bottom chrome, rendered once in a native footer.
 - `router: RouterAdapter` (optional). Optional app-injected router adapter for dirty navigation blocking. Retry must bypass only this registration once. Requires the shell to be inside ThemeProvider.
 - `contentReady: boolean` (optional). Defaults to true. Set false while main-pane route content is incomplete so saved scroll restoration can wait for growth; true settles at the current clamped boundary.
-- `shortcutHelp: boolean` (optional). Enable localized help, pending indicator, global question-mark binding, and development-only mod+shift+d theme cycling. Requires app-owned ThemeProvider and ShortcutProvider ancestors; defaults to false. Apps should enable this even when character shortcuts are disabled. Development policy comes from ShortcutProvider.
+- `shortcutHelp: boolean` (optional). Enable localized help, pending indicator, global question-mark binding, and development-only mod+shift+d theme cycling. The help trigger renders on the server; the sheet body loads on idle or intent and a first question-mark press is queued. Requires app-owned ThemeProvider and ShortcutProvider ancestors; defaults to false. Apps should enable this even when character shortcuts are disabled. Development policy comes from ShortcutProvider.
 
 Accessibility role: main, complementary, banner, contentinfo
 Keyboard: Tab, Shift+Tab, PageUp, PageDown
@@ -8851,7 +9009,7 @@ Sectioned native navigation with nested disclosure groups and app-supplied activ
 Category: application
 
 Props:
-- `sections: readonly SidebarNavSection[]` (required). Named sections containing link/group entries with globally unique nonempty IDs. Links may supply a named action menu rendered beside the destination. Same-ID, same-kind entries retain mounted state across object replacement/reordering within their parent; moving between parents or changing kind creates a new owner.
+- `sections: readonly SidebarNavSection[]` (required). Named sections containing link/group entries with globally unique nonempty IDs. Links may supply a named action menu rendered beside the destination. Groups start closed unless `defaultOpen` is true or they contain the current destination.Same-ID, same-kind entries retain mounted state across object replacement/reordering within their parent; moving between parents or changing kind creates a new owner.
 - `pathname: string` (required). Accepted router pathname. Exact matching is default; prefix matching respects path segments. Longest matching destination wins; ties use declaration order. External destinations are never automatically current.
 - `headingLevel: 2|3|4|5|6` (optional). Section heading level, default 3, independent of compact visual size.
 - `collapsed: boolean` (optional). App-controlled icon rail. All nested destinations remain reachable; disclosure state returns when expanded. Labels remain accessible with tooltips. Supply icons; missing icons use the first label code point. Requires ThemeProvider in both modes.
@@ -9139,16 +9297,17 @@ Category: data
 Props:
 - `mode: "client"|"server"` (optional; default "client"). Client processes complete supplied data; server delegates the full query and requires pagination plus onStateChange.
 - `data: readonly Row[]` (optional). Complete bounded client dataset. Available only in client mode.
-- `initialResult: DataTableResult<Row>` (optional). Optional authoritative server result used for SSR without a duplicate hydration request. Delegated grouping includes groups for the accepted page.
-- `onStateChange: (state:TableState,signal:AbortSignal)=>Promise<DataTableResult<Row>>` (optional). Server request adapter receiving complete state and an AbortSignal. Available only in server mode.
-- `onExport: (request:TableExportRequest,signal:AbortSignal)=>Promise<Blob>` (optional). Optional server adapter returning a Blob for the captured accepted state and immutable selection. Server export UI is hidden without it.
+- `pagination: Pagination|TablePagination` (optional). False selects complete continuous results; { pageIndex, pageSize } selects numbered pagination; server-only { kind: "cursor", pageSize, cursor } selects opaque after/before cursor pages with a first/previous/next pager and no page count. Client defaults false and server requires an explicit choice.
+- `onAcceptedStateChange: ((state:TableState)=>void)|((state:TableState<DataTableServerPagination<Pagination>>)=>void)` (optional). Receives accepted query states, including the accepted cursor in cursor mode, and locally committed layout states; transient resize frames are excluded.
+- `initialResult: DataTableServerResult<Row,Pagination>` (optional). Optional authoritative server result used for SSR without a duplicate hydration request. Delegated grouping includes groups for the accepted page. Cursor mode supplies one cursor page instead.
+- `onStateChange: (state:TableState<DataTableServerPagination<Pagination>>,signal:AbortSignal)=>Promise<DataTableServerResult<Row,Pagination>>` (optional). Server request adapter receiving complete state and an AbortSignal. Numbered and complete modes return { rows, total }; cursor mode returns { rows, nextCursor, previousCursor, total? } where either cursor may be null and total may be exact, an estimate, or a lower bound. Search, filter, and sort changes request the first page. Available only in server mode.
+- `onExport: (request:TableExportRequest<DataTableServerPagination<Pagination>>,signal:AbortSignal)=>Promise<Blob>` (optional). Optional server adapter returning a Blob for the captured accepted state and immutable selection. Server export UI is hidden without it. Cursor state is included but exports should cover the full query, not one cursor page.
 - `refreshKey: string|number` (optional). Server-only invalidation key. Changes revalidate the latest requested or accepted query, retaining rows, layout, drafts, selection, and scroll. The initial value does not fetch; changing it supersedes pending transport.
 - `columns: SheenColumns<Row>` (required). Opaque column definitions returned by defineColumns. Noneditable custom cells may declare cellDependencies for extra row fields; accessor values always invalidate, and omitted dependencies retain whole-row invalidation. Include fields captured by event handlers and replace row data immutably.
 - `getRowId: (row:Row)=>string` (required). Returns a stable, unique, nonempty row ID.
 - `caption: string` (required). Required accessible table caption, visually hidden by default.
 - `variant: DataTableVariant` (optional). Standalone frame or application-pane integration; omission follows context.
 - `density: DataTableDensity` (optional). Optional table-local compact, comfortable, or spacious density. Omission inherits the surrounding application density.
-- `pagination: TablePagination` (optional). False selects complete continuous results; page state selects numbered pagination. Client defaults false and server requires an explicit choice.
 - `initialState: DataTableInitialState` (optional). Optional initial query and column-layout state; pagination remains configured by the pagination prop.
 - `filter: FilterNode` (optional). Optional app-owned accepted filter applied reactively without remounting retained rows; onAcceptedStateChange synchronizes table-authored changes.
 - `rowHeight: string` (optional; default "var(--sheen-table-row-h)"). CSS length for the fixed row block size or the minimum measured variable-row size.
@@ -9156,7 +9315,6 @@ Props:
 - `estimatedRowHeight: number` (optional; default 34). Positive CSS-pixel estimate used before measurement. Defaults to the active compact, comfortable, or spacious row token.
 - `initialViewportHeight: number` (optional; default 400). Positive CSS-pixel viewport size used for deterministic server rendering and hydration.
 - `class: string` (optional). Optional class merged onto the table region.
-- `onAcceptedStateChange: (state:TableState)=>void` (optional). Receives accepted query states and locally committed layout states; transient resize frames are excluded.
 - `onRowActivate: (row:Row)=>void` (optional). Enables roving row focus and receives Enter activation for the focused row.
 - `selection: DataTableSelectionOptions<Row>` (optional). Enables table-owned multiple selection, optional authorization-boundary resetKey, and immutable explicit-ID or query/exclusion payloads.
 - `actions: readonly DataTableAction<Row>[]` (optional). One validated action model rendered in the bottom selection bar and each accepted row's context menu.
@@ -9178,6 +9336,7 @@ Tokens: `--sheen-table-row-h`, `--sheen-color-border`, `--sheen-color-bg`, `--sh
 Do:
 - Use continuous client mode for bounded local datasets.
 - Use numbered server pagination for large or expensive remote results.
+- Use cursor pagination when the API pages with opaque after/before cursors; return null cursors at the ends and label estimated or capped totals as such.
 - Enable mobileLayout when a table must be functional on phones; tune its bounded continuous page size to row complexity.
 - Supply full-query counts and aggregates when the server delegates grouping.
 - Provide initialResult when server rendering already fetched the accepted page.
@@ -9186,14 +9345,17 @@ Do:
 - Return explicit conflict results from onCellCommit instead of parsing transport error text.
 - Change selection.resetKey, hierarchy.resetKey, export.resetKey, and editResetKey when the user's authorization or account boundary changes.
 - Keep column controls enabled when users can drag, so every layout action has a keyboard path.
+- Use createDataTable with only the features a table needs (filterBarFeature, groupingFeature, hierarchyFeature, cellEditingFeature) when bundle size matters; DataTable includes all of them.
 
 Do not:
 - Do not use pagination=false for an incomplete server response or infinite fetching.
+- Do not fabricate page numbers or an exact total for cursor pagination.
 - Do not render an unbounded phone card list; mobileLayout limits continuous pages to at most 100 cards.
 - Do not calculate group totals from one server page.
 - Do not paginate, sort, filter, or export one server page locally and present it as the complete query.
 - Do not materialize all-matching selection by walking server pages or offer it for a hierarchy whose subtree query cannot be represented.
 - Do not request server data for visibility, order, pin, or width-only changes.
+- Do not pass filterBar, grouping, hierarchy, editors, or editing props to a createDataTable composition that omits their feature; it fails at compile time and render.
 
 Example, Bounded continuous data:
 ```tsx
@@ -9213,6 +9375,26 @@ const columns = defineColumns<{ readonly id: string; readonly name: string; read
 ]);
 const rows = [{ id: "one", name: "Alpha", status: "Active" }, { id: "two", name: "Beta", status: "Paused" }];
 <DataTable data={rows} columns={columns} getRowId={row => row.id} caption="Active accounts" summarizeColumns={["status"]} filter={{ kind: "enum", column: "status", operator: "in", values: ["Active"] }} initialViewportHeight={160} />
+```
+
+Example, Cursor server pages:
+```tsx
+const columns = defineColumns<{ readonly id: string; readonly name: string }>([
+  { id: "name", header: "Name", accessor: row => row.name, sort: "text" },
+]);
+const page = [{ id: "a1", name: "Alpha" }, { id: "a2", name: "Beta" }];
+<DataTable mode="server" columns={columns} getRowId={row => row.id} caption="Accounts" pagination={{ kind: "cursor", pageSize: 25, cursor: null }} onStateChange={async state => ({ rows: page, nextCursor: state.pagination.cursor ? null : "a2", previousCursor: state.pagination.cursor ? "a1" : null, total: { kind: "estimate", value: 2 } })} initialViewportHeight={160} />
+```
+
+Example, Light composition with only the filter bar:
+```tsx
+const FilteredTable = createDataTable([filterBarFeature]);
+const columns = defineColumns<{ readonly id: string; readonly name: string; readonly status: string }>([
+  { id: "name", header: "Name", accessor: row => row.name, search: true },
+  { id: "status", header: "Status", accessor: row => row.status, filter: { type: "enum", options: ["Active", "Paused"] } },
+]);
+const rows = [{ id: "one", name: "Alpha", status: "Active" }, { id: "two", name: "Beta", status: "Paused" }];
+<FilteredTable data={rows} columns={columns} getRowId={row => row.id} caption="Accounts" pagination={false} initialViewportHeight={160} />
 ```
 
 ### FilterBar
@@ -9786,20 +9968,22 @@ Props:
 - `id: string` (optional). Root container ID, also used to derive stable internal IDs.
 - `ref: HTMLDivElement|((element:HTMLDivElement)=>void)` (optional). Root container reference; use inputRef for the native input.
 - `onPointerDown: NonNullable<JSX.EventHandlerUnion<HTMLDivElement,PointerEvent,JSX.EventHandler<HTMLDivElement,PointerEvent>>>` (optional). Native root pointer-down handler, composed with primitive focus behavior.
-- `label: string` (required). Required visible label.
 - `description: string` (optional). Supporting text associated with the native input.
 - `error: string` (optional). Associated validation error; marks the input invalid without moving focus.
 - `checked: boolean` (optional). App-owned checked value, retained across form reset unless the app changes it.
 - `defaultChecked: boolean` (optional; default false). Initial uncontrolled checked value restored on form reset.
 - `indeterminate: boolean` (optional; default false). App-owned mixed presentation; clear it explicitly when resolving a partial selection.
-- `onCheckedChange: (checked:boolean)=>void` (optional). Receives requested checked changes, not a DOM event.
+- `onCheckedChange: ((checked:boolean)=>void)` (optional). Receives requested checked changes, not a DOM event.
 - `disabled: boolean` (optional; default false). Disables activation, keyboard focus, and form submission.
 - `readOnly: boolean` (optional; default false). Prevents changes while retaining focus and submission.
 - `required: boolean` (optional; default false). Requires this checkbox to be checked for native form validation.
 - `name: string` (optional). Native form field name; omitted or empty names are not submitted.
 - `form: string` (optional). ID of an owning form outside the input's ancestry; forwarded to the native input.
 - `value: string` (optional; default "on"). Submitted value when checked.
-- `inputRef: (element:HTMLInputElement)=>void` (optional). Receives the native input; ref and remaining DOM props belong to the root container.
+- `inputRef: ((element:HTMLInputElement)=>void)` (optional). Receives the native input; ref and remaining DOM props belong to the root container.
+- `label: string` (optional). Visible label. Supply exactly one of label, aria-label, or aria-labelledby.
+- `aria-label: string` (optional). Accessible name on the native input when no visible label fits, such as a table row selector.
+- `aria-labelledby: string` (optional). ID of existing visible text, such as a row header, that names the native input.
 
 Accessibility role: checkbox
 Keyboard: Tab, Shift+Tab, Space
@@ -9807,6 +9991,7 @@ Tokens: `--sheen-color-border-control`, `--sheen-color-accent`, `--sheen-color-f
 
 Do:
 - Use mixed state for partial selections and update it explicitly.
+- Use aria-label or aria-labelledby only where a visible label would repeat nearby text.
 
 Do not:
 - Do not use a checkbox for an immediate on/off setting that needs switch semantics.
@@ -9814,6 +9999,11 @@ Do not:
 Example, Opt in:
 ```tsx
 <Checkbox label="Receive alerts" name="alerts" description="Send alerts for this workspace." />
+```
+
+Example, Table row selector:
+```tsx
+<Checkbox aria-label="Select invoice 1042" name="selected" value="1042" />
 ```
 
 ### CheckboxGroup
@@ -9977,7 +10167,7 @@ Searches static, remote and registered shortcut commands with retained refresh r
 Category: overlays
 
 Props:
-- `sources: readonly CommandPaletteSource[]` (required). Static and abortable remote command sources with stable IDs.
+- `sources: readonly CommandPaletteSource[]` (required). Static and abortable remote command sources with stable IDs. Each command may add render functions for a decorative leading icon and trailing content, such as a Kbd hint or Badge, which becomes the option's description; its label remains the accessible name.
 - `open: boolean` (optional). Controlled open state.
 - `defaultOpen: boolean` (optional; default false). Initial uncontrolled open state.
 - `onOpenChange: (open:boolean)=>void` (optional). Receives open-state requests.
@@ -9993,6 +10183,7 @@ Tokens: `--sheen-color-bg-raised`, `--sheen-color-border`, `--sheen-color-bg-sel
 
 Do:
 - Provide stable command IDs and server-known initial remote results.
+- Keep trailing text short and supplementary to the label.
 
 Do not:
 - Do not read recents on mount or blank accepted results during remote search.
@@ -10001,6 +10192,13 @@ Example, Application commands:
 ```tsx
 import type { CommandPaletteSource } from "@gemologic/sheen";
 const sources: readonly CommandPaletteSource[] = [{ kind: "static", id: "app", commands: [{ id: "settings", label: "Open settings", group: "Navigation", run: () => {} }] }];
+<ShortcutProvider development><CommandPalette sources={sources} /></ShortcutProvider>
+```
+
+Example, Icons and trailing hints:
+```tsx
+import type { CommandPaletteSource } from "@gemologic/sheen";
+const sources: readonly CommandPaletteSource[] = [{ kind: "static", id: "app", commands: [{ id: "new-project", label: "Create project", group: "Actions", icon: () => <Glyph name="plus" />, trailing: () => <Badge>New</Badge>, run: () => {} }, { id: "search", label: "Search records", group: "Navigation", icon: () => <Glyph name="search" />, trailing: () => <Kbd>/</Kbd>, run: () => {} }] }];
 <ShortcutProvider development><CommandPalette sources={sources} /></ShortcutProvider>
 ```
 
@@ -11120,6 +11318,7 @@ Props:
 - `open: boolean` (optional). App-owned open state.
 - `defaultOpen: boolean` (optional; default false). Uncontrolled initial state; portal content mounts when its theme target is ready.
 - `onOpenChange: (open:boolean)=>void` (optional). Requested open-state changes; controlled owners may reject them.
+- `disabled: boolean` (optional; default false). Natively disables the trigger, like Button, so it leaves the tab order and cannot request opening. An already open popover still closes normally.
 - `placement: "top"|"top-start"|"top-end"|"bottom"|"bottom-start"|"bottom-end"|"left"|"right"` (optional; default "bottom"). Preferred logical side and alignment, with viewport collision handling.
 - `class: string` (optional). Additional content classes.
 
@@ -11136,6 +11335,11 @@ Do not:
 Example, View options:
 ```tsx
 <Popover title="View options" trigger="View options"><Checkbox label="Show archived" /></Popover>
+```
+
+Example, Unavailable options:
+```tsx
+<Popover title="Export options" trigger="Export options" disabled>Choose a format.</Popover>
 ```
 
 ### Progress
@@ -11476,8 +11680,8 @@ Props:
 - `clearLabel: string` (optional). Override the localized clear-search action label.
 - `shortcut: ShortcutAction` (optional). Optional typed shortcut registration that focuses the input when a ShortcutProvider is present.
 - `description: string` (optional). Associated search instructions.
-- `label: string` (required). Required visible label.
 - `error: string` (optional). App-owned validation message.
+- `label: string` (required). Required visible label.
 
 Accessibility role: searchbox plus a native clear button
 Keyboard: Native text editing, Tab to clear action, Enter or Space clears and restores input focus
@@ -12037,18 +12241,20 @@ Props:
 - `id: string` (optional). Root container ID used to derive internal IDs.
 - `ref: HTMLDivElement|((element:HTMLDivElement)=>void)` (optional). Root container reference; inputRef targets the native input.
 - `onPointerDown: NonNullable<JSX.EventHandlerUnion<HTMLDivElement,PointerEvent,JSX.EventHandler<HTMLDivElement,PointerEvent>>>` (optional). Native root pointer-down handler composed with focus behavior.
-- `label: string` (required). Required visible label, unchanged between on and off.
 - `error: string` (optional). Associated error marking the control invalid without moving focus.
 - `checked: boolean` (optional). App-owned state, retained on reset unless the app changes it.
 - `defaultChecked: boolean` (optional; default false). Initial uncontrolled state restored on uncanceled reset.
-- `onCheckedChange: ((checked:boolean)=>void)` (optional). Receives the requested boolean state, not a DOM event.
+- `onCheckedChange: (checked:boolean)=>void` (optional). Receives the requested boolean state, not a DOM event.
 - `disabled: boolean` (optional; default false). Prevents changes, keyboard focus, and form submission.
 - `readOnly: boolean` (optional; default false). Prevents changes while retaining focus and submission.
 - `required: boolean` (optional; default false). Requires the switch to be on for native form validation.
 - `name: string` (optional). Native form name; empty or omitted names are not submitted.
 - `form: string` (optional). External owning form ID, forwarded to the native input.
 - `value: string` (optional; default "on"). Value submitted when on.
-- `inputRef: ((element:HTMLInputElement)=>void)` (optional). Receives the native input.
+- `inputRef: (element:HTMLInputElement)=>void` (optional). Receives the native input.
+- `label: string` (optional). Visible label, unchanged between on and off. Supply exactly one of label, aria-label, or aria-labelledby.
+- `aria-label: string` (optional). Accessible name on the native input when no visible label fits.
+- `aria-labelledby: string` (optional). ID of existing visible text that names the native input.
 
 Accessibility role: switch
 Keyboard: Tab, Shift+Tab, Space
@@ -12063,6 +12269,11 @@ Do not:
 Example, Live updates:
 ```tsx
 <Switch label="Live updates" defaultChecked description="Refresh this view automatically." />
+```
+
+Example, Row setting:
+```tsx
+<Switch aria-label="Enable alerts for Production" defaultChecked />
 ```
 
 ### Table
@@ -12585,11 +12796,49 @@ Do:
 - Provide a visible label or aria-label on the native trigger.
 
 Do not:
-- Do not nest a button inside Tooltip or put interactive controls in its content.
+- Do not nest a button inside Tooltip; use TooltipTrigger to attach help to an existing element.
+- Do not put interactive controls in its content.
 
 Example, Save hint:
 ```tsx
 <Tooltip content="Save the workspace" shortcut={{ keys: "mod+s", scope: "global", label: "Save workspace", group: "Editing" }} variant="outline">Save</Tooltip>
+```
+
+### TooltipTrigger
+
+Hover/focus help attached to an existing focusable element without rendering another control.
+
+Category: overlays
+
+Props:
+- `content: string` (required). Noninteractive supporting text; never a replacement for the element's accessible name.
+- `shortcut: string` (optional). Display-only shortcut hint rendered as Kbd; it does not register a binding.
+- `tooltipDisabled: boolean` (optional; default false). Disables only the help layer. Set it when the element is disabled, because disabled controls do not open help.
+- `placement: "top"|"bottom"|"left"|"right"` (optional; default "top"). Preferred side, with viewport collision handling.
+- `openDelay: number` (optional; default 500). Hover opening delay in milliseconds; keyboard focus opens immediately.
+- `closeDelay: number` (optional; default 100). Pointer departure delay in milliseconds, preserving a hoverable path to the content.
+- `aria-describedby: string` (optional). Existing description IDs, merged with the tooltip content ID in the supplied bindings.
+- `children: (trigger:TooltipTriggerBindings)=>JSX.Element` (required). Render exactly one focusable element and spread the supplied ref and aria-describedby bindings on it. Compose an own ref by calling the binding's ref; the element keeps its own event handlers.
+
+Accessibility role: tooltip
+Keyboard: Tab, Shift+Tab, Escape
+Tokens: `--sheen-color-bg-raised`, `--sheen-elevation-raised`, `--sheen-duration-fast`
+
+Do:
+- Use for an element that already exists, such as an app button or a third-party control, instead of nesting it inside Tooltip.
+
+Do not:
+- Do not render more than one element from the bindings or attach help to a non-focusable element.
+- Do not put interactive content in the tooltip; use Popover.
+
+Example, Existing button:
+```tsx
+<TooltipTrigger content="Archive the selected rows">{trigger => <Button {...trigger} variant="outline">Archive</Button>}</TooltipTrigger>
+```
+
+Example, Native element:
+```tsx
+<TooltipTrigger content="Copied values stay local" shortcut="mod+c">{trigger => <button type="button" {...trigger}>Copy</button>}</TooltipTrigger>
 ```
 
 ### Tree

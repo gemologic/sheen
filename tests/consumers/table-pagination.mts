@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { assessServerPage, compileFilter, countClientFacets, createClientView, createDebouncedSearch, createTableRequests, deserializeFilter, filterClientRows, paginateClientRows, parseFilter, parseSorting, resolvePagination, searchClientRows, serializeFilter, sortClientRows } from "@gemologic/sheen-table/core";
-import type { FilterColumn, TablePagination } from "@gemologic/sheen-table/core";
+import type { CursorTableStateSchema, FilterColumn, TablePagination } from "@gemologic/sheen-table/core";
 import { changeClientViewState, parseClientViewState } from "@gemologic/sheen-table/core";
 import { deserializeState, parseTableState, serializeState } from "@gemologic/sheen-table/core";
 import { changeTableState } from "@gemologic/sheen-table/core";
@@ -62,6 +62,10 @@ assert.deepEqual(changeClientViewState(queryState, { kind: "search", value: "new
 const tableSchema = { ...schema, columns: ["id"] };
 const saved = parseTableState({ ...queryState, columns: [{ id: "id", visible: true, width: null, pin: false }] }, tableSchema);
 assert.deepEqual(deserializeState(serializeState(saved, tableSchema), tableSchema), saved);
+const cursorSchema: CursorTableStateSchema = { ...tableSchema, pagination: "cursor" };
+const cursorSaved = parseTableState({ ...saved, pagination: { kind: "cursor", pageSize: 20, cursor: { direction: "after", value: "live" } } }, cursorSchema);
+assert.deepEqual(deserializeState(serializeState(cursorSaved, cursorSchema), cursorSchema).pagination, { kind: "cursor", pageSize: 20, cursor: null });
+assert.throws(() => deserializeState(serializeState(saved, tableSchema), cursorSchema), /cursor pagination/);
 assert.equal(changeTableState(saved, { kind: "columnVisibility", column: "id", visible: false }, tableSchema).columns[0]?.visible, false);
 const selection = createTableSelection(filter, columns);
 selection.setLoadedIds(["a"]);

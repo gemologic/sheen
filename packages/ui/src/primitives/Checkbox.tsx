@@ -3,11 +3,17 @@ import type { JSX } from "solid-js";
 import { cn } from "../utils/cn.ts";
 import { createBooleanInputState } from "./boolean-input-state.ts";
 
-export interface CheckboxProps extends Omit<JSX.HTMLAttributes<HTMLDivElement>, "children" | "onChange" | "id" | "ref" | "onPointerDown"> {
+/** Exactly one accessible name source for the native input. */
+export type BooleanControlName =
+  | { label: string; "aria-label"?: never; "aria-labelledby"?: never }
+  | { label?: never; "aria-label": string; "aria-labelledby"?: never }
+  | { label?: never; "aria-label"?: never; "aria-labelledby": string };
+
+// Directives apply only to native elements, never through a component's props.
+export interface BooleanControlBaseProps extends Omit<JSX.HTMLAttributes<HTMLDivElement>, "children" | "onChange" | "id" | "ref" | "onPointerDown" | "aria-label" | "aria-labelledby" | `use:${string}`> {
   id?: string;
   ref?: HTMLDivElement | ((element: HTMLDivElement) => void);
   onPointerDown?: NonNullable<JSX.HTMLAttributes<HTMLDivElement>["onPointerDown"]>;
-  label: string;
   description?: string;
   error?: string;
   checked?: boolean;
@@ -23,23 +29,24 @@ export interface CheckboxProps extends Omit<JSX.HTMLAttributes<HTMLDivElement>, 
   inputRef?: (element: HTMLInputElement) => void;
 }
 
+export type CheckboxProps = BooleanControlBaseProps & BooleanControlName;
+
 export function createNativeBooleanControl(props: CheckboxProps, kind: "checkbox" | "switch"): JSX.Element {
   const [local, state, others] = splitProps(props,
-    ["label", "description", "error", "class", "onCheckedChange", "inputRef", "form"],
+    ["label", "aria-label", "aria-labelledby", "description", "error", "class", "onCheckedChange", "inputRef", "form"],
     ["checked", "defaultChecked", "indeterminate", "disabled", "readOnly", "required", "name", "value"]);
   const prefix = `sheen-${kind}`;
   const generatedId = createUniqueId();
   const inputId = `${generatedId}-input`;
-  let input: HTMLInputElement | undefined;
   const describedBy = () => [local.description ? `${generatedId}-description` : "", local.error ? `${generatedId}-error` : ""].filter(Boolean).join(" ") || undefined;
   const { checked, requestChange, setInput } = createBooleanInputState(state, next => local.onCheckedChange?.(next));
   return <div {...others} class={cn(prefix, local.class)} data-checked={checked() || undefined} data-indeterminate={state.indeterminate || undefined} data-disabled={state.disabled || undefined} data-readonly={state.readOnly || undefined} data-invalid={local.error ? "" : undefined}>
     <div class={`${prefix}-row`}>
-      <input id={inputId} type="checkbox" role={kind === "switch" ? "switch" : undefined} name={state.name ?? ""} value={state.value} form={local.form} disabled={state.disabled} required={state.required} readOnly={state.readOnly} checked={checked()} aria-readonly={state.readOnly || undefined} aria-invalid={local.error ? "true" : undefined} aria-describedby={describedBy()} class={`${prefix}-input`} ref={element => { input = element; setInput(element); local.inputRef?.(element); }} onChange={event => requestChange(event.currentTarget)} />
-      <span class={`${prefix}-control`} data-indeterminate={state.indeterminate || undefined} aria-hidden="true" onClick={() => input?.click()}>
+      <input id={inputId} type="checkbox" role={kind === "switch" ? "switch" : undefined} name={state.name ?? ""} value={state.value} form={local.form} disabled={state.disabled} required={state.required} readOnly={state.readOnly} checked={checked()} aria-label={local["aria-label"]} aria-labelledby={local["aria-labelledby"]} aria-readonly={state.readOnly || undefined} aria-invalid={local.error ? "true" : undefined} aria-describedby={describedBy()} class={`${prefix}-input`} ref={element => { setInput(element); local.inputRef?.(element); }} onChange={event => requestChange(event.currentTarget)} />
+      <span class={`${prefix}-control`} data-indeterminate={state.indeterminate || undefined} aria-hidden="true">
         {kind === "checkbox" ? <span class="sheen-checkbox-indicator"><span class="sheen-checkbox-mark" /></span> : <span class="sheen-switch-thumb" />}
       </span>
-      <label for={inputId} class={`${prefix}-label`}>{local.label}<Show when={state.required}><span aria-hidden="true"> *</span></Show></label>
+      <Show when={local.label}>{label => <label for={inputId} class={`${prefix}-label`}>{label()}<Show when={state.required}><span aria-hidden="true"> *</span></Show></label>}</Show>
     </div>
     <Show when={local.description}><p id={`${generatedId}-description`} class={`${prefix}-description`}>{local.description}</p></Show>
     <Show when={local.error}><p id={`${generatedId}-error`} class={`${prefix}-error`}>{local.error}</p></Show>

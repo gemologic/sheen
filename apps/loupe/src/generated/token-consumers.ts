@@ -181,6 +181,9 @@ export const tokenConsumers: Readonly<Record<string, readonly string[]>> = Objec
     "InputGroup",
     "Meter",
     "MultiCombobox",
+    "NativeDateField",
+    "NativeDateTimeField",
+    "NativeTimeField",
     "NumberField",
     "Progress",
     "PromptInput",
@@ -251,6 +254,7 @@ export const tokenConsumers: Readonly<Record<string, readonly string[]>> = Objec
     "Toast",
     "Toaster",
     "Tooltip",
+    "TooltipTrigger",
     "WorkspaceSwitcher"
   ],
   "--sheen-color-bg-selected": [
@@ -339,7 +343,11 @@ export const tokenConsumers: Readonly<Record<string, readonly string[]>> = Objec
     "FilterBar",
     "Input",
     "InputGroup",
+    "LazyIcon",
     "MultiCombobox",
+    "NativeDateField",
+    "NativeDateTimeField",
+    "NativeTimeField",
     "NumberField",
     "PromptInput",
     "QueryBuilder",
@@ -371,7 +379,10 @@ export const tokenConsumers: Readonly<Record<string, readonly string[]>> = Objec
     "Stat"
   ],
   "--sheen-color-danger-border": [
-    "EditableTextField"
+    "EditableTextField",
+    "NativeDateField",
+    "NativeDateTimeField",
+    "NativeTimeField"
   ],
   "--sheen-color-danger-fg": [
     "CheckboxGroup",
@@ -589,6 +600,7 @@ export const tokenConsumers: Readonly<Record<string, readonly string[]>> = Objec
     "LaptopIcon",
     "LayersIcon",
     "LayoutIcon",
+    "LazyIcon",
     "LegalIcon",
     "LightbulbIcon",
     "LightningIcon",
@@ -772,6 +784,9 @@ export const tokenConsumers: Readonly<Record<string, readonly string[]>> = Objec
     "List",
     "ListDetailLayout",
     "MultiCombobox",
+    "NativeDateField",
+    "NativeDateTimeField",
+    "NativeTimeField",
     "NavItem",
     "NumberField",
     "Popover",
@@ -864,7 +879,8 @@ export const tokenConsumers: Readonly<Record<string, readonly string[]>> = Objec
   ],
   "--sheen-color-warning-border": [
     "DateTimePicker",
-    "EditableTextField"
+    "EditableTextField",
+    "NativeDateTimeField"
   ],
   "--sheen-color-warning-fg": [
     "LogViewer"
@@ -895,13 +911,15 @@ export const tokenConsumers: Readonly<Record<string, readonly string[]>> = Objec
     "Progress"
   ],
   "--sheen-control-radius": [
+    "LazyIcon",
     "Skeleton"
   ],
   "--sheen-duration-fast": [
     "IconButton",
     "Popover",
     "Toaster",
-    "Tooltip"
+    "Tooltip",
+    "TooltipTrigger"
   ],
   "--sheen-duration-normal": [
     "Accordion",
@@ -950,7 +968,8 @@ export const tokenConsumers: Readonly<Record<string, readonly string[]>> = Objec
     "PricingTable",
     "SortableList",
     "Testimonial",
-    "Tooltip"
+    "Tooltip",
+    "TooltipTrigger"
   ],
   "--sheen-font-mono": [
     "Code",
@@ -1109,6 +1128,7 @@ export const tokenConsumers: Readonly<Record<string, readonly string[]>> = Objec
     "LaptopIcon",
     "LayersIcon",
     "LayoutIcon",
+    "LazyIcon",
     "LegalIcon",
     "LightbulbIcon",
     "LightningIcon",
@@ -1375,6 +1395,7 @@ export const tokenConsumers: Readonly<Record<string, readonly string[]>> = Objec
     "LaptopIcon",
     "LayersIcon",
     "LayoutIcon",
+    "LazyIcon",
     "LegalIcon",
     "LightbulbIcon",
     "LightningIcon",
@@ -1640,6 +1661,7 @@ export const tokenConsumers: Readonly<Record<string, readonly string[]>> = Objec
     "LaptopIcon",
     "LayersIcon",
     "LayoutIcon",
+    "LazyIcon",
     "LegalIcon",
     "LightbulbIcon",
     "LightningIcon",

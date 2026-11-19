@@ -16,7 +16,7 @@ export default defineMeta<AppShellProps>({
     statusBar: { description: "Fixed bottom chrome, rendered once in a native footer." },
     router: { description: "Optional app-injected router adapter for dirty navigation blocking. Retry must bypass only this registration once. Requires the shell to be inside ThemeProvider." },
     contentReady: { description: "Defaults to true. Set false while main-pane route content is incomplete so saved scroll restoration can wait for growth; true settles at the current clamped boundary." },
-    shortcutHelp: { description: "Enable localized help, pending indicator, global question-mark binding, and development-only mod+shift+d theme cycling. Requires app-owned ThemeProvider and ShortcutProvider ancestors; defaults to false. Apps should enable this even when character shortcuts are disabled. Development policy comes from ShortcutProvider." },
+    shortcutHelp: { description: "Enable localized help, pending indicator, global question-mark binding, and development-only mod+shift+d theme cycling. The help trigger renders on the server; the sheet body loads on idle or intent and a first question-mark press is queued. Requires app-owned ThemeProvider and ShortcutProvider ancestors; defaults to false. Apps should enable this even when character shortcuts are disabled. Development policy comes from ShortcutProvider." },
   },
   tokens: ["--sheen-color-bg", "--sheen-color-border"],
   a11y: { role: "main, complementary, banner, contentinfo", keyboard: ["Tab", "Shift+Tab", "PageUp", "PageDown"] },

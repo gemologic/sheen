@@ -22,4 +22,9 @@ describe("Switch server contract", () => {
     expect(input).toMatch(/\bdisabled(?:[ =>])/);
     expect(input).toContain('aria-readonly="true"');
   });
+  it("places aria-label on the native switch without a visible label", () => {
+    const html = renderToString(() => <Switch aria-label="Production alerts" />);
+    expect(html.match(/<input\b[^>]*>/)?.[0]).toContain('aria-label="Production alerts"');
+    expect(html).not.toContain("<label");
+  });
 });

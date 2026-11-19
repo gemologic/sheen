@@ -1,4 +1,4 @@
-import { breakpointQuery, Dialog, ScrollArea, ShortcutPending, ShortcutSheet, Tooltip, useShortcut, useShortcutBindings, useTheme } from "@gemologic/sheen";
+import { breakpointQuery, Button, Dialog, ScrollArea, ShortcutPending, Tooltip, useShortcut, useShortcutBindings, useTheme } from "@gemologic/sheen";
 import { Title } from "@solidjs/meta";
 import { Show, children, createEffect, createMemo, createSignal, createUniqueId, onCleanup, onMount, splitProps } from "solid-js";
 import type { JSX } from "solid-js";
@@ -8,6 +8,7 @@ import type { RouterAdapter } from "./router.ts";
 import { ShellNavigationGuard } from "./ShellNavigationGuard.tsx";
 import { PaneRestorationContext, createPaneRestoration } from "./pane-restoration.ts";
 import { createSidebarScrollRetention } from "./sidebar-scroll.ts";
+import { createDeferredModule } from "./deferred-module.ts";
 
 export interface AppShellProps extends JSX.HTMLAttributes<HTMLDivElement> {
   label: string;
@@ -141,16 +142,22 @@ function ShellFrame(props: AppShellProps & { sidebarProjection: (element: HTMLEl
 function ShellShortcutHelp(): JSX.Element {
   const theme = useTheme();
   const [open, setOpen] = createSignal(false);
+  const sheet = createDeferredModule(() => import("./shell-shortcut-sheet.ts"), () => true);
   let origin: HTMLElement | undefined;
   const change = (next: boolean) => {
     if (next && !open()) origin = document.activeElement instanceof HTMLElement ? document.activeElement : undefined;
+    if (next) sheet.load();
     setOpen(next);
   };
   useShortcut({ keys: "?", scope: "global", get label() { return theme.messages().shortcutHelp; }, get group() { return theme.messages().shortcutGroup; }, run: () => change(true) });
   useShortcut({ keys: "mod+shift+d", scope: "global", developmentOnly: true, get label() { return theme.messages().cycleThemeMode; }, get group() { return theme.messages().shortcutGroup; },
     run: () => theme.setMode(theme.mode() === "dark" ? "light" : theme.mode() === "light" ? "system" : "dark") });
   return <><ShortcutPending />
-    <ShortcutSheet title={theme.messages().shortcutHelp} trigger={theme.messages().shortcutHelp} open={open()} onOpenChange={change} returnFocus={() => origin} />
+    <Button aria-haspopup="dialog" aria-expanded={open()} onPointerEnter={sheet.load} onFocus={sheet.load} onClick={() => change(true)}>{theme.messages().shortcutHelp}</Button>
+    <Show when={sheet.module()}>{loaded => {
+      const ShortcutSheet = loaded().ShortcutSheet;
+      return <ShortcutSheet title={theme.messages().shortcutHelp} open={open()} onOpenChange={change} returnFocus={() => origin} />;
+    }}</Show>
   </>;
 }
 

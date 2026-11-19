@@ -44,4 +44,11 @@ describe("SidebarNav", () => {
     expect(html).toContain('href="/orders/reports/"');
     expect(html).not.toContain('role="menu"');
   });
+  it("server renders a defaultOpen group open without a current destination inside it", () => {
+    const render = (defaultOpen: boolean) => renderToString(() => <ThemeProvider><SidebarNav pathname="/" sections={[{ id: "work", label: "Workspace", items: [
+      { kind: "group", id: "reports", label: "Reports", defaultOpen, items: [{ kind: "link", id: "report", label: "Report", href: "/reports" }] },
+    ] }]} /></ThemeProvider>);
+    expect(render(true)).toContain('aria-expanded="true"');
+    expect(render(false)).not.toContain('aria-expanded="true"');
+  });
 });

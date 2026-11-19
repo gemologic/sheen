@@ -1,5 +1,5 @@
-export { parsePagination, resolvePagination, resetPagination, resizePagination, getPageRange, paginateClientRows, assessServerPage } from "./pagination.ts";
-export type { PageState, TablePagination, PageRange, PageResult, ServerPageAssessment } from "./pagination.ts";
+export { parsePagination, parseCursorPagination, parseServerPagination, resolvePagination, resetPagination, resizePagination, getPageRange, paginateClientRows, assessServerPage, assessCursorPage } from "./pagination.ts";
+export type { PageState, TablePagination, CursorPosition, CursorPagination, ServerPagination, CursorTotal, CursorPageResult, CursorPageAssessment, PageRange, PageResult, ServerPageAssessment } from "./pagination.ts";
 export { createTableRequests } from "./requests.ts";
 export type { TableRequestState, TableRequestSnapshot, TableRequestOutcome, InitialTableResult } from "./requests.ts";
 export { parseFilter, serializeFilter, deserializeFilter } from "./filter.ts";
@@ -23,7 +23,7 @@ export type { ClientView, ClientViewState, ClientViewOptions } from "./client-vi
 export { parseClientViewState, changeClientViewState } from "./client-state.ts";
 export type { ClientStateSchema, ClientStateChange } from "./client-state.ts";
 export { parseTableState, serializeState, deserializeState } from "./table-state.ts";
-export type { ColumnState, TableState, TableStateSchema } from "./table-state.ts";
+export type { ColumnState, TableState, TableStateSchema, CursorTableStateSchema } from "./table-state.ts";
 export { changeTableState } from "./table-state-changes.ts";
 export type { TableStateChange } from "./table-state-changes.ts";
 export { orderColumnStates, placeColumn, moveColumn, canMoveColumn } from "./column-layout.ts";
@@ -47,8 +47,8 @@ export type { GroupAggregateColumn, GroupAggregateValue, ClientRowGroup, ServerR
 export { createRowHierarchy } from "./row-hierarchy.ts";
 export type { HierarchyLoadOutcome, RowHierarchyOptions, HierarchyRow } from "./row-hierarchy.ts";
 export { createTableUrlState } from "./url-state.ts";
-export type { TableUrlLocation, TableUrlRouter, TableUrlRead, TableUrlWrite } from "./url-state.ts";
+export type { TableUrlLocation, TableUrlRouter, TableUrlRead, TableUrlWrite, TableUrlState } from "./url-state.ts";
 export { createSavedViews } from "./saved-views.ts";
-export type { SavedViewRecord, SavedViewSave, SavedViewsAdapter, SavedViewOperation, SavedViewsSnapshot, SavedViewOutcome, SavedViewRestore } from "./saved-views.ts";
+export type { SavedViews, SavedViewRecord, SavedViewSave, SavedViewsAdapter, SavedViewOperation, SavedViewsSnapshot, SavedViewOutcome, SavedViewRestore } from "./saved-views.ts";
 export { englishTableMessages, resolveTableMessages } from "./messages.ts";
 export type { TableMessages } from "./messages.ts";

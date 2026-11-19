@@ -13,6 +13,8 @@
   "exports": {
     ".": { "types": "./dist/index.d.ts", "solid": "./src/index.ts", "import": "./dist/index.js" },
     "./runtime": { "types": "./dist/runtime.d.ts", "solid": "./src/runtime.tsx", "import": "./dist/runtime.js" },
+    "./lazy": { "types": "./dist/lazy.d.ts", "solid": "./src/lazy.tsx", "import": "./dist/lazy.js" },
+    "./lucide": { "types": "./dist/lucide.d.ts", "solid": "./src/lucide.ts", "import": "./dist/lucide.js" },
     "./vite": { "types": "./dist/vite.d.ts", "import": "./dist/vite.js" },
     "./icons/*": { "types": "./dist/icons/*.d.ts", "solid": "./src/icons/*.tsx", "import": "./dist/icons/*.js" },
     "./styles.css": "./src/styles.css"

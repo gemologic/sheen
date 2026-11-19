@@ -1309,6 +1309,12 @@ export const componentIndex = Object.freeze([
     "summary": "The statically importable layout semantic icon with Radix and Phosphor artwork."
   },
   {
+    "name": "LazyIcon",
+    "package": "@gemologic/sheen-icons",
+    "category": "icons",
+    "summary": "Resolves one semantic icon by runtime name through a per-icon dynamic import, without retaining the complete registry."
+  },
+  {
     "name": "LegalIcon",
     "package": "@gemologic/sheen-icons",
     "category": "icons",
@@ -1541,6 +1547,24 @@ export const componentIndex = Object.freeze([
     "package": "@gemologic/sheen-icons",
     "category": "icons",
     "summary": "The statically importable mute semantic icon with Radix and Phosphor artwork."
+  },
+  {
+    "name": "NativeDateField",
+    "package": "@gemologic/sheen-date",
+    "category": "date and time",
+    "summary": "A lightweight Sheen-styled native date input with a CalendarDate value and an ISO form projection."
+  },
+  {
+    "name": "NativeDateTimeField",
+    "package": "@gemologic/sheen-date",
+    "category": "date and time",
+    "summary": "A lightweight native datetime-local input that enters wall time in an explicit IANA zone and commits a DateTime instant."
+  },
+  {
+    "name": "NativeTimeField",
+    "package": "@gemologic/sheen-date",
+    "category": "date and time",
+    "summary": "A lightweight Sheen-styled native time input with a wall-clock Time value and an ISO form projection."
   },
   {
     "name": "NavigateIcon",
@@ -2357,6 +2381,12 @@ export const componentIndex = Object.freeze([
     "package": "@gemologic/sheen",
     "category": "overlays",
     "summary": "An action button with hover/focus help and optional shortcut display."
+  },
+  {
+    "name": "TooltipTrigger",
+    "package": "@gemologic/sheen",
+    "category": "overlays",
+    "summary": "Hover/focus help attached to an existing focusable element without rendering another control."
   },
   {
     "name": "TopNav",

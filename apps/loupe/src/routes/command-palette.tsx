@@ -1,4 +1,4 @@
-import { Button, CommandPalette, Heading, Row, ShortcutProvider, Stack, Text, ThemeScope, useShortcut } from "@gemologic/sheen";
+import { Badge, Button, CommandPalette, Glyph, Heading, Kbd, Row, ShortcutProvider, Stack, Text, ThemeScope, useShortcut } from "@gemologic/sheen";
 import type { CommandPaletteCommand, CommandPaletteSource } from "@gemologic/sheen";
 import { createSignal } from "solid-js";
 
@@ -20,8 +20,8 @@ function PaletteWorkspace() {
   const initialRemote: CommandPaletteCommand = { id: "remote-report", label: "Remote report", group: "Remote", keywords: ["report"], run: () => { setSelected("remote-report"); } };
   const sources: readonly CommandPaletteSource[] = [
     { kind: "static", id: "application", commands: [
-      { id: "settings", label: "Open settings", group: "Navigation", keywords: ["preferences", "config"], run: () => { setSelected("settings"); } },
-      { id: "new-project", label: "Create project", group: "Actions", run: () => { setSelected("new-project"); } },
+      { id: "settings", label: "Open settings", group: "Navigation", keywords: ["preferences", "config"], icon: () => <Glyph name="search" />, trailing: () => <Kbd>G S</Kbd>, run: () => { setSelected("settings"); } },
+      { id: "new-project", label: "Create project", group: "Actions", icon: () => <Glyph name="plus" />, trailing: () => <Badge>New</Badge>, run: () => { setSelected("new-project"); } },
     ] },
     { kind: "remote", id: "server", initialCommands: [initialRemote], minimumQueryLength: 6, search: async (query, signal) => {
       const response = await fetch(`/api/palette?query=${encodeURIComponent(query)}`, { signal });

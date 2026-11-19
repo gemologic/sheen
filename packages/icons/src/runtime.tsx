@@ -1,6 +1,7 @@
-import { For, createMemo, splitProps } from "solid-js";
+import { splitProps } from "solid-js";
 import type { Component, JSX } from "solid-js";
 import { iconData } from "./generated/catalog.ts";
+import { IconGlyph } from "./glyph.tsx";
 import { isIconName } from "./registry.ts";
 import type { IconName, IconSetName } from "./registry.ts";
 
@@ -23,25 +24,6 @@ export interface StaticIconProps extends IconVisualProps {
 }
 export type IconProps = StaticIconProps & { readonly name: IconName };
 export type DynamicIconProps = StaticIconProps & { readonly name: string };
-
-type IconGlyphProps = StaticIconProps & {
-  readonly name: IconName;
-  readonly icons: readonly IconData[];
-};
-
-function IconGlyph(props: IconGlyphProps): JSX.Element {
-  const [local, others] = splitProps(props, ["name", "icons", "size", "tone", "decorative", "label", "class"]);
-  const accessibility = createMemo<{ readonly label: string | undefined; readonly hidden: "true" | undefined; readonly role: "img" | undefined }>(() => {
-    const label = local.label?.trim();
-    if (local.decorative === false && !label) throw new Error(`${local.name} icon requires a nonempty label when decorative=false`);
-    return local.decorative === false ? { label, hidden: undefined, role: "img" } : { label: undefined, hidden: "true", role: undefined };
-  });
-  return <span {...others} class={`sheen-icon${local.class ? ` ${local.class}` : ""}`} data-sheen-icon={local.name} data-size={local.size ?? "md"} data-tone={local.tone ?? "muted"}
-    role={accessibility().role} aria-label={accessibility().label} aria-hidden={accessibility().hidden}>
-    <For each={local.icons}>{(icon, index) => <svg xmlns="http://www.w3.org/2000/svg" viewBox={`0 0 ${icon.width} ${icon.height}`}
-      data-sheen-icon-set-value={icon.set} data-sheen-icon-default={index() === 0 || undefined} aria-hidden="true" innerHTML={icon.body} />}</For>
-  </span>;
-}
 
 export function createStaticIcon(name: IconName, icons: readonly IconData[]): Component<StaticIconProps> {
   if (!icons.length || new Set(icons.map(icon => icon.set)).size !== icons.length) throw new Error(`${name} icon requires one unique entry per bundled set`);

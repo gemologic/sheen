@@ -23,6 +23,7 @@ export default function SwitchFixture() {
           <Switch label="Disabled setting" defaultChecked disabled name="disabled" />
           <Switch label="Readonly setting" defaultChecked readOnly name="readonly" />
           <Switch label="Unnamed setting" defaultChecked />
+          <Switch aria-label="Production alerts" />
           <Button type="submit">Inspect values</Button>
           <Button type="reset">Reset switches</Button>
         </Stack>

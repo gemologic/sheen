@@ -4,7 +4,8 @@ import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createSavedViews } from "./saved-views.ts";
 import type { SavedViewRecord, SavedViewsAdapter } from "./saved-views.ts";
-import type { TableState, TableStateSchema } from "./table-state.ts";
+import type { CursorTableStateSchema, TableState, TableStateSchema } from "./table-state.ts";
+import type { CursorPagination } from "./pagination.ts";
 
 const schema: TableStateSchema = { columns: ["name"], filterColumns: [{ id: "name", type: "text" }], sortColumns: [{ id: "name", type: "text" }] };
 const state: TableState = { search: "initial", filter: { kind: "and", children: [] }, sorting: [], pagination: false, columns: [{ id: "name", visible: true, width: null, pin: false }] };
@@ -105,6 +106,17 @@ describe("saved view adapter ownership", () => {
     expect(controller.restore("view-1")).toEqual({ kind: "accepted", state: changed });
     expect(await controller.delete("view-1")).toBe("accepted");
     expect(controller.getSnapshot().accepted).toEqual([]);
+    controller.dispose();
+  });
+
+  it("saves cursor views as their first page and restores them through real HTTP", async () => {
+    const transport = { reject: false, delay: 5, ignoreAbort: false, corrupt: false };
+    const cursorSchema: CursorTableStateSchema = { ...schema, pagination: "cursor" };
+    const paged: TableState<CursorPagination> = { ...state, pagination: { kind: "cursor", pageSize: 25, cursor: { direction: "before", value: "short-lived" } } };
+    const controller = createSavedViews(adapter(randomUUID(), () => transport), cursorSchema);
+    expect(await controller.save("Cursor view", paged)).toBe("accepted");
+    expect(controller.getSnapshot().accepted?.[0]?.state).not.toContain("short-lived");
+    expect(controller.restore("view-1")).toEqual({ kind: "accepted", state: { ...paged, pagination: { kind: "cursor", pageSize: 25, cursor: null } } });
     controller.dispose();
   });
 

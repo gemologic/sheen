@@ -1,0 +1,16 @@
+@import "@gemologic/sheen-tokens/fonts.css";
+@import "@gemologic/sheen-tokens/themes.css";
+@import "@gemologic/sheen-tokens/core.css";
+@import "@gemologic/sheen/styles/core.css";
+@import "@gemologic/sheen/styles/forms.css";
+@import "@gemologic/sheen/styles/overlays.css";
+@import "@gemologic/sheen/styles/navigation.css";
+@import "@gemologic/sheen-icons/styles.css";
+@import "@gemologic/sheen-table/styles.css";
+@import "@gemologic/sheen-patterns/styles.css";
+
+* { box-sizing: border-box; }
+html, body, #app { margin: 0; block-size: 100%; background: var(--sheen-color-bg); }
+
+.spa-header { flex: 1 1 auto; min-inline-size: 0; padding-inline: var(--sheen-space-inline-md); }
+.spa-page { display: grid; align-content: start; gap: var(--sheen-space-block-lg); padding: var(--sheen-space-section); min-inline-size: 0; }

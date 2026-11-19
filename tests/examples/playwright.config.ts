@@ -1,10 +1,12 @@
 import { defineConfig, devices } from "@playwright/test";
 
 /** Smoke coverage for the example applications. Each project starts its own dev server. */
+/** Set SHEEN_EXAMPLE to one app name to start only that app's dev server. */
 const apps = [
   { name: "ops-console", port: process.env.SHEEN_OPS_PORT ?? "4310" },
   { name: "market-desk", port: process.env.SHEEN_MARKET_PORT ?? "4320" },
-] as const;
+  { name: "vite-spa", port: process.env.SHEEN_VITE_SPA_PORT ?? "4330" },
+].filter(app => !process.env.SHEEN_EXAMPLE || app.name === process.env.SHEEN_EXAMPLE);
 
 export default defineConfig({
   testDir: ".",

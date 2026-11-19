@@ -1,5 +1,5 @@
-import { breakpointQuery, Button, CommandPalette, createConfirm, createToaster, Kbd, Link, Popover, ShortcutProvider, ThemeScope, Toaster, useShortcutLabel } from "@gemologic/sheen";
-import { For, Show, children, createContext, createMemo, createSignal, onCleanup, onMount, useContext } from "solid-js";
+import { breakpointQuery, Button, createConfirm, createToaster, Kbd, Link, Popover, ShortcutProvider, ThemeScope, Toaster, useShortcut, useShortcutLabel, useTheme } from "@gemologic/sheen";
+import { For, Show, children, createContext, createEffect, createMemo, createSignal, on, onCleanup, onMount, useContext } from "solid-js";
 import type { Accessor, JSX } from "solid-js";
 import type { CommandPaletteRecents, CommandPaletteSource, ConfirmController, ThemeOverrides, ToastController } from "@gemologic/sheen";
 import { AppShell } from "./AppShell.tsx";
@@ -13,6 +13,7 @@ import { WorkspaceSwitcher } from "./WorkspaceSwitcher.tsx";
 import { NotificationCenter } from "./NotificationCenter.tsx";
 import { DetailsPanel } from "./DetailsPanel.tsx";
 import { resolveAdminAppearance, resolveAdminPlacements } from "./admin-config.ts";
+import { createDeferredModule } from "./deferred-module.ts";
 import type { AdminAccountModel, AdminAction, AdminActionAppearance, AdminActionGroup, AdminAppearance, AdminChromeTarget, AdminChromeZone, AdminNavigationModel, AdminNotificationModel, AdminPlacementOverride, AdminPreset, AdminProductModel, AdminWorkspaceModel } from "./admin-config.ts";
 
 export interface AdminSidebarPersistence {
@@ -58,8 +59,8 @@ export interface AdminAppProps {
   readonly router?: RouterAdapter;
   readonly product?: AdminProductModel | undefined;
   readonly workspace?: AdminWorkspaceModel | undefined;
-  readonly primaryNavigation?: AdminNavigationModel | undefined;
-  readonly secondaryNavigation?: AdminNavigationModel | undefined;
+  readonly primaryNavigation?: AdminNavigationModel | readonly AdminNavigationModel[] | undefined;
+  readonly secondaryNavigation?: AdminNavigationModel | readonly AdminNavigationModel[] | undefined;
   readonly currentView?: JSX.Element | undefined;
   readonly globalSearch?: JSX.Element | undefined;
   readonly actionGroups?: readonly AdminActionGroup[] | undefined;
@@ -142,8 +143,9 @@ function AdminRuntime(props: AdminAppProps & { readonly services: AdminServices 
   // nodes before the accepted instance is mounted.
   const product = createMemo(() => props.product);
   const workspace = createMemo(() => props.workspace);
-  const primaryNavigation = createMemo(() => props.primaryNavigation);
-  const secondaryNavigation = createMemo(() => props.secondaryNavigation);
+  const navigation = createMemo(() => validateNavigationSections(navigationSections(props.primaryNavigation), navigationSections(props.secondaryNavigation)));
+  const primaryNavigation = () => navigation().primary;
+  const secondaryNavigation = () => navigation().secondary;
   const notifications = createMemo(() => props.notifications);
   const account = createMemo(() => props.account);
   const commandPalette = createMemo(() => props.commandPalette);
@@ -154,26 +156,30 @@ function AdminRuntime(props: AdminAppProps & { readonly services: AdminServices 
   const collapsed = () => props.sidebarCollapsed ?? collapsedDraft();
   const [commandDraft, setCommandDraft] = createSignal(commandPalette()?.defaultOpen ?? false);
   const commandOpen = () => commandPalette()?.open ?? commandDraft();
+  let commandOrigin: HTMLElement | undefined;
+  const palette = createDeferredModule(() => import("./admin-command-palette.ts"), () => commandPalette() !== undefined);
+  createEffect(() => { if (commandPalette() !== undefined && commandOpen()) palette.load(); });
+  // CommandPalette has no trigger of its own, so the shell restores the opener unless a command moved focus elsewhere.
+  createEffect(on(commandOpen, (open, wasOpen) => {
+    if (open || !wasOpen) return;
+    const origin = commandOrigin;
+    commandOrigin = undefined;
+    const active = document.activeElement;
+    if (!origin?.isConnected || (active instanceof HTMLElement && active !== document.body && !active.closest('[role="dialog"]'))) return;
+    origin.focus({ preventScroll: true });
+  }, { defer: true }));
   const narrowDetails = useNarrowDetails();
   const groups = createMemo(() => validateActionGroups(props.actionGroups ?? []).filter(group => group.items.length > 0));
-  const sidebarSections = createMemo<readonly SidebarNavSection[]>(() => {
-    const result: SidebarNavSection[] = [];
-    const primary = primaryNavigation();
-    if (primary && placements()["primary-navigation"] === "sidebar-navigation") {
-      result.push({ id: primary.id, label: primary.label, items: primary.items });
-    }
-    const secondary = secondaryNavigation();
-    if (secondary && placements()["secondary-navigation"] === "sidebar-navigation") {
-      result.push({ id: secondary.id, label: secondary.label, items: secondary.items });
-    }
-    return result;
-  });
+  const sidebarSections = createMemo<readonly SidebarNavSection[]>(() => [
+    ...(placements()["primary-navigation"] === "sidebar-navigation" ? primaryNavigation() : []),
+    ...(placements()["secondary-navigation"] === "sidebar-navigation" ? secondaryNavigation() : []),
+  ]);
   const available = (zone: AdminChromeZone): boolean => {
     switch (zone) {
       case "product": return product() !== undefined;
       case "workspace": return workspace() !== undefined;
-      case "primary-navigation": return primaryNavigation() !== undefined;
-      case "secondary-navigation": return secondaryNavigation() !== undefined;
+      case "primary-navigation": return primaryNavigation().length > 0;
+      case "secondary-navigation": return secondaryNavigation().length > 0;
       case "current-view": return Boolean(currentView());
       case "command-trigger": return commandPalette() !== undefined;
       case "global-search": return Boolean(search());
@@ -197,6 +203,7 @@ function AdminRuntime(props: AdminAppProps & { readonly services: AdminServices 
     } catch (error) { persistence.onError(error); }
   };
   const setCommandOpen = (next: boolean): void => {
+    if (next && !commandOpen()) commandOrigin = document.activeElement instanceof HTMLElement ? document.activeElement : undefined;
     if (commandPalette()?.open === undefined) setCommandDraft(next);
     commandPalette()?.onOpenChange?.(next);
   };
@@ -210,16 +217,10 @@ function AdminRuntime(props: AdminAppProps & { readonly services: AdminServices 
         const model = workspace();
         return model ? <WorkspaceSwitcher workspace={model} target={workspaceTarget(target)} collapsed={collapsed() && target.startsWith("sidebar-")} /> : null;
       }
-      case "primary-navigation": {
-        const model = primaryNavigation();
-        return model && target === "topbar-center" ? <TopNav navigation={model} pathname={props.pathname} /> : null;
-      }
-      case "secondary-navigation": {
-        const model = secondaryNavigation();
-        return model && target === "topbar-center" ? <TopNav navigation={model} pathname={props.pathname} /> : null;
-      }
+      case "primary-navigation": return target === "topbar-center" ? <TopNavSections sections={primaryNavigation()} pathname={props.pathname} /> : null;
+      case "secondary-navigation": return target === "topbar-center" ? <TopNavSections sections={secondaryNavigation()} pathname={props.pathname} /> : null;
       case "current-view": return currentView();
-      case "command-trigger": return commandPalette() ? <Button variant="ghost" class="sheen-admin-command-trigger" onClick={() => setCommandOpen(true)}><span>{commandPalette()?.label ?? "Search or jump to…"}</span><Kbd>{commandShortcut()}</Kbd></Button> : null;
+      case "command-trigger": return commandPalette() ? <Button variant="ghost" class="sheen-admin-command-trigger" onPointerEnter={palette.load} onFocus={palette.load} onClick={() => setCommandOpen(true)}><span>{commandPalette()?.label ?? "Search or jump to…"}</span><Kbd>{commandShortcut()}</Kbd></Button> : null;
       case "global-search": return search();
       case "primary-actions": return <AdminActions groups={groups().filter(group => group.role === "primary")} appearance={appearance().actions} target={target} />;
       case "utility-actions": return <AdminActions groups={groups().filter(group => group.role === "utility")} appearance={appearance().actions} target={target} />;
@@ -260,12 +261,41 @@ function AdminRuntime(props: AdminAppProps & { readonly services: AdminServices 
         {...(model().defaultWidth === undefined ? {} : { defaultWidth: model().defaultWidth })} {...(model().minWidth === undefined ? {} : { minWidth: model().minWidth })}
         {...(model().maxWidth === undefined ? {} : { maxWidth: model().maxWidth })} {...(model().onWidthChange === undefined ? {} : { onWidthChange: model().onWidthChange })}>{model().content}</DetailsPanel>}</Show>
     </div>
-    <Show when={commandPalette()}>{model => <CommandPalette sources={model().sources} open={commandOpen()} onOpenChange={setCommandOpen}
-      {...(model().recents === undefined ? {} : { recents: model().recents })} {...(model().onSourceError === undefined ? {} : { onSourceError: model().onSourceError })}
-      {...(model().onCommandError === undefined ? {} : { onCommandError: model().onCommandError })} />}</Show>
+    <Show when={commandPalette()}>{model => <Show when={palette.module()} fallback={<CommandShortcut toggle={() => { palette.load(); setCommandOpen(!commandOpen()); }} />}>{loaded => {
+      const CommandPalette = loaded().CommandPalette;
+      return <CommandPalette sources={model().sources} open={commandOpen()} onOpenChange={setCommandOpen}
+        {...(model().recents === undefined ? {} : { recents: model().recents })} {...(model().onSourceError === undefined ? {} : { onSourceError: model().onSourceError })}
+        {...(model().onCommandError === undefined ? {} : { onCommandError: model().onCommandError })} />;
+    }}</Show>}</Show>
     <Toaster controller={props.services.toasts} />
     <ConfirmDialog />
   </AppShell>;
+}
+
+/** Holds Ctrl/Cmd+K until the deferred palette registers its own identical binding. */
+function CommandShortcut(props: { readonly toggle: () => void }): JSX.Element {
+  const theme = useTheme();
+  useShortcut({ keys: "mod+k", scope: "global", get label() { return theme.messages().openCommandPalette; }, group: "Navigation", run: () => props.toggle() });
+  return null;
+}
+
+function navigationSections(input: AdminNavigationModel | readonly AdminNavigationModel[] | undefined): readonly AdminNavigationModel[] {
+  if (input === undefined) return [];
+  return "items" in input ? [input] : input;
+}
+
+function validateNavigationSections(primary: readonly AdminNavigationModel[], secondary: readonly AdminNavigationModel[]) {
+  const ids = new Set<string>();
+  for (const section of [...primary, ...secondary]) {
+    if (ids.has(section.id)) throw new Error(`AdminApp has duplicate navigation section ID ${JSON.stringify(section.id)}`);
+    ids.add(section.id);
+  }
+  return { primary, secondary };
+}
+
+function TopNavSections(props: { readonly sections: readonly AdminNavigationModel[]; readonly pathname: string }): JSX.Element {
+  const sections = createMemo(() => new Map(props.sections.map(section => [section.id, section])));
+  return <For each={[...sections().keys()]}>{id => <Show when={sections().get(id)}>{section => <TopNav navigation={section()} pathname={props.pathname} />}</Show>}</For>;
 }
 
 function AdminTarget(props: { readonly target: AdminChromeTarget; readonly zones: readonly AdminChromeZone[]; readonly render: (zone: AdminChromeZone, target: AdminChromeTarget) => JSX.Element }): JSX.Element {

@@ -762,3 +762,67 @@ test("server initial results hydrate without duplicate fetch or replacing row DO
     release();
   }
 });
+
+test("cursor server pagination follows opaque cursors, keeps pager focus, and restarts on sort", async ({ page }) => {
+  const requests: URLSearchParams[] = [];
+  page.on("request", request => { const url = new URL(request.url()); if (url.pathname === "/api/data-table-cursor") requests.push(url.searchParams); });
+  await page.goto("/data-table");
+  await expect(page.locator('[data-sheen-portal="root"]')).toHaveAttribute("data-sheen-ready", "true");
+  const section = page.getByRole("region", { name: "Cursor server example" });
+  const root = section.locator(".sheen-data-table");
+  const table = section.getByRole("table", { name: "Cursor server rows" });
+  const pager = section.getByRole("navigation", { name: "Pagination" });
+  const status = pager.locator("output");
+  const first = pager.getByRole("button", { name: "First page", exact: true });
+  const previousPage = pager.getByRole("button", { name: "Previous page", exact: true });
+  const next = pager.getByRole("button", { name: "Next page", exact: true });
+  await expect(table.locator('[data-row-id="server-0"]')).toBeVisible();
+  await expect(status).toHaveText("Page 1");
+  await expect(section.getByText("About 60 results", { exact: true })).toBeVisible();
+  await expect(first).toBeDisabled();
+  await expect(previousPage).toBeDisabled();
+  expect(requests).toHaveLength(0);
+
+  await next.focus();
+  await page.keyboard.press("Enter");
+  await expect(root).toHaveAttribute("data-previous-results", "");
+  await expect(next).toBeDisabled();
+  await expect(table.locator('[data-row-id="server-10"]')).toBeVisible();
+  await expect(root).not.toHaveAttribute("data-previous-results", "");
+  await expect(status).toHaveText("Page 2");
+  await expect(next).toBeFocused();
+  expect(requests.at(-1)?.get("after")).toBe("server-9");
+
+  await page.keyboard.press("Enter");
+  await expect(status).toHaveText("Page 3");
+  await expect(table.locator('[data-row-id="server-20"]')).toBeVisible();
+  await previousPage.press("Enter");
+  await expect(status).toHaveText("Page 2");
+  await expect(table.locator('[data-row-id="server-10"]')).toBeVisible();
+  expect(requests.at(-1)?.get("before")).toBe("server-20");
+  await first.press("Enter");
+  await expect(status).toHaveText("Page 1");
+  await expect(table.locator('[data-row-id="server-0"]')).toBeVisible();
+  expect(requests.at(-1)?.has("after") || requests.at(-1)?.has("before")).toBe(false);
+
+  for (let page = 2; page <= 6; page++) {
+    await next.press("Enter");
+    await expect(status).toHaveText(`Page ${page}`);
+  }
+  await expect(table.locator('[data-row-id="server-54"]')).toBeVisible();
+  await expect(next).toBeDisabled();
+  await expect(previousPage).toBeEnabled();
+
+  const amount = table.getByRole("button", { name: "Amount", exact: true });
+  await amount.click();
+  await expect(status).toHaveText("Page 1");
+  await amount.click();
+  await expect(table.locator('[data-row-id="server-54"]')).toBeVisible();
+  await expect(table.locator('[data-row-id="server-44"]')).toHaveCount(0);
+  await expect(status).toHaveText("Page 1");
+  await expect(previousPage).toBeDisabled();
+  await expect(next).toBeEnabled();
+  const sorted = requests.at(-1);
+  expect(sorted?.get("direction")).toBe("desc");
+  expect(sorted?.has("after") || sorted?.has("before")).toBe(false);
+});

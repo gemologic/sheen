@@ -1,25 +1,27 @@
 import { parseFilter } from "./filter.ts";
 import type { BulkSelection } from "./selection.ts";
-import { parseTableState } from "./table-state.ts";
+import { parsePagination } from "./pagination.ts";
+import type { ServerPagination, TablePagination } from "./pagination.ts";
+import { parseTableStateWith } from "./table-state.ts";
 import type { TableState, TableStateSchema } from "./table-state.ts";
 
-export interface TableExportRequest {
+export interface TableExportRequest<Pagination extends ServerPagination = TablePagination> {
   readonly format: "csv" | "json";
-  readonly state: TableState;
+  readonly state: TableState<Pagination>;
   /** null exports the whole matching view; explicit empty IDs export zero rows. */
   readonly selection: BulkSelection | null;
 }
-export interface ServerExportSnapshot<Artifact> {
-  readonly accepted: { readonly request: TableExportRequest; readonly artifact: Artifact } | null;
-  readonly requested: TableExportRequest | null;
+export interface ServerExportSnapshot<Artifact, Pagination extends ServerPagination = TablePagination> {
+  readonly accepted: { readonly request: TableExportRequest<Pagination>; readonly artifact: Artifact } | null;
+  readonly requested: TableExportRequest<Pagination> | null;
   readonly pending: boolean;
   readonly error: unknown;
 }
 export type ServerExportOutcome = "accepted" | "failed" | "busy" | "unavailable" | "canceled" | "disposed";
 
-function capture(request: TableExportRequest, schema: TableStateSchema): TableExportRequest {
+function capture<Pagination extends ServerPagination>(request: TableExportRequest<Pagination>, schema: TableStateSchema, readPagination: (value: unknown) => Pagination): TableExportRequest<Pagination> {
   if (request.format !== "csv" && request.format !== "json") throw new Error("Unsupported table export format");
-  const state = parseTableState(request.state, schema);
+  const state = parseTableStateWith(request.state, schema, readPagination);
   let selection: BulkSelection | null = null;
   if (request.selection !== null) {
     const source = request.selection;
@@ -40,12 +42,16 @@ function capture(request: TableExportRequest, schema: TableStateSchema): TableEx
 
 /** App callback creates the artifact; only the accepted result should be offered for download. */
 export function createServerExport<Artifact>(schema: TableStateSchema, onExport?: (request: TableExportRequest, signal: AbortSignal) => Promise<Artifact>) {
-  let snapshot: ServerExportSnapshot<Artifact> = { accepted: null, requested: null, pending: false, error: null };
+  return createServerExportWith(schema, parsePagination, onExport);
+}
+
+export function createServerExportWith<Artifact, Pagination extends ServerPagination>(schema: TableStateSchema, readPagination: (value: unknown) => Pagination, onExport?: (request: TableExportRequest<Pagination>, signal: AbortSignal) => Promise<Artifact>) {
+  let snapshot: ServerExportSnapshot<Artifact, Pagination> = { accepted: null, requested: null, pending: false, error: null };
   let sequence = 0n;
   let controller: AbortController | undefined;
   let disposed = false;
   let clearing = false;
-  async function request(value: TableExportRequest): Promise<ServerExportOutcome> {
+  async function request(value: TableExportRequest<Pagination>): Promise<ServerExportOutcome> {
     if (disposed) return "disposed";
     if (!onExport) return "unavailable";
     if (clearing) return "canceled";
@@ -55,7 +61,7 @@ export function createServerExport<Artifact>(schema: TableStateSchema, onExport?
     controller = current;
     snapshot = { ...snapshot, requested: null, pending: true, error: null };
     try {
-      const captured = capture(value, schema);
+      const captured = capture(value, schema, readPagination);
       snapshot = { ...snapshot, requested: captured };
       const artifact = await onExport(captured, current.signal);
       if (disposed) return "disposed";

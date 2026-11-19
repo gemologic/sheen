@@ -1,14 +1,15 @@
-import { deserializeState, serializeState } from "./table-state.ts";
-import type { TableState, TableStateSchema } from "./table-state.ts";
+import type { CursorPagination, ServerPagination, TablePagination } from "./pagination.ts";
+import { deserializeState, schemaPagination, serializeState } from "./table-state.ts";
+import type { CursorTableStateSchema, TableState, TableStateSchema } from "./table-state.ts";
 
 export interface TableUrlLocation { readonly pathname: string; readonly search: string; readonly hash: string }
 export interface TableUrlRouter {
   readonly location: () => TableUrlLocation;
   readonly navigate: (to: string, options?: { readonly replace?: boolean; readonly scroll?: boolean }) => void;
 }
-export type TableUrlRead =
+export type TableUrlRead<Pagination extends ServerPagination = TablePagination> =
   | { readonly kind: "absent" }
-  | { readonly kind: "accepted"; readonly state: TableState }
+  | { readonly kind: "accepted"; readonly state: TableState<Pagination> }
   | { readonly kind: "invalid"; readonly error: unknown };
 export type TableUrlWrite =
   | { readonly kind: "unchanged"; readonly to: string }
@@ -28,22 +29,38 @@ function target(pathname: string, parameters: URLSearchParams, hash: string): st
   return `${pathname}${search ? `?${search}` : ""}${hash}`;
 }
 
-/** Pull-based URL state using the same structural adapter as AppShell. */
-export function createTableUrlState(router: TableUrlRouter, parameter: string, schema: TableStateSchema) {
+export interface TableUrlState<Pagination extends ServerPagination = TablePagination> {
+  readonly read: () => TableUrlRead<Pagination>;
+  readonly write: (state: TableState<Pagination>, options?: { readonly replace?: boolean }) => TableUrlWrite;
+  readonly clear: (options?: { readonly replace?: boolean }) => TableUrlWrite;
+}
+
+/** Pull-based URL state using the same structural adapter as AppShell. Cursor schemas write and read only the first page. */
+export function createTableUrlState(router: TableUrlRouter, parameter: string, schema: CursorTableStateSchema): TableUrlState<CursorPagination>;
+export function createTableUrlState(router: TableUrlRouter, parameter: string, schema: TableStateSchema): TableUrlState;
+export function createTableUrlState(router: TableUrlRouter, parameter: string, schema: TableStateSchema | CursorTableStateSchema): TableUrlState<CursorPagination> | TableUrlState {
+  schemaPagination(schema);
+  if (schema.pagination === "cursor") {
+    return tableUrlState<CursorPagination>(router, parameter, state => serializeState(state, schema), value => deserializeState(value, schema));
+  }
+  return tableUrlState<TablePagination>(router, parameter, state => serializeState(state, schema), value => deserializeState(value, schema));
+}
+
+function tableUrlState<Pagination extends ServerPagination>(router: TableUrlRouter, parameter: string, serialize: (state: TableState<Pagination>) => string, deserialize: (value: string) => TableState<Pagination>): TableUrlState<Pagination> {
   const name = parameterName(parameter);
-  function read(): TableUrlRead {
+  function read(): TableUrlRead<Pagination> {
     try {
       const { parameters } = locationParts(router.location());
       const values = parameters.getAll(name);
       if (values.length === 0) return Object.freeze({ kind: "absent" });
       if (values.length !== 1) throw new Error(`Table URL parameter ${name} must occur exactly once`);
-      return Object.freeze({ kind: "accepted", state: deserializeState(values[0] ?? "", schema) });
+      return Object.freeze({ kind: "accepted", state: deserialize(values[0] ?? "") });
     } catch (error) { return Object.freeze({ kind: "invalid", error }); }
   }
-  function write(state: TableState, options: { readonly replace?: boolean } = {}): TableUrlWrite {
+  function write(state: TableState<Pagination>, options: { readonly replace?: boolean } = {}): TableUrlWrite {
     const current = locationParts(router.location());
     const present = target(current.pathname, current.parameters, current.hash);
-    current.parameters.set(name, serializeState(state, schema));
+    current.parameters.set(name, serialize(state));
     const to = target(current.pathname, current.parameters, current.hash);
     if (to === present) return Object.freeze({ kind: "unchanged", to });
     router.navigate(to, { replace: options.replace ?? true, scroll: false });

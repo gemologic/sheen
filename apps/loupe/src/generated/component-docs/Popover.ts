@@ -45,6 +45,16 @@ export const componentDoc = Object.freeze({
       "required": false
     },
     {
+      "name": "disabled",
+      "description": "Natively disables the trigger, like Button, so it leaves the tab order and cannot request opening. An already open popover still closes normally.",
+      "type": "boolean",
+      "required": false,
+      "default": false,
+      "control": {
+        "kind": "boolean"
+      }
+    },
+    {
       "name": "placement",
       "description": "Preferred logical side and alignment, with viewport collision handling.",
       "type": "\"top\" | \"top-start\" | \"top-end\" | \"bottom\" | \"bottom-start\" | \"bottom-end\" | \"left\" | \"right\"",
@@ -98,6 +108,7 @@ export const componentDoc = Object.freeze({
   "source": "packages/ui/src/primitives/Popover.tsx",
   "playground": {
     "defaults": {
+      "disabled": false,
       "placement": "bottom"
     },
     "controlsSupported": true,
@@ -108,54 +119,66 @@ export const componentDoc = Object.freeze({
     {
       "title": "View options",
       "code": "<Popover title=\"View options\" trigger=\"View options\"><Checkbox label=\"Show archived\" /></Popover>"
+    },
+    {
+      "title": "Unavailable options",
+      "code": "<Popover title=\"Export options\" trigger=\"Export options\" disabled>Choose a format.</Popover>"
     }
   ],
   "variants": [
     {
       "label": "placement: top",
       "values": {
+        "disabled": false,
         "placement": "top"
       }
     },
     {
       "label": "placement: top-start",
       "values": {
+        "disabled": false,
         "placement": "top-start"
       }
     },
     {
       "label": "placement: top-end",
       "values": {
+        "disabled": false,
         "placement": "top-end"
       }
     },
     {
       "label": "placement: bottom",
       "values": {
+        "disabled": false,
         "placement": "bottom"
       }
     },
     {
       "label": "placement: bottom-start",
       "values": {
+        "disabled": false,
         "placement": "bottom-start"
       }
     },
     {
       "label": "placement: bottom-end",
       "values": {
+        "disabled": false,
         "placement": "bottom-end"
       }
     },
     {
       "label": "placement: left",
       "values": {
+        "disabled": false,
         "placement": "left"
       }
     },
     {
       "label": "placement: right",
       "values": {
+        "disabled": false,
         "placement": "right"
       }
     }

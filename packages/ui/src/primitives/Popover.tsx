@@ -13,13 +13,14 @@ export interface PopoverProps extends ParentProps {
   open?: boolean;
   defaultOpen?: boolean;
   onOpenChange?: (open: boolean) => void;
+  disabled?: boolean;
   placement?: "top" | "top-start" | "top-end" | "bottom" | "bottom-start" | "bottom-end" | "left" | "right";
   class?: string;
 }
 
-function PopoverTrigger(props: ParentProps): JSX.Element {
+function PopoverTrigger(props: ParentProps<{ disabled: boolean }>): JSX.Element {
   const context = Primitive.usePopoverContext();
-  return <Button ref={context.setTriggerRef} variant="outline" data-sheen-popover-trigger=""
+  return <Button ref={context.setTriggerRef} variant="outline" data-sheen-popover-trigger="" disabled={props.disabled}
     aria-haspopup="dialog" aria-expanded={context.isOpen()} aria-controls={context.isOpen() ? context.contentId() : undefined}
     onPointerDown={event => { if (event.pointerType === "mouse") event.preventDefault(); }}
     onClick={() => context.toggle()} {...context.dataset()}>{props.children}</Button>;
@@ -31,14 +32,14 @@ export function Popover(props: PopoverProps): JSX.Element {
   const [draft, setDraft] = createSignal(props.defaultOpen ?? false);
   const open = () => props.open === undefined ? draft() : props.open;
   const change = (next: boolean) => {
-    if (next === open()) return;
+    if (next === open() || (next && props.disabled)) return;
     if (props.open === undefined) setDraft(next);
     props.onOpenChange?.(next);
   };
   createEffect(() => { if (open()) onCleanup(theme.layers.register(id)); });
   const layer = createMemo<number>(previous => open() ? theme.layers.zIndex(id) : previous ?? 100);
   return <Primitive.Root open={open()} onOpenChange={change} placement={props.placement ?? "bottom"} gutter={6}>
-    <PopoverTrigger>{props.trigger}</PopoverTrigger>
+    <PopoverTrigger disabled={props.disabled ?? false}>{props.trigger}</PopoverTrigger>
     <Show when={theme.portal()}>{target => <Primitive.Portal mount={target()}>
       <Primitive.Content data-kb-top-layer="true" class={cn("sheen-popover", props.class)} aria-hidden={!open() || undefined} inert={!open()} style={{ "z-index": layer() }}
         onEscapeKeyDown={event => { if (!theme.layers.isTop(id)) event.preventDefault(); }}>

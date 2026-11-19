@@ -1,6 +1,6 @@
 import { Button, ThemeScope } from "@gemologic/sheen";
 import { DataTable, defineColumns } from "@gemologic/sheen-table";
-import type { DataTableResult, ServerRowGroup, TableState } from "@gemologic/sheen-table";
+import type { CursorPagination, DataTableCursorResult, DataTableResult, ServerRowGroup, TableState } from "@gemologic/sheen-table";
 import { createSignal } from "solid-js";
 import "@gemologic/sheen-table/styles.css";
 
@@ -59,6 +59,12 @@ function parseResult(value: unknown): DataTableResult<FixtureRow> {
   return { rows: parsed, total: value.total };
 }
 
+function parseCursorResult(value: unknown): DataTableCursorResult<FixtureRow> {
+  if (!record(value) || (typeof value.next_cursor !== "string" && value.next_cursor !== null) || (typeof value.prev_cursor !== "string" && value.prev_cursor !== null) || (value.total_estimate !== undefined && typeof value.total_estimate !== "number")) throw new Error("Invalid cursor DataTable response");
+  const { rows } = parseResult({ rows: value.rows, total: 0 });
+  return { rows, nextCursor: value.next_cursor, previousCursor: value.prev_cursor, ...(value.total_estimate === undefined ? {} : { total: { kind: "estimate", value: value.total_estimate } }) };
+}
+
 function record(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
@@ -99,6 +105,15 @@ async function requestServer(state: TableState, signal: AbortSignal, fail = fals
   const response = await fetch(`/api/data-table?${parameters}`, { signal });
   if (!response.ok) throw new Error(`DataTable request failed (${response.status})`);
   return parseResult(await response.json());
+}
+
+async function requestCursorServer(state: TableState<CursorPagination>, signal: AbortSignal): Promise<DataTableCursorResult<FixtureRow>> {
+  const direction = state.sorting.find(entry => entry.column === "amount")?.direction ?? "none";
+  const parameters = new URLSearchParams({ limit: String(state.pagination.pageSize), direction });
+  if (state.pagination.cursor) parameters.set(state.pagination.cursor.direction, state.pagination.cursor.value);
+  const response = await fetch(`/api/data-table-cursor?${parameters}`, { signal });
+  if (!response.ok) throw new Error(`Cursor DataTable request failed (${response.status})`);
+  return parseCursorResult(await response.json());
 }
 
 async function requestGroupedServer(state: TableState, signal: AbortSignal): Promise<DataTableResult<GroupedRow>> {
@@ -196,6 +211,11 @@ export default function DataTableFixture() {
       <DataTable mode="server" columns={columns} getRowId={row => row.id} caption="Paginated server rows" pagination={{ pageIndex: 0, pageSize: 10 }}
         initialResult={{ rows: initialServerRows, total: 55 }} onStateChange={requestFallibleServer} initialViewportHeight={180}
         selection={{ mode: "multiple", onChange: value => setServerSelectionState(JSON.stringify(value)) }} />
+    </section>
+    <section aria-label="Cursor server example">
+      <h2>Cursor server data</h2>
+      <DataTable mode="server" columns={columns} getRowId={row => row.id} caption="Cursor server rows" pagination={{ kind: "cursor", pageSize: 10, cursor: null }}
+        initialResult={{ rows: initialServerRows, nextCursor: "server-9", previousCursor: null, total: { kind: "estimate", value: 60 } }} onStateChange={requestCursorServer} initialViewportHeight={180} />
     </section>
   </main>;
 }

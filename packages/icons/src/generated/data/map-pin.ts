@@ -3,3 +3,4 @@ import type { IconData } from "../../runtime.tsx";
 
 export const radixMapPin = Object.freeze({"set":"radix","body":"<path fill=\"currentColor\" d=\"M7.5 1A2.5 2.5 0 0 1 8 5.95v7.55a.5.5 0 0 1-1 0V5.95A2.5 2.5 0 0 1 7.5 1m0 1a1.5 1.5 0 1 0 0 3a1.5 1.5 0 0 0 0-3\"/>","width":15,"height":15}) satisfies IconData;
 export const phosphorMapPin = Object.freeze({"set":"phosphor","body":"<path fill=\"currentColor\" d=\"M128 64a40 40 0 1 0 40 40a40 40 0 0 0-40-40m0 64a24 24 0 1 1 24-24a24 24 0 0 1-24 24m0-112a88.1 88.1 0 0 0-88 88c0 31.4 14.51 64.68 42 96.25a254.2 254.2 0 0 0 41.45 38.3a8 8 0 0 0 9.18 0a254.2 254.2 0 0 0 41.37-38.3c27.45-31.57 42-64.85 42-96.25a88.1 88.1 0 0 0-88-88m0 206c-16.53-13-72-60.75-72-118a72 72 0 0 1 144 0c0 57.23-55.47 105-72 118\"/>","width":256,"height":256}) satisfies IconData;
+export const glyphs: readonly IconData[] = [radixMapPin, phosphorMapPin];

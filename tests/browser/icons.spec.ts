@@ -78,3 +78,31 @@ test("persisted icon artwork is correct before delayed hydration and remains sta
     releaseScripts();
   }
 });
+
+test("lazy icons hydrate their server placeholder in place and mark unknown names", async ({ page }) => {
+  let releaseScripts: () => void = () => {};
+  const scriptsReleased = new Promise<void>(resolve => { releaseScripts = resolve; });
+  await page.route("**/*", async route => {
+    if (route.request().resourceType() === "script") await scriptsReleased;
+    await route.continue();
+  });
+  try {
+    await page.goto("/icons", { waitUntil: "commit" });
+    const known = page.locator("#lazy-known-icon");
+    const unknown = page.locator("#lazy-unknown-icon");
+    await expect(known).toHaveAttribute("data-sheen-icon-state", "loading");
+    await expect(unknown).toHaveAttribute("data-sheen-icon-state", "unknown");
+    expect(await known.evaluate(element => getComputedStyle(element).inlineSize)).toBe("16px");
+    expect(await unknown.evaluate(element => getComputedStyle(element).outlineStyle)).toBe("dashed");
+    await known.evaluate(element => element.setAttribute("data-server-identity", "retained"));
+    releaseScripts();
+    await expect(page.locator('[data-sheen-portal="root"]')).toHaveAttribute("data-sheen-ready", "true");
+    await expect(known).not.toHaveAttribute("data-sheen-icon-state");
+    await expect(known).toHaveAttribute("data-server-identity", "retained");
+    expect(await visibleSets(known)).toEqual(["radix"]);
+    await expect(page.getByRole("img", { name: "Lazy merge" })).toHaveAttribute("id", "lazy-known-icon");
+    await expect(page.getByRole("img", { name: "Unknown lazy icon" })).toHaveAttribute("data-sheen-icon-state", "unknown");
+  } finally {
+    releaseScripts();
+  }
+});

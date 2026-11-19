@@ -8,6 +8,9 @@
 .sheen-command-palette [cmdk-list] { max-block-size: min(26rem, 60vh); overflow: auto; padding: var(--sheen-space-block-sm); scroll-padding-block: var(--sheen-space-block-sm); }
 .sheen-command-palette [cmdk-group-heading] { padding-block: var(--sheen-space-block-sm) var(--sheen-space-block-xs); padding-inline: var(--sheen-space-inline-sm); color: var(--sheen-color-fg-muted); font-size: var(--sheen-text-ui-sm-size); font-weight: 600; }
 .sheen-command-palette [cmdk-item] { display: flex; align-items: center; justify-content: space-between; gap: var(--sheen-space-inline-md); min-block-size: var(--sheen-control-h-md); padding-inline: var(--sheen-space-inline-sm); border-radius: var(--sheen-control-radius); cursor: default; }
+.sheen-command-palette .sheen-command-icon { display: inline-flex; flex: none; align-items: center; color: var(--sheen-color-fg-muted); }
+.sheen-command-palette .sheen-command-label { flex: 1 1 auto; min-inline-size: 0; overflow-wrap: anywhere; }
+.sheen-command-palette .sheen-command-trailing { display: inline-flex; flex: none; align-items: center; gap: var(--sheen-space-inline-xs); color: var(--sheen-color-fg-muted); }
 .sheen-command-palette [cmdk-item][data-selected="true"] { background: var(--sheen-color-bg-selected); }
 .sheen-command-palette [cmdk-item][data-disabled="true"] { color: var(--sheen-color-fg-subtle); }
 .sheen-command-palette [cmdk-empty], .sheen-command-palette [cmdk-loading], .sheen-command-palette [role="alert"] { padding: var(--sheen-space-block-lg) var(--sheen-space-inline-sm); color: var(--sheen-color-fg-muted); text-align: center; }
