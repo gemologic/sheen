@@ -1,76 +1,107 @@
 # Sheen
 
-SolidJS design-system workspace. Loupe is the SolidStart SSR preview.
+An accessible, themeable design system for SolidJS applications. It's dark-first, SSR-complete, and built for dense operational UIs: admin consoles, data tables, live charts, and trading-style dashboards.
 
-[sheen.gemologic.dev](https://sheen.gemologic.dev) is the prerendered public workbench. Release candidates require the package, browser, registry-consumer, and manual accessibility gates in the [release policy](docs/releases.md).
+- **Workbench and component docs:** [sheen.gemologic.dev](https://sheen.gemologic.dev)
+- **npm:** [@gemologic/sheen](https://www.npmjs.com/package/@gemologic/sheen)
+- **Agent context:** [`llms.txt`](https://sheen.gemologic.dev/llms.txt) (compact) and [`llms-full.txt`](https://sheen.gemologic.dev/llms-full.txt) (complete)
+- **Upgrading from 0.2:** [docs/upgrade-0.3.md](docs/upgrade-0.3.md)
+
+## Packages
+
+All packages share one version.
+
+| Package                                          | What it is                                                                                                                               |
+| ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| [`@gemologic/sheen`](packages/ui)                | Core components, theming, overlays, forms, navigation, chat (`/ai`), sortable lists (`/sortable`), and the `sheenRuntime()` Vite plugin. |
+| [`@gemologic/sheen-tokens`](packages/tokens)     | Themes, accent presets, IBM Plex fonts, semantic tokens, and the theme and accent compiler.                                              |
+| [`@gemologic/sheen-icons`](packages/icons)       | A semantic icon catalog with build-time-selectable icon sets.                                                                            |
+| [`@gemologic/sheen-patterns`](packages/patterns) | Application layouts: AdminApp, auth frames, settings and list-detail layouts, and marketing sections.                                    |
+| [`@gemologic/sheen-table`](packages/table)       | DataTable and QueryBuilder, with pagination, virtualization, filtering, selection, export, and editing.                                  |
+| [`@gemologic/sheen-charts`](packages/charts)     | SVG and canvas charts, including streaming time series.                                                                                  |
+| [`@gemologic/sheen-date`](packages/date)         | Locale- and timezone-aware date, time, and range controls.                                                                               |
+| [`@gemologic/sheen-code`](packages/code)         | Code blocks, plus diff, log, and JSON viewers.                                                                                           |
+| [`@gemologic/sheen-cli`](packages/cli)           | The `sheen` command for scaffolds, `doctor`, and agent-skill sync.                                                                       |
+| [`eslint-plugin-sheen`](packages/eslint-plugin)  | Lint rules for tokens, package boundaries, Solid reactivity, and motion.                                                                 |
+
+## Quick start
+
+Scaffold a new SolidStart app:
+
+```sh
+pnpm dlx @gemologic/sheen-cli new app ./my-app
+```
+
+Or add Sheen to an existing Vite or SolidStart app. Sheen requires exactly `solid-js@1.9.19`.
+
+```sh
+pnpm add @gemologic/sheen @gemologic/sheen-tokens solid-js@1.9.19
+```
+
+```ts
+// vite.config.ts (or your SolidStart config)
+import { sheenRuntime } from '@gemologic/sheen/vite';
+
+export default { plugins: [sheenRuntime() /* your Solid/SolidStart plugin */] };
+```
+
+```css
+@import '@gemologic/sheen-tokens/fonts.css';
+@import '@gemologic/sheen-tokens/themes.css';
+@import '@gemologic/sheen-tokens/core.css';
+@import '@gemologic/sheen/styles.css';
+```
+
+```tsx
+import { Button, ThemeProvider } from '@gemologic/sheen';
+
+export function App() {
+  return (
+    <ThemeProvider>
+      <Button>Continue</Button>
+    </ThemeProvider>
+  );
+}
+```
+
+The [UI package README](packages/ui/README.md) covers the details. [Hydration](docs/hydration.md) and [UI consumers](docs/ui-consumers.md) explain the SSR and bundling contracts.
+
+## Examples
+
+- [`examples/ops-console`](examples/ops-console) is an operations console built on AdminApp. It has a million-row server-paginated table, saved views, optimistic bulk actions, role changes, and streaming charts.
+- [`examples/market-desk`](examples/market-desk) is a trading desk with a 30–60Hz streaming price chart, a live order book and blotter, and an order ticket.
+
+Both are SolidStart SSR apps that run on synthetic data from their own API routes. Start one with `pnpm --filter ops-console dev` or `pnpm --filter market-desk dev`.
 
 ## Development
 
-Use the existing `default.nix` environment (Node 24 and pnpm 11). Dependencies are pinned in `pnpm-lock.yaml`.
+The dev environment comes from `default.nix` (Node 24, pnpm 11).
 
 ```sh
 sheen-install -- --frozen-lockfile
-sheen-check
-pnpm dev
+pnpm dev        # Loupe, the SSR workbench, on http://127.0.0.1:4173
+sheen-check     # build, lint, typecheck, unit tests, manifest
 ```
 
-Loupe listens on `0.0.0.0:4173`; use `http://127.0.0.1:4173` on the host or the machine's Tailscale address from another device. `pnpm check` builds the libraries and Loupe, runs lint/typechecks and unit tests, and verifies private-theme and native UI consumption from isolated built package files. The root build order ensures workspace package declarations exist before consumer typechecks. See [private themes](docs/private-themes.md) for the compiler and migration contract and [UI consumers](docs/ui-consumers.md) for export, type, CSS, and tree-shaking checks and their limits.
-
-Browser tests run against the real SolidStart server. Install the browser matching the lockfile once, then run the Nix wrapper, which supplies its native library path:
+To run the browser tests, install the pinned Chromium once, then use the Nix wrapper:
 
 ```sh
 PLAYWRIGHT_SKIP_BROWSER_GC=1 pnpm exec playwright install chromium
 sheen-browser
 ```
 
-On Ubuntu, CI uses `playwright install --with-deps chromium` and `pnpm test:browser` directly. Do not substitute a different installed Chromium for the pinned test browser.
+`.github/workflows` defines CI, and local checks should match it. More guides:
 
-Loupe handles disconnected requests before Vite's global error overlay. See [development request cancellation](docs/dev-request-cancellation.md) for the narrow cancellation boundary and real-server regressions.
+- [Component authoring](docs/component-authoring.md): the metadata, example, and demo contract. `pnpm manifest` regenerates the agent context.
+- [Agent context](docs/agent-context.md): the generated `llms.txt` files and the vendorable skill.
+- [Benchmarks](docs/table-benchmarks.md): the table, AdminApp, date, chart, and Composer workloads and their gates.
+- [GitHub Pages](docs/pages.md): what the public workbench build includes.
+- [Private themes](docs/private-themes.md): the theme compiler and its migration contract.
 
-Build and inspect the exact static GitHub Pages artifact with:
+## Releases
 
-```sh
-pnpm build:pages
-pnpm check:pages
-pnpm test:pages
-```
+Changesets maintains a version pull request, and publishing is a manual, protected workflow. See the [release policy](docs/releases.md). Report security issues through the [security policy](SECURITY.md).
 
-The Pages artifact contains the landing page and server-independent workbench routes only. Loupe's API-backed fixtures remain part of the SSR development application and are never uploaded. See [GitHub Pages](docs/pages.md) for the deployment and custom-domain boundary.
+## License
 
-Run the calibrated production DataTable workload with `sheen-benchmark` or `pnpm benchmark:table`, the heavy AdminApp workload with `pnpm benchmark:admin`, the date overlay workload with `sheen-benchmark-date` or `pnpm benchmark:date`, and the Composer continuity workload with `sheen-benchmark-composer` or `pnpm benchmark:composer`. They write complete five-run records under `test-results/bench/`. See [table benchmarks](docs/table-benchmarks.md), [AdminApp](docs/admin-app.md), [date and time](docs/date-time.md), and [Composer](docs/composer.md) for their workloads, gates, and rebaseline contracts, plus [frame sampling](docs/benchmark-sampling.md) for measurement boundaries and stall-detection tests.
-
-## Current implementation
-
-- Token compiler with reference/cycle diagnostics, schema-version defaults, scoped CSS, OKLCH/sRGB output, and WCAG contrast checks.
-- Six initial themes, each with light/dark modes, and twelve independent accent presets.
-- Theme provider/scopes, persisted dark-default bootstrap, and the complete accessible UI component inventory.
-- A [cross-system laboratory](docs/loupe-lab.md) with URL-backed theme axes, persistent root preferences, explicit locale, and a resizable retained iframe preview.
-- A [layout gallery](docs/layout-gallery.md) with retained-refresh dashboard, list-detail, settings, form-heavy, and reading compositions plus the same full DataTable surface over deterministic 100k paginated or continuous data.
-- A [compact AdminApp starter](docs/admin-app.md) with configurable semantic chrome, six operational metrics, time-series and regional charts, service health, activity, account details, route-complete content, and an explicit 12,000-row/20,000-point heavy mode at `/admin?workload=heavy&table=continuous`.
-- A [theme editor](docs/theme-editor.md) with scoped rAF-batched token writes, OKLCH controls, strict derivation/import/export gates, and recoverable client-only work in progress behind a hydration-stable dark boundary.
-- A [token explorer](docs/token-explorer.md) with generated manifest consumers, computed values, live WCAG diagnostics, and five chart-palette simulations. Signed perceptual Lc output remains pending official-package approval and its required integration notices.
-- Real SSR preview and browser checks for scoped overlays, persisted preferences, delayed hydration, and input identity across accent changes.
-- Cookie-mode SSR and persistence via a real endpoint, including offline failure without changing accepted state.
-- Serializable [date and time controls](docs/date-time.md) with scoped overlays, explicit IANA zones and DST resolution, native form projection, retained async options, table-filter injection, isolated package budgets, and a calibrated production benchmark.
-- [Chat components](docs/ai-chat.md): a send/stop PromptInput, a keyed stick-to-bottom Conversation log of Messages, and append-only StreamingText, from `@gemologic/sheen/ai` with the `styles/ai.css` island.
-- An [Application Composer](docs/composer.md) that starts from the branded compact AdminApp, edits a constrained private layout document, and emits deterministic copyable public-API TSX. Its pointer engine is lazy and Loupe-only; every edit also has a keyboard-operable control.
-
-The package implementation is ready for a `0.1.0-rc` qualification cycle. Release qualification includes hosted CI for the exact commit, registry-installed npm/pnpm/Bun consumers, manual NVDA/Firefox and VoiceOver/Safari passes, and later viz/metron dogfood. Sheen ships its corrected overlay backend and DOM renderer, retaining the app's shared Solid core. Assay remains deliberately paused and is not a 0.1 release-candidate blocker. Passing local checks is not publication authorization or the v1 release gate.
-
-Component authors should follow the [metadata/demo contract](docs/component-authoring.md). `pnpm manifest` generates exhaustive prop information, typechecks every documented example, and refreshes the compact/full agent context plus the vendorable Sheen skill; it is part of `pnpm check`. See [agent context](docs/agent-context.md) for the generated-artifact and budget contract.
-
-The dependency-free CLI package provides guarded app/theme/component scaffolds and fail-closed vendored-skill synchronization. The app scaffold carries dark-default hydration/keyboard bootstraps, public router/shell seams, recommended lint, vendored context, and `sheenRuntime()` setup. It needs no consumer patches. See the [CLI contract](docs/cli.md) for paths, previews, overwrite refusal, and qualification boundaries.
-
-The [ESLint plugin](docs/lint.md) enforces all specified JavaScript/TypeScript rule families, including token/directionality, dependency wrappers, Solid reactivity, fixed-shell scrolling, motion, icon semantics, explicit unsafe seams, and layout composition. Standalone CSS enforcement remains open.
-
-Release versioning, package-content checks, deprecation windows, codemod requirements, public-repository setup, and the protected npm bootstrap/OIDC process are documented in [the release policy](docs/releases.md). The automatic release workflow only maintains a version pull request. The separate publication workflow is manual, main-only, artifact-bound, and gated by the protected `npm` environment.
-
-All public packages use one Changesets-owned fixed version. The development sentinel is `0.0.0`; the initial registry candidate is the generated `0.1.0-rc.0` on `next`. `pnpm check:packages` verifies packed runtime integrity and refuses stable publication if future workspace-only dependency patches are introduced.
-
-Security reports should follow [the security policy](SECURITY.md), not a public issue containing vulnerability details.
-
-## Dependency decisions
-
-The dependency set is Solid, SolidStart, Kobalte, Tailwind, Vite, Vitest, Playwright, and the class/variant helpers. Solid is pinned to 1.9.19. SolidStart 2.0.4 remains compatible with Solid 1.9 and uses Vite 8; its version is independent of the deferred Solid 2 migration. TypeScript 6.0.3 satisfies typescript-eslint 8.69's `<6.1` peer range; TypeScript 7 does not.
-
-See the [SolidStart configuration guide](https://docs.solidjs.com/solid-start/v2/getting-started), [Vite library build options](https://vite.dev/config/build-options.html), and installed package peer metadata when refreshing these pins.
+[MIT](LICENSE)
