@@ -50,7 +50,7 @@ export const lucideIconAliases = Object.freeze({
   // Data and charts
   "chart-column": "barChart", "chart-bar": "barChart", "bar-chart": "barChart", "bar-chart-2": "barChart", "chart-line": "lineChart",
   "line-chart": "lineChart", "chart-pie": "pieChart", "pie-chart": "pieChart", "trending-up": "trendUp", "trending-down": "trendDown",
-  "activity": "activity", "gauge": "gauge", "table": "table",
+  "activity": "activity", "gauge": "gauge", "table": "table", "table-2": "table",
   // Devices and connectivity
   "monitor": "desktop", "laptop": "laptop", "smartphone": "mobile", "tablet": "tablet", "cpu": "cpu", "wifi": "wifi", "wifi-off": "wifiOff",
   // Development and infrastructure
@@ -58,7 +58,7 @@ export const lucideIconAliases = Object.freeze({
   "git-branch": "gitBranch", "git-commit-horizontal": "gitCommit", "git-commit": "gitCommit", "git-merge": "gitMerge",
   "git-pull-request": "gitPullRequest", "git-fork": "gitFork", "diff": "gitDiff", "bug": "bug", "database": "database", "server": "server",
   "cloud": "cloud", "cloud-upload": "cloudUpload", "cloud-download": "cloudDownload", "cloud-off": "cloudOff", "key": "key", "key-round": "key",
-  "plug": "api", "webhook": "webhook", "workflow": "workflow", "network": "network", "layers": "layers", "logs": "logs",
+  "plug": "api", "webhook": "webhook", "workflow": "workflow", "network": "network", "layers": "layers", "logs": "logs", "scroll": "logs", "scroll-text": "logs",
   "shield": "shield", "shield-check": "shieldCheck",
   // Status
   "circle-alert": "alert", "alert-circle": "alert", "hourglass": "pending", "badge-check": "verified", "lightbulb": "lightbulb",
@@ -78,7 +78,7 @@ export const lucideIconAliases = Object.freeze({
   "sun": "sun", "moon": "moon", "cloud-rain": "cloudRain", "snowflake": "snowflake", "timer": "timer",
   "calendar-plus": "calendarAdd", "calendar-check": "calendarCheck",
   // Maps and location
-  "map-pin": "mapPin", "map": "map", "navigation": "navigate", "building": "building",
+  "map-pin": "mapPin", "map": "map", "navigation": "navigate", "building": "building", "building-2": "building",
   // Brands and social
   "github": "githubLogo", "gitlab": "gitlabLogo", "linkedin": "linkedinLogo", "twitter": "xLogo", "slack": "slackLogo", "youtube": "youtubeLogo",
 }) satisfies Readonly<Record<string, IconName>>;

@@ -108,6 +108,10 @@ export const componentDoc = Object.freeze({
     {
       "title": "Native element",
       "code": "<TooltipTrigger content=\"Copied values stay local\" shortcut=\"mod+c\">{trigger => <button type=\"button\" {...trigger}>Copy</button>}</TooltipTrigger>"
+    },
+    {
+      "title": "Switch or checkbox",
+      "code": "<TooltipTrigger content=\"Allows destructive actions for this session\">{trigger => <Switch label=\"Danger mode\" inputRef={trigger.ref} aria-describedby={trigger[\"aria-describedby\"]} />}</TooltipTrigger>"
     }
   ],
   "variants": [

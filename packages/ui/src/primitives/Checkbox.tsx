@@ -10,10 +10,12 @@ export type BooleanControlName =
   | { label?: never; "aria-label"?: never; "aria-labelledby": string };
 
 // Directives apply only to native elements, never through a component's props.
-export interface BooleanControlBaseProps extends Omit<JSX.HTMLAttributes<HTMLDivElement>, "children" | "onChange" | "id" | "ref" | "onPointerDown" | "aria-label" | "aria-labelledby" | `use:${string}`> {
+export interface BooleanControlBaseProps extends Omit<JSX.HTMLAttributes<HTMLDivElement>, "children" | "onChange" | "id" | "ref" | "onPointerDown" | "aria-label" | "aria-labelledby" | "aria-describedby" | `use:${string}`> {
   id?: string;
   ref?: HTMLDivElement | ((element: HTMLDivElement) => void);
   onPointerDown?: NonNullable<JSX.HTMLAttributes<HTMLDivElement>["onPointerDown"]>;
+  /** Extra description IDs for the native input, merged with the description and error. */
+  "aria-describedby"?: string | undefined;
   description?: string;
   error?: string;
   checked?: boolean;
@@ -33,12 +35,12 @@ export type CheckboxProps = BooleanControlBaseProps & BooleanControlName;
 
 export function createNativeBooleanControl(props: CheckboxProps, kind: "checkbox" | "switch"): JSX.Element {
   const [local, state, others] = splitProps(props,
-    ["label", "aria-label", "aria-labelledby", "description", "error", "class", "onCheckedChange", "inputRef", "form"],
+    ["label", "aria-label", "aria-labelledby", "aria-describedby", "description", "error", "class", "onCheckedChange", "inputRef", "form"],
     ["checked", "defaultChecked", "indeterminate", "disabled", "readOnly", "required", "name", "value"]);
   const prefix = `sheen-${kind}`;
   const generatedId = createUniqueId();
   const inputId = `${generatedId}-input`;
-  const describedBy = () => [local.description ? `${generatedId}-description` : "", local.error ? `${generatedId}-error` : ""].filter(Boolean).join(" ") || undefined;
+  const describedBy = () => [local["aria-describedby"], local.description ? `${generatedId}-description` : "", local.error ? `${generatedId}-error` : ""].filter(Boolean).join(" ") || undefined;
   const { checked, requestChange, setInput } = createBooleanInputState(state, next => local.onCheckedChange?.(next));
   return <div {...others} class={cn(prefix, local.class)} data-checked={checked() || undefined} data-indeterminate={state.indeterminate || undefined} data-disabled={state.disabled || undefined} data-readonly={state.readOnly || undefined} data-invalid={local.error ? "" : undefined}>
     <div class={`${prefix}-row`}>

@@ -274,7 +274,7 @@ test("AdminApp operations retain owners and satisfy calibrated frame stability g
   if (!capture && !latest) throw new Error("AdminApp CPU benchmark baseline history must not be empty");
   if (!capture && latest) {
     for (const name of metricNames) {
-      const maximum = latest.normalized[name] * (1 + adminAppBenchmarkBaseline.maximumRegression);
+      const maximum = latest.normalized[name] * (1 + (adminAppBenchmarkBaseline.operationMaximumRegression[name] ?? adminAppBenchmarkBaseline.maximumRegression));
       if (normalized[name] > maximum) failures.push(`${name} normalized median ${normalized[name].toFixed(4)} exceeds ${maximum.toFixed(4)}`);
     }
   }

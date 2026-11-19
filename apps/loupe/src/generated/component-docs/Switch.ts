@@ -32,6 +32,12 @@ export const componentDoc = Object.freeze({
       "required": false
     },
     {
+      "name": "aria-describedby",
+      "description": "Extra description IDs on the native input, merged with description and error. With TooltipTrigger, pass its aria-describedby here and its ref as inputRef.",
+      "type": "string | undefined",
+      "required": false
+    },
+    {
       "name": "error",
       "description": "Associated error marking the control invalid without moving focus.",
       "type": "string",

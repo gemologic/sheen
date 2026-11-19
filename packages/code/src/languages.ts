@@ -11,6 +11,7 @@ export const cpp = { id: "cpp", aliases: ["c++"], load: () => import("shiki/lang
 export const css = { id: "css", aliases: [], load: () => import("shiki/langs/css.mjs") } as const satisfies CodeLanguage;
 export const csv = { id: "csv", aliases: [], load: () => import("shiki/langs/csv.mjs") } as const satisfies CodeLanguage;
 export const glsl = { id: "glsl", aliases: [], load: () => import("shiki/langs/glsl.mjs") } as const satisfies CodeLanguage;
+export const go = { id: "go", aliases: ["golang"], load: () => import("shiki/langs/go.mjs") } as const satisfies CodeLanguage;
 export const graphql = { id: "graphql", aliases: ["gql"], load: () => import("shiki/langs/graphql.mjs") } as const satisfies CodeLanguage;
 export const haml = { id: "haml", aliases: [], load: () => import("shiki/langs/haml.mjs") } as const satisfies CodeLanguage;
 export const handlebars = { id: "handlebars", aliases: ["hbs"], load: () => import("shiki/langs/handlebars.mjs") } as const satisfies CodeLanguage;
@@ -40,6 +41,7 @@ export const pug = { id: "pug", aliases: ["jade"], load: () => import("shiki/lan
 export const python = { id: "python", aliases: ["py"], load: () => import("shiki/langs/python.mjs") } as const satisfies CodeLanguage;
 export const r = { id: "r", aliases: [], load: () => import("shiki/langs/r.mjs") } as const satisfies CodeLanguage;
 export const regexp = { id: "regexp", aliases: ["regex"], load: () => import("shiki/langs/regexp.mjs") } as const satisfies CodeLanguage;
+export const rust = { id: "rust", aliases: ["rs"], load: () => import("shiki/langs/rust.mjs") } as const satisfies CodeLanguage;
 export const sass = { id: "sass", aliases: [], load: () => import("shiki/langs/sass.mjs") } as const satisfies CodeLanguage;
 export const scss = { id: "scss", aliases: [], load: () => import("shiki/langs/scss.mjs") } as const satisfies CodeLanguage;
 export const shellscript = { id: "shellscript", aliases: ["bash", "sh", "shell", "zsh"], load: () => import("shiki/langs/shellscript.mjs") } as const satisfies CodeLanguage;
@@ -47,6 +49,7 @@ export const smithy = { id: "smithy", aliases: [], load: () => import("shiki/lan
 export const sql = { id: "sql", aliases: [], load: () => import("shiki/langs/sql.mjs") } as const satisfies CodeLanguage;
 export const stylus = { id: "stylus", aliases: ["styl"], load: () => import("shiki/langs/stylus.mjs") } as const satisfies CodeLanguage;
 export const svelte = { id: "svelte", aliases: [], load: () => import("shiki/langs/svelte.mjs") } as const satisfies CodeLanguage;
+export const toml = { id: "toml", aliases: [], load: () => import("shiki/langs/toml.mjs") } as const satisfies CodeLanguage;
 export const tsTags = { id: "ts-tags", aliases: ["lit"], load: () => import("shiki/langs/ts-tags.mjs") } as const satisfies CodeLanguage;
 export const tsx = { id: "tsx", aliases: [], load: () => import("shiki/langs/tsx.mjs") } as const satisfies CodeLanguage;
 export const typescript = { id: "typescript", aliases: ["ts", "cts", "mts"], load: () => import("shiki/langs/typescript.mjs") } as const satisfies CodeLanguage;

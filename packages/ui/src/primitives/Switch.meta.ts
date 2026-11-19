@@ -10,6 +10,7 @@ export default defineMeta<SwitchProps>({
     label: { description: "Visible label, unchanged between on and off. Supply exactly one of label, aria-label, or aria-labelledby.", control: { kind: "text" } },
     "aria-label": { description: "Accessible name on the native input when no visible label fits." },
     "aria-labelledby": { description: "ID of existing visible text that names the native input." },
+    "aria-describedby": { description: "Extra description IDs on the native input, merged with description and error. With TooltipTrigger, pass its aria-describedby here and its ref as inputRef." },
     description: { description: "Associated supporting instructions." },
     error: { description: "Associated error marking the control invalid without moving focus." },
     checked: { description: "App-owned state, retained on reset unless the app changes it.", control: { kind: "boolean" } },

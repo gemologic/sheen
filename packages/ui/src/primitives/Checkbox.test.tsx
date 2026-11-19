@@ -30,6 +30,9 @@ describe("Checkbox server contract", () => {
     expect(named).not.toContain("<label");
     const referenced = renderToString(() => <Checkbox aria-labelledby="invoice-1042" />);
     expect(referenced.match(/<input\b[^>]*>/)?.[0]).toContain('aria-labelledby="invoice-1042"');
+    const described = renderToString(() => <Checkbox aria-label="Select invoice 1042" aria-describedby="row-help" description="Included in the export" />);
+    expect(described.match(/<input\b[^>]*>/)?.[0]).toMatch(/aria-describedby="row-help \S+-description"/);
+    expect(described.match(/<div\b[^>]*>/)?.[0]).not.toContain("aria-describedby");
     // @ts-expect-error An accessible name source is required.
     const unnamed = () => <Checkbox name="selected" />;
     // @ts-expect-error Naming sources are mutually exclusive.

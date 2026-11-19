@@ -101,7 +101,7 @@ Aliases: s=string, b=boolean, n=number, v=void, ro=readonly, node=JSX.Element, P
 - Callout(tone?:NoticeTone,heading?:s,icon?:node,actions?:node,onDismiss?:(()=>v),dismissLabel?:s): Static contextual information, not an urgent live-region announcement; <Callout heading="Retention policy">History is retained for 30 days.</Callout>
 - Card(variant?:"base"|"subtle"|"raised"|"inset",padding?:Spacing,bordered?:b,elevated?:b): A bordered raised surface, without a shadow unless explicitly requested; See full example.
 - Center(): Centers content within the space allocated by its parent; <Center><Button>Continue</Button></Center>
-- Checkbox(,+19 optional): A labeled native checkbox with controlled, uncontrolled, and mixed presentation; See full example.
+- Checkbox(,+20 optional): A labeled native checkbox with controlled, uncontrolled, and mixed presentation; See full example.
 - CheckboxGroup(label:s,options:ro CheckboxOption[],value?:ro s[],defaultValue?:ro s[],onValueChange?:(value:s[])=>v,description?:s,error?:s,readOnly?:b): A native fieldset of independent choices with shared selection ownership; See full example.
 - Cluster(wrap?:b,gap?:Spacing,align?:Alignment,justify?:Justification): Row alias for wrapping groups of related controls; <Cluster><Button>One</Button><Button>Two</Button></Cluster>
 - Code(): Inline code, rendered as code with the mono type role. Syntax highlighting belongs to CodeBlock; <Code>workspace.id</Code>
@@ -173,7 +173,7 @@ Aliases: s=string, b=boolean, n=number, v=void, ro=readonly, node=JSX.Element, P
 - Stepper(ref?:HTMLElement|((element:HTMLElement)=>v),label:s,steps:ro StepperStep[],orientation?:"horizontal"|"vertical",density?:"compact"|"default",refreshing?:b): A responsive workflow progress list with native link, action, and status steps; See full example.
 - StreamingText(ref?:HTMLDivElement|((element:HTMLDivElement)=>v),text:s,streaming?:b,completeLabel?:s): Plain text that grows token by token, retaining paragraph nodes and announcing completion once; See full example.
 - Surface(variant?:"base"|"subtle"|"raised"|"inset",padding?:Spacing,bordered?:b,elevated?:b): Semantic surface with role padding and an inherited focus-ring offset; <Surface variant="raised" padding="md"><Input label="Name"/></Surface>
-- Switch(,+18 optional): A labeled binary setting with native form participation and switch semantics; See full example.
+- Switch(,+19 optional): A labeled binary setting with native form participation and switch semantics; See full example.
 - Table(striped?:b): Native table semantics and token styling for bounded, non-virtualized tables; See full example.
 - TableBody(): Native tbody semantics and token styling for bounded, non-virtualized tables; See full example.
 - TableCaption(): Native caption semantics and token styling for bounded, non-virtualized tables; See full example.

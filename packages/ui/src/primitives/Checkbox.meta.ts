@@ -10,6 +10,7 @@ export default defineMeta<CheckboxProps>({
     label: { description: "Visible label. Supply exactly one of label, aria-label, or aria-labelledby.", control: { kind: "text" } },
     "aria-label": { description: "Accessible name on the native input when no visible label fits, such as a table row selector." },
     "aria-labelledby": { description: "ID of existing visible text, such as a row header, that names the native input." },
+    "aria-describedby": { description: "Extra description IDs on the native input, merged with description and error. With TooltipTrigger, pass its aria-describedby here and its ref as inputRef." },
     description: { description: "Supporting text associated with the native input." },
     error: { description: "Associated validation error; marks the input invalid without moving focus." },
     checked: { description: "App-owned checked value, retained across form reset unless the app changes it.", control: { kind: "boolean" } },

@@ -9968,6 +9968,7 @@ Props:
 - `id: string` (optional). Root container ID, also used to derive stable internal IDs.
 - `ref: HTMLDivElement|((element:HTMLDivElement)=>void)` (optional). Root container reference; use inputRef for the native input.
 - `onPointerDown: NonNullable<JSX.EventHandlerUnion<HTMLDivElement,PointerEvent,JSX.EventHandler<HTMLDivElement,PointerEvent>>>` (optional). Native root pointer-down handler, composed with primitive focus behavior.
+- `aria-describedby: string` (optional). Extra description IDs on the native input, merged with description and error. With TooltipTrigger, pass its aria-describedby here and its ref as inputRef.
 - `description: string` (optional). Supporting text associated with the native input.
 - `error: string` (optional). Associated validation error; marks the input invalid without moving focus.
 - `checked: boolean` (optional). App-owned checked value, retained across form reset unless the app changes it.
@@ -12241,6 +12242,7 @@ Props:
 - `id: string` (optional). Root container ID used to derive internal IDs.
 - `ref: HTMLDivElement|((element:HTMLDivElement)=>void)` (optional). Root container reference; inputRef targets the native input.
 - `onPointerDown: NonNullable<JSX.EventHandlerUnion<HTMLDivElement,PointerEvent,JSX.EventHandler<HTMLDivElement,PointerEvent>>>` (optional). Native root pointer-down handler composed with focus behavior.
+- `aria-describedby: string` (optional). Extra description IDs on the native input, merged with description and error. With TooltipTrigger, pass its aria-describedby here and its ref as inputRef.
 - `error: string` (optional). Associated error marking the control invalid without moving focus.
 - `checked: boolean` (optional). App-owned state, retained on reset unless the app changes it.
 - `defaultChecked: boolean` (optional; default false). Initial uncontrolled state restored on uncanceled reset.
@@ -12839,6 +12841,11 @@ Example, Existing button:
 Example, Native element:
 ```tsx
 <TooltipTrigger content="Copied values stay local" shortcut="mod+c">{trigger => <button type="button" {...trigger}>Copy</button>}</TooltipTrigger>
+```
+
+Example, Switch or checkbox:
+```tsx
+<TooltipTrigger content="Allows destructive actions for this session">{trigger => <Switch label="Danger mode" inputRef={trigger.ref} aria-describedby={trigger["aria-describedby"]} />}</TooltipTrigger>
 ```
 
 ### Tree

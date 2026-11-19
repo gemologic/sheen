@@ -87,6 +87,8 @@ export interface AdminNavigationGroup {
   readonly id: string;
   readonly label: string;
   readonly items: readonly AdminNavigationEntry[];
+  /** Initial disclosure state. A group containing the current destination always opens. */
+  readonly defaultOpen?: boolean;
 }
 
 export type AdminNavigationEntry = AdminNavigationLink | AdminNavigationGroup;

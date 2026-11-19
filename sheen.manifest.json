@@ -160940,6 +160940,12 @@
           "required": false,
           "inherited": true
         },
+        "aria-describedby": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | undefined",
+          "required": false,
+          "inherited": true
+        },
         "use:eventListener": {
           "description": "Inherited Solid/HTML attribute; see the generated type.",
           "type": "import(\"@solid-primitives/event-listener\").EventListenerDirectiveProps",
@@ -163349,12 +163355,6 @@
         "aria-current": {
           "description": "Inherited Solid/HTML attribute; see the generated type.",
           "type": "boolean | \"true\" | \"false\" | \"page\" | \"step\" | \"location\" | \"date\" | \"time\" | undefined",
-          "required": false,
-          "inherited": true
-        },
-        "aria-describedby": {
-          "description": "Inherited Solid/HTML attribute; see the generated type.",
-          "type": "string | undefined",
           "required": false,
           "inherited": true
         },
@@ -166476,6 +166476,12 @@
           "required": false,
           "inherited": true
         },
+        "aria-describedby": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | undefined",
+          "required": false,
+          "inherited": true
+        },
         "use:eventListener": {
           "description": "Inherited Solid/HTML attribute; see the generated type.",
           "type": "import(\"@solid-primitives/event-listener\").EventListenerDirectiveProps | undefined",
@@ -168885,12 +168891,6 @@
         "aria-current": {
           "description": "Inherited Solid/HTML attribute; see the generated type.",
           "type": "boolean | \"true\" | \"false\" | \"page\" | \"step\" | \"location\" | \"date\" | \"time\" | undefined",
-          "required": false,
-          "inherited": true
-        },
-        "aria-describedby": {
-          "description": "Inherited Solid/HTML attribute; see the generated type.",
-          "type": "string | undefined",
           "required": false,
           "inherited": true
         },
@@ -172198,6 +172198,12 @@
           "required": false,
           "inherited": true
         },
+        "aria-describedby": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | undefined",
+          "required": false,
+          "inherited": true
+        },
         "use:eventListener": {
           "description": "Inherited Solid/HTML attribute; see the generated type.",
           "type": "import(\"@solid-primitives/event-listener\").EventListenerDirectiveProps | undefined",
@@ -174610,12 +174616,6 @@
           "required": false,
           "inherited": true
         },
-        "aria-describedby": {
-          "description": "Inherited Solid/HTML attribute; see the generated type.",
-          "type": "string | undefined",
-          "required": false,
-          "inherited": true
-        },
         "aria-description": {
           "description": "Inherited Solid/HTML attribute; see the generated type.",
           "type": "string | undefined",
@@ -174956,6 +174956,12 @@
           "inherited": true
         },
         "aria-labelledby": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "aria-describedby": {
           "description": "Inherited Solid/HTML attribute; see the generated type.",
           "type": "string | undefined",
           "required": false,
@@ -177370,12 +177376,6 @@
         "aria-current": {
           "description": "Inherited Solid/HTML attribute; see the generated type.",
           "type": "boolean | \"false\" | \"true\" | \"page\" | \"step\" | \"location\" | \"date\" | \"time\" | undefined",
-          "required": false,
-          "inherited": true
-        },
-        "aria-describedby": {
-          "description": "Inherited Solid/HTML attribute; see the generated type.",
-          "type": "string | undefined",
           "required": false,
           "inherited": true
         },
@@ -186082,6 +186082,12 @@
           "required": false,
           "inherited": true
         },
+        "aria-describedby": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | undefined",
+          "required": false,
+          "inherited": true
+        },
         "use:eventListener": {
           "description": "Inherited Solid/HTML attribute; see the generated type.",
           "type": "import(\"@solid-primitives/event-listener\").EventListenerDirectiveProps | undefined",
@@ -188491,12 +188497,6 @@
         "aria-current": {
           "description": "Inherited Solid/HTML attribute; see the generated type.",
           "type": "boolean | \"true\" | \"false\" | \"page\" | \"step\" | \"location\" | \"date\" | \"time\" | undefined",
-          "required": false,
-          "inherited": true
-        },
-        "aria-describedby": {
-          "description": "Inherited Solid/HTML attribute; see the generated type.",
-          "type": "string | undefined",
           "required": false,
           "inherited": true
         },
@@ -202825,6 +202825,12 @@
           "required": false,
           "inherited": false
         },
+        "aria-describedby": {
+          "description": "Extra description IDs on the native input, merged with description and error. With TooltipTrigger, pass its aria-describedby here and its ref as inputRef.",
+          "type": "string | undefined",
+          "required": false,
+          "inherited": false
+        },
         "description": {
           "description": "Supporting text associated with the native input.",
           "type": "string",
@@ -205330,12 +205336,6 @@
           "required": false,
           "inherited": true
         },
-        "aria-describedby": {
-          "description": "Inherited Solid/HTML attribute; see the generated type.",
-          "type": "string | undefined",
-          "required": false,
-          "inherited": true
-        },
         "aria-description": {
           "description": "Inherited Solid/HTML attribute; see the generated type.",
           "type": "string | undefined",
@@ -205717,6 +205717,12 @@
           "inherited": true
         },
         "aria-labelledby": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "aria-describedby": {
           "description": "Inherited Solid/HTML attribute; see the generated type.",
           "type": "string | undefined",
           "required": false,
@@ -208131,12 +208137,6 @@
         "aria-current": {
           "description": "Inherited Solid/HTML attribute; see the generated type.",
           "type": "boolean | \"true\" | \"false\" | \"page\" | \"step\" | \"location\" | \"date\" | \"time\" | undefined",
-          "required": false,
-          "inherited": true
-        },
-        "aria-describedby": {
-          "description": "Inherited Solid/HTML attribute; see the generated type.",
-          "type": "string | undefined",
           "required": false,
           "inherited": true
         },
@@ -216899,6 +216899,12 @@
           "required": false,
           "inherited": true
         },
+        "aria-describedby": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | undefined",
+          "required": false,
+          "inherited": true
+        },
         "use:eventListener": {
           "description": "Inherited Solid/HTML attribute; see the generated type.",
           "type": "import(\"@solid-primitives/event-listener\").EventListenerDirectiveProps | undefined",
@@ -219308,12 +219314,6 @@
         "aria-current": {
           "description": "Inherited Solid/HTML attribute; see the generated type.",
           "type": "boolean | \"false\" | \"true\" | \"page\" | \"step\" | \"location\" | \"date\" | \"time\" | undefined",
-          "required": false,
-          "inherited": true
-        },
-        "aria-describedby": {
-          "description": "Inherited Solid/HTML attribute; see the generated type.",
-          "type": "string | undefined",
           "required": false,
           "inherited": true
         },
@@ -225380,6 +225380,12 @@
           "required": false,
           "inherited": true
         },
+        "aria-describedby": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | undefined",
+          "required": false,
+          "inherited": true
+        },
         "use:eventListener": {
           "description": "Inherited Solid/HTML attribute; see the generated type.",
           "type": "import(\"@solid-primitives/event-listener\").EventListenerDirectiveProps | undefined",
@@ -227789,12 +227795,6 @@
         "aria-current": {
           "description": "Inherited Solid/HTML attribute; see the generated type.",
           "type": "boolean | \"false\" | \"true\" | \"page\" | \"step\" | \"location\" | \"date\" | \"time\" | undefined",
-          "required": false,
-          "inherited": true
-        },
-        "aria-describedby": {
-          "description": "Inherited Solid/HTML attribute; see the generated type.",
-          "type": "string | undefined",
           "required": false,
           "inherited": true
         },
@@ -236818,6 +236818,12 @@
           "required": false,
           "inherited": true
         },
+        "aria-describedby": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | undefined",
+          "required": false,
+          "inherited": true
+        },
         "use:eventListener": {
           "description": "Inherited Solid/HTML attribute; see the generated type.",
           "type": "import(\"@solid-primitives/event-listener\").EventListenerDirectiveProps | undefined",
@@ -239227,12 +239233,6 @@
         "aria-current": {
           "description": "Inherited Solid/HTML attribute; see the generated type.",
           "type": "false | true | \"false\" | \"true\" | \"page\" | \"step\" | \"location\" | \"date\" | \"time\" | undefined",
-          "required": false,
-          "inherited": true
-        },
-        "aria-describedby": {
-          "description": "Inherited Solid/HTML attribute; see the generated type.",
-          "type": "string | undefined",
           "required": false,
           "inherited": true
         },
@@ -242384,6 +242384,12 @@
           "required": false,
           "inherited": true
         },
+        "aria-describedby": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | undefined",
+          "required": false,
+          "inherited": true
+        },
         "use:eventListener": {
           "description": "Inherited Solid/HTML attribute; see the generated type.",
           "type": "import(\"@solid-primitives/event-listener\").EventListenerDirectiveProps | undefined",
@@ -244796,12 +244802,6 @@
           "required": false,
           "inherited": true
         },
-        "aria-describedby": {
-          "description": "Inherited Solid/HTML attribute; see the generated type.",
-          "type": "string | undefined",
-          "required": false,
-          "inherited": true
-        },
         "aria-description": {
           "description": "Inherited Solid/HTML attribute; see the generated type.",
           "type": "string | undefined",
@@ -245225,6 +245225,12 @@
           "inherited": true
         },
         "aria-labelledby": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "aria-describedby": {
           "description": "Inherited Solid/HTML attribute; see the generated type.",
           "type": "string | undefined",
           "required": false,
@@ -247618,12 +247624,6 @@
           "required": false,
           "inherited": true
         },
-        "aria-describedby": {
-          "description": "Inherited Solid/HTML attribute; see the generated type.",
-          "type": "string | undefined",
-          "required": false,
-          "inherited": true
-        },
         "aria-description": {
           "description": "Inherited Solid/HTML attribute; see the generated type.",
           "type": "string | undefined",
@@ -247956,6 +247956,12 @@
           "inherited": true
         },
         "aria-labelledby": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "aria-describedby": {
           "description": "Inherited Solid/HTML attribute; see the generated type.",
           "type": "string | undefined",
           "required": false,
@@ -250364,12 +250370,6 @@
         "aria-current": {
           "description": "Inherited Solid/HTML attribute; see the generated type.",
           "type": "boolean | \"true\" | \"false\" | \"page\" | \"step\" | \"location\" | \"date\" | \"time\" | undefined",
-          "required": false,
-          "inherited": true
-        },
-        "aria-describedby": {
-          "description": "Inherited Solid/HTML attribute; see the generated type.",
-          "type": "string | undefined",
           "required": false,
           "inherited": true
         },
@@ -253537,6 +253537,12 @@
           "required": false,
           "inherited": true
         },
+        "aria-describedby": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | undefined",
+          "required": false,
+          "inherited": true
+        },
         "use:eventListener": {
           "description": "Inherited Solid/HTML attribute; see the generated type.",
           "type": "import(\"@solid-primitives/event-listener\").EventListenerDirectiveProps | undefined",
@@ -255949,12 +255955,6 @@
           "required": false,
           "inherited": true
         },
-        "aria-describedby": {
-          "description": "Inherited Solid/HTML attribute; see the generated type.",
-          "type": "string | undefined",
-          "required": false,
-          "inherited": true
-        },
         "aria-description": {
           "description": "Inherited Solid/HTML attribute; see the generated type.",
           "type": "string | undefined",
@@ -256290,6 +256290,12 @@
           "inherited": true
         },
         "aria-labelledby": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "aria-describedby": {
           "description": "Inherited Solid/HTML attribute; see the generated type.",
           "type": "string | undefined",
           "required": false,
@@ -258452,12 +258458,6 @@
         "aria-current": {
           "description": "Inherited Solid/HTML attribute; see the generated type.",
           "type": "boolean | \"false\" | \"true\" | \"page\" | \"step\" | \"location\" | \"date\" | \"time\" | undefined",
-          "required": false,
-          "inherited": true
-        },
-        "aria-describedby": {
-          "description": "Inherited Solid/HTML attribute; see the generated type.",
-          "type": "string | undefined",
           "required": false,
           "inherited": true
         },
@@ -265187,6 +265187,12 @@
           "required": false,
           "inherited": true
         },
+        "aria-describedby": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | undefined",
+          "required": false,
+          "inherited": true
+        },
         "use:eventListener": {
           "description": "Inherited Solid/HTML attribute; see the generated type.",
           "type": "import(\"@solid-primitives/event-listener\").EventListenerDirectiveProps | undefined",
@@ -267596,12 +267602,6 @@
         "aria-current": {
           "description": "Inherited Solid/HTML attribute; see the generated type.",
           "type": "boolean | \"true\" | \"false\" | \"page\" | \"step\" | \"location\" | \"date\" | \"time\" | undefined",
-          "required": false,
-          "inherited": true
-        },
-        "aria-describedby": {
-          "description": "Inherited Solid/HTML attribute; see the generated type.",
-          "type": "string | undefined",
           "required": false,
           "inherited": true
         },
@@ -285688,6 +285688,12 @@
           "required": false,
           "inherited": true
         },
+        "aria-describedby": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | undefined",
+          "required": false,
+          "inherited": true
+        },
         "use:eventListener": {
           "description": "Inherited Solid/HTML attribute; see the generated type.",
           "type": "import(\"@solid-primitives/event-listener\").EventListenerDirectiveProps | undefined",
@@ -288091,12 +288097,6 @@
         "aria-current": {
           "description": "Inherited Solid/HTML attribute; see the generated type.",
           "type": "boolean | \"true\" | \"false\" | \"page\" | \"step\" | \"location\" | \"date\" | \"time\" | undefined",
-          "required": false,
-          "inherited": true
-        },
-        "aria-describedby": {
-          "description": "Inherited Solid/HTML attribute; see the generated type.",
-          "type": "string | undefined",
           "required": false,
           "inherited": true
         },
@@ -288478,6 +288478,12 @@
           "required": false,
           "inherited": true
         },
+        "aria-describedby": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | undefined",
+          "required": false,
+          "inherited": true
+        },
         "use:eventListener": {
           "description": "Inherited Solid/HTML attribute; see the generated type.",
           "type": "import(\"@solid-primitives/event-listener\").EventListenerDirectiveProps | undefined",
@@ -290887,12 +290893,6 @@
         "aria-current": {
           "description": "Inherited Solid/HTML attribute; see the generated type.",
           "type": "boolean | \"true\" | \"false\" | \"page\" | \"step\" | \"location\" | \"date\" | \"time\" | undefined",
-          "required": false,
-          "inherited": true
-        },
-        "aria-describedby": {
-          "description": "Inherited Solid/HTML attribute; see the generated type.",
-          "type": "string | undefined",
           "required": false,
           "inherited": true
         },
@@ -291252,6 +291252,12 @@
           "required": false,
           "inherited": true
         },
+        "aria-describedby": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | undefined",
+          "required": false,
+          "inherited": true
+        },
         "use:eventListener": {
           "description": "Inherited Solid/HTML attribute; see the generated type.",
           "type": "import(\"@solid-primitives/event-listener\").EventListenerDirectiveProps | undefined",
@@ -293661,12 +293667,6 @@
         "aria-current": {
           "description": "Inherited Solid/HTML attribute; see the generated type.",
           "type": "boolean | \"true\" | \"false\" | \"page\" | \"step\" | \"location\" | \"date\" | \"time\" | undefined",
-          "required": false,
-          "inherited": true
-        },
-        "aria-describedby": {
-          "description": "Inherited Solid/HTML attribute; see the generated type.",
-          "type": "string | undefined",
           "required": false,
           "inherited": true
         },
@@ -294109,6 +294109,12 @@
           "inherited": true
         },
         "aria-labelledby": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "aria-describedby": {
           "description": "Inherited Solid/HTML attribute; see the generated type.",
           "type": "string | undefined",
           "required": false,
@@ -296526,12 +296532,6 @@
           "required": false,
           "inherited": true
         },
-        "aria-describedby": {
-          "description": "Inherited Solid/HTML attribute; see the generated type.",
-          "type": "string | undefined",
-          "required": false,
-          "inherited": true
-        },
         "aria-description": {
           "description": "Inherited Solid/HTML attribute; see the generated type.",
           "type": "string | undefined",
@@ -296894,6 +296894,12 @@
           "inherited": true
         },
         "aria-labelledby": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "aria-describedby": {
           "description": "Inherited Solid/HTML attribute; see the generated type.",
           "type": "string | undefined",
           "required": false,
@@ -299300,12 +299306,6 @@
           "inherited": true
         },
         "aria-controls": {
-          "description": "Inherited Solid/HTML attribute; see the generated type.",
-          "type": "string | undefined",
-          "required": false,
-          "inherited": true
-        },
-        "aria-describedby": {
           "description": "Inherited Solid/HTML attribute; see the generated type.",
           "type": "string | undefined",
           "required": false,
@@ -302587,6 +302587,12 @@
           "required": false,
           "inherited": true
         },
+        "aria-describedby": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | undefined",
+          "required": false,
+          "inherited": true
+        },
         "use:eventListener": {
           "description": "Inherited Solid/HTML attribute; see the generated type.",
           "type": "import(\"@solid-primitives/event-listener\").EventListenerDirectiveProps | undefined",
@@ -304999,12 +305005,6 @@
           "required": false,
           "inherited": true
         },
-        "aria-describedby": {
-          "description": "Inherited Solid/HTML attribute; see the generated type.",
-          "type": "string | undefined",
-          "required": false,
-          "inherited": true
-        },
         "aria-description": {
           "description": "Inherited Solid/HTML attribute; see the generated type.",
           "type": "string | undefined",
@@ -305341,6 +305341,12 @@
           "inherited": true
         },
         "aria-labelledby": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "aria-describedby": {
           "description": "Inherited Solid/HTML attribute; see the generated type.",
           "type": "string | undefined",
           "required": false,
@@ -307758,12 +307764,6 @@
           "required": false,
           "inherited": true
         },
-        "aria-describedby": {
-          "description": "Inherited Solid/HTML attribute; see the generated type.",
-          "type": "string | undefined",
-          "required": false,
-          "inherited": true
-        },
         "aria-description": {
           "description": "Inherited Solid/HTML attribute; see the generated type.",
           "type": "string | undefined",
@@ -308104,6 +308104,12 @@
           "inherited": true
         },
         "aria-labelledby": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "aria-describedby": {
           "description": "Inherited Solid/HTML attribute; see the generated type.",
           "type": "string | undefined",
           "required": false,
@@ -310518,12 +310524,6 @@
         "aria-current": {
           "description": "Inherited Solid/HTML attribute; see the generated type.",
           "type": "boolean | \"true\" | \"false\" | \"page\" | \"step\" | \"location\" | \"date\" | \"time\" | undefined",
-          "required": false,
-          "inherited": true
-        },
-        "aria-describedby": {
-          "description": "Inherited Solid/HTML attribute; see the generated type.",
-          "type": "string | undefined",
           "required": false,
           "inherited": true
         },
@@ -310986,6 +310986,12 @@
           "required": false,
           "inherited": true
         },
+        "aria-describedby": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | undefined",
+          "required": false,
+          "inherited": true
+        },
         "use:eventListener": {
           "description": "Inherited Solid/HTML attribute; see the generated type.",
           "type": "import(\"@solid-primitives/event-listener\").EventListenerDirectiveProps | undefined",
@@ -313395,12 +313401,6 @@
         "aria-current": {
           "description": "Inherited Solid/HTML attribute; see the generated type.",
           "type": "boolean | \"true\" | \"false\" | \"page\" | \"step\" | \"location\" | \"date\" | \"time\" | undefined",
-          "required": false,
-          "inherited": true
-        },
-        "aria-describedby": {
-          "description": "Inherited Solid/HTML attribute; see the generated type.",
-          "type": "string | undefined",
           "required": false,
           "inherited": true
         },
@@ -313831,6 +313831,12 @@
           "required": false,
           "inherited": true
         },
+        "aria-describedby": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | undefined",
+          "required": false,
+          "inherited": true
+        },
         "use:eventListener": {
           "description": "Inherited Solid/HTML attribute; see the generated type.",
           "type": "import(\"@solid-primitives/event-listener\").EventListenerDirectiveProps | undefined",
@@ -316234,12 +316240,6 @@
         "aria-current": {
           "description": "Inherited Solid/HTML attribute; see the generated type.",
           "type": "boolean | \"true\" | \"false\" | \"page\" | \"step\" | \"location\" | \"date\" | \"time\" | undefined",
-          "required": false,
-          "inherited": true
-        },
-        "aria-describedby": {
-          "description": "Inherited Solid/HTML attribute; see the generated type.",
-          "type": "string | undefined",
           "required": false,
           "inherited": true
         },
@@ -319446,6 +319446,12 @@
           "required": false,
           "inherited": true
         },
+        "aria-describedby": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | undefined",
+          "required": false,
+          "inherited": true
+        },
         "use:eventListener": {
           "description": "Inherited Solid/HTML attribute; see the generated type.",
           "type": "import(\"@solid-primitives/event-listener\").EventListenerDirectiveProps | undefined",
@@ -321855,12 +321861,6 @@
         "aria-current": {
           "description": "Inherited Solid/HTML attribute; see the generated type.",
           "type": "boolean | \"true\" | \"false\" | \"page\" | \"step\" | \"location\" | \"date\" | \"time\" | undefined",
-          "required": false,
-          "inherited": true
-        },
-        "aria-describedby": {
-          "description": "Inherited Solid/HTML attribute; see the generated type.",
-          "type": "string | undefined",
           "required": false,
           "inherited": true
         },
@@ -322318,6 +322318,12 @@
           "required": false,
           "inherited": true
         },
+        "aria-describedby": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | undefined",
+          "required": false,
+          "inherited": true
+        },
         "use:eventListener": {
           "description": "Inherited Solid/HTML attribute; see the generated type.",
           "type": "import(\"@solid-primitives/event-listener\").EventListenerDirectiveProps | undefined",
@@ -324727,12 +324733,6 @@
         "aria-current": {
           "description": "Inherited Solid/HTML attribute; see the generated type.",
           "type": "false | true | \"false\" | \"true\" | \"page\" | \"step\" | \"location\" | \"date\" | \"time\" | undefined",
-          "required": false,
-          "inherited": true
-        },
-        "aria-describedby": {
-          "description": "Inherited Solid/HTML attribute; see the generated type.",
-          "type": "string | undefined",
           "required": false,
           "inherited": true
         },
@@ -325100,6 +325100,12 @@
           "required": false,
           "inherited": true
         },
+        "aria-describedby": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | undefined",
+          "required": false,
+          "inherited": true
+        },
         "use:eventListener": {
           "description": "Inherited Solid/HTML attribute; see the generated type.",
           "type": "import(\"@solid-primitives/event-listener\").EventListenerDirectiveProps | undefined",
@@ -327512,12 +327518,6 @@
           "required": false,
           "inherited": true
         },
-        "aria-describedby": {
-          "description": "Inherited Solid/HTML attribute; see the generated type.",
-          "type": "string | undefined",
-          "required": false,
-          "inherited": true
-        },
         "aria-description": {
           "description": "Inherited Solid/HTML attribute; see the generated type.",
           "type": "string | undefined",
@@ -327842,6 +327842,12 @@
           "inherited": true
         },
         "aria-labelledby": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "aria-describedby": {
           "description": "Inherited Solid/HTML attribute; see the generated type.",
           "type": "string | undefined",
           "required": false,
@@ -330256,12 +330262,6 @@
         "aria-current": {
           "description": "Inherited Solid/HTML attribute; see the generated type.",
           "type": "boolean | \"true\" | \"false\" | \"page\" | \"step\" | \"location\" | \"date\" | \"time\" | undefined",
-          "required": false,
-          "inherited": true
-        },
-        "aria-describedby": {
-          "description": "Inherited Solid/HTML attribute; see the generated type.",
-          "type": "string | undefined",
           "required": false,
           "inherited": true
         },
@@ -330778,6 +330778,12 @@
           "inherited": true
         },
         "aria-labelledby": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "aria-describedby": {
           "description": "Inherited Solid/HTML attribute; see the generated type.",
           "type": "string | undefined",
           "required": false,
@@ -333186,12 +333192,6 @@
         "aria-current": {
           "description": "Inherited Solid/HTML attribute; see the generated type.",
           "type": "boolean | \"false\" | \"true\" | \"page\" | \"step\" | \"location\" | \"date\" | \"time\" | undefined",
-          "required": false,
-          "inherited": true
-        },
-        "aria-describedby": {
-          "description": "Inherited Solid/HTML attribute; see the generated type.",
-          "type": "string | undefined",
           "required": false,
           "inherited": true
         },
@@ -339108,6 +339108,12 @@
           "required": false,
           "inherited": true
         },
+        "aria-describedby": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | undefined",
+          "required": false,
+          "inherited": true
+        },
         "use:eventListener": {
           "description": "Inherited Solid/HTML attribute; see the generated type.",
           "type": "import(\"@solid-primitives/event-listener\").EventListenerDirectiveProps | undefined",
@@ -341520,12 +341526,6 @@
           "required": false,
           "inherited": true
         },
-        "aria-describedby": {
-          "description": "Inherited Solid/HTML attribute; see the generated type.",
-          "type": "string | undefined",
-          "required": false,
-          "inherited": true
-        },
         "aria-description": {
           "description": "Inherited Solid/HTML attribute; see the generated type.",
           "type": "string | undefined",
@@ -342232,6 +342232,12 @@
           "inherited": true
         },
         "aria-labelledby": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "aria-describedby": {
           "description": "Inherited Solid/HTML attribute; see the generated type.",
           "type": "string | undefined",
           "required": false,
@@ -344649,12 +344655,6 @@
           "required": false,
           "inherited": true
         },
-        "aria-describedby": {
-          "description": "Inherited Solid/HTML attribute; see the generated type.",
-          "type": "string | undefined",
-          "required": false,
-          "inherited": true
-        },
         "aria-description": {
           "description": "Inherited Solid/HTML attribute; see the generated type.",
           "type": "string | undefined",
@@ -345058,6 +345058,12 @@
           "inherited": true
         },
         "aria-labelledby": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "aria-describedby": {
           "description": "Inherited Solid/HTML attribute; see the generated type.",
           "type": "string | undefined",
           "required": false,
@@ -347472,12 +347478,6 @@
         "aria-current": {
           "description": "Inherited Solid/HTML attribute; see the generated type.",
           "type": "false | true | \"false\" | \"true\" | \"page\" | \"step\" | \"location\" | \"date\" | \"time\" | undefined",
-          "required": false,
-          "inherited": true
-        },
-        "aria-describedby": {
-          "description": "Inherited Solid/HTML attribute; see the generated type.",
-          "type": "string | undefined",
           "required": false,
           "inherited": true
         },
@@ -350706,6 +350706,12 @@
           "required": false,
           "inherited": true
         },
+        "aria-describedby": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | undefined",
+          "required": false,
+          "inherited": true
+        },
         "use:eventListener": {
           "description": "Inherited Solid/HTML attribute; see the generated type.",
           "type": "import(\"@solid-primitives/event-listener\").EventListenerDirectiveProps | undefined",
@@ -353115,12 +353121,6 @@
         "aria-current": {
           "description": "Inherited Solid/HTML attribute; see the generated type.",
           "type": "false | true | \"false\" | \"true\" | \"page\" | \"step\" | \"location\" | \"date\" | \"time\" | undefined",
-          "required": false,
-          "inherited": true
-        },
-        "aria-describedby": {
-          "description": "Inherited Solid/HTML attribute; see the generated type.",
-          "type": "string | undefined",
           "required": false,
           "inherited": true
         },
@@ -356392,6 +356392,12 @@
           "required": false,
           "inherited": true
         },
+        "aria-describedby": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | undefined",
+          "required": false,
+          "inherited": true
+        },
         "use:eventListener": {
           "description": "Inherited Solid/HTML attribute; see the generated type.",
           "type": "import(\"@solid-primitives/event-listener\").EventListenerDirectiveProps | undefined",
@@ -358804,12 +358810,6 @@
           "required": false,
           "inherited": true
         },
-        "aria-describedby": {
-          "description": "Inherited Solid/HTML attribute; see the generated type.",
-          "type": "string | undefined",
-          "required": false,
-          "inherited": true
-        },
         "aria-description": {
           "description": "Inherited Solid/HTML attribute; see the generated type.",
           "type": "string | undefined",
@@ -359239,6 +359239,12 @@
           "inherited": true
         },
         "aria-labelledby": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "aria-describedby": {
           "description": "Inherited Solid/HTML attribute; see the generated type.",
           "type": "string | undefined",
           "required": false,
@@ -361653,12 +361659,6 @@
         "aria-current": {
           "description": "Inherited Solid/HTML attribute; see the generated type.",
           "type": "false | true | \"false\" | \"true\" | \"page\" | \"step\" | \"location\" | \"date\" | \"time\" | undefined",
-          "required": false,
-          "inherited": true
-        },
-        "aria-describedby": {
-          "description": "Inherited Solid/HTML attribute; see the generated type.",
-          "type": "string | undefined",
           "required": false,
           "inherited": true
         },
@@ -367555,6 +367555,12 @@
           "required": false,
           "inherited": true
         },
+        "aria-describedby": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | undefined",
+          "required": false,
+          "inherited": true
+        },
         "use:eventListener": {
           "description": "Inherited Solid/HTML attribute; see the generated type.",
           "type": "import(\"@solid-primitives/event-listener\").EventListenerDirectiveProps | undefined",
@@ -369964,12 +369970,6 @@
         "aria-current": {
           "description": "Inherited Solid/HTML attribute; see the generated type.",
           "type": "false | true | \"true\" | \"false\" | \"page\" | \"step\" | \"location\" | \"date\" | \"time\" | undefined",
-          "required": false,
-          "inherited": true
-        },
-        "aria-describedby": {
-          "description": "Inherited Solid/HTML attribute; see the generated type.",
-          "type": "string | undefined",
           "required": false,
           "inherited": true
         },
@@ -373135,6 +373135,12 @@
           "required": false,
           "inherited": true
         },
+        "aria-describedby": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | undefined",
+          "required": false,
+          "inherited": true
+        },
         "use:eventListener": {
           "description": "Inherited Solid/HTML attribute; see the generated type.",
           "type": "import(\"@solid-primitives/event-listener\").EventListenerDirectiveProps | undefined",
@@ -375547,12 +375553,6 @@
           "required": false,
           "inherited": true
         },
-        "aria-describedby": {
-          "description": "Inherited Solid/HTML attribute; see the generated type.",
-          "type": "string | undefined",
-          "required": false,
-          "inherited": true
-        },
         "aria-description": {
           "description": "Inherited Solid/HTML attribute; see the generated type.",
           "type": "string | undefined",
@@ -375888,6 +375888,12 @@
           "inherited": true
         },
         "aria-labelledby": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "aria-describedby": {
           "description": "Inherited Solid/HTML attribute; see the generated type.",
           "type": "string | undefined",
           "required": false,
@@ -378302,12 +378308,6 @@
         "aria-current": {
           "description": "Inherited Solid/HTML attribute; see the generated type.",
           "type": "boolean | \"false\" | \"true\" | \"page\" | \"step\" | \"location\" | \"date\" | \"time\" | undefined",
-          "required": false,
-          "inherited": true
-        },
-        "aria-describedby": {
-          "description": "Inherited Solid/HTML attribute; see the generated type.",
-          "type": "string | undefined",
           "required": false,
           "inherited": true
         },
@@ -381396,6 +381396,12 @@
           "required": false,
           "inherited": false
         },
+        "aria-describedby": {
+          "description": "Extra description IDs on the native input, merged with description and error. With TooltipTrigger, pass its aria-describedby here and its ref as inputRef.",
+          "type": "string | undefined",
+          "required": false,
+          "inherited": false
+        },
         "innerText": {
           "description": "Inherited Solid/HTML attribute; see the generated type.",
           "type": "string | number | undefined",
@@ -383799,12 +383805,6 @@
         "aria-current": {
           "description": "Inherited Solid/HTML attribute; see the generated type.",
           "type": "false | true | \"false\" | \"true\" | \"page\" | \"step\" | \"location\" | \"date\" | \"time\" | undefined",
-          "required": false,
-          "inherited": true
-        },
-        "aria-describedby": {
-          "description": "Inherited Solid/HTML attribute; see the generated type.",
-          "type": "string | undefined",
           "required": false,
           "inherited": true
         },
@@ -406399,6 +406399,12 @@
           "required": false,
           "inherited": true
         },
+        "aria-describedby": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | undefined",
+          "required": false,
+          "inherited": true
+        },
         "use:eventListener": {
           "description": "Inherited Solid/HTML attribute; see the generated type.",
           "type": "import(\"@solid-primitives/event-listener\").EventListenerDirectiveProps | undefined",
@@ -408808,12 +408814,6 @@
         "aria-current": {
           "description": "Inherited Solid/HTML attribute; see the generated type.",
           "type": "false | true | \"false\" | \"true\" | \"page\" | \"step\" | \"location\" | \"date\" | \"time\" | undefined",
-          "required": false,
-          "inherited": true
-        },
-        "aria-describedby": {
-          "description": "Inherited Solid/HTML attribute; see the generated type.",
-          "type": "string | undefined",
           "required": false,
           "inherited": true
         },
@@ -412065,6 +412065,12 @@
           "required": false,
           "inherited": true
         },
+        "aria-describedby": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | undefined",
+          "required": false,
+          "inherited": true
+        },
         "use:eventListener": {
           "description": "Inherited Solid/HTML attribute; see the generated type.",
           "type": "import(\"@solid-primitives/event-listener\").EventListenerDirectiveProps | undefined",
@@ -414468,12 +414474,6 @@
         "aria-current": {
           "description": "Inherited Solid/HTML attribute; see the generated type.",
           "type": "boolean | \"false\" | \"true\" | \"page\" | \"step\" | \"location\" | \"date\" | \"time\" | undefined",
-          "required": false,
-          "inherited": true
-        },
-        "aria-describedby": {
-          "description": "Inherited Solid/HTML attribute; see the generated type.",
-          "type": "string | undefined",
           "required": false,
           "inherited": true
         },
@@ -417626,6 +417626,12 @@
           "required": false,
           "inherited": true
         },
+        "aria-describedby": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | undefined",
+          "required": false,
+          "inherited": true
+        },
         "use:eventListener": {
           "description": "Inherited Solid/HTML attribute; see the generated type.",
           "type": "import(\"@solid-primitives/event-listener\").EventListenerDirectiveProps | undefined",
@@ -420038,12 +420044,6 @@
           "required": false,
           "inherited": true
         },
-        "aria-describedby": {
-          "description": "Inherited Solid/HTML attribute; see the generated type.",
-          "type": "string | undefined",
-          "required": false,
-          "inherited": true
-        },
         "aria-description": {
           "description": "Inherited Solid/HTML attribute; see the generated type.",
           "type": "string | undefined",
@@ -420996,6 +420996,12 @@
           "inherited": true
         },
         "aria-labelledby": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "aria-describedby": {
           "description": "Inherited Solid/HTML attribute; see the generated type.",
           "type": "string | undefined",
           "required": false,
@@ -423413,12 +423419,6 @@
           "required": false,
           "inherited": true
         },
-        "aria-describedby": {
-          "description": "Inherited Solid/HTML attribute; see the generated type.",
-          "type": "string | undefined",
-          "required": false,
-          "inherited": true
-        },
         "aria-description": {
           "description": "Inherited Solid/HTML attribute; see the generated type.",
           "type": "string | undefined",
@@ -423952,6 +423952,10 @@
         {
           "title": "Native element",
           "code": "<TooltipTrigger content=\"Copied values stay local\" shortcut=\"mod+c\">{trigger => <button type=\"button\" {...trigger}>Copy</button>}</TooltipTrigger>"
+        },
+        {
+          "title": "Switch or checkbox",
+          "code": "<TooltipTrigger content=\"Allows destructive actions for this session\">{trigger => <Switch label=\"Danger mode\" inputRef={trigger.ref} aria-describedby={trigger[\"aria-describedby\"]} />}</TooltipTrigger>"
         }
       ],
       "guidance": {
@@ -424075,6 +424079,12 @@
           "inherited": true
         },
         "aria-labelledby": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "aria-describedby": {
           "description": "Inherited Solid/HTML attribute; see the generated type.",
           "type": "string | undefined",
           "required": false,
@@ -426474,12 +426484,6 @@
           "required": false,
           "inherited": true
         },
-        "aria-describedby": {
-          "description": "Inherited Solid/HTML attribute; see the generated type.",
-          "type": "string | undefined",
-          "required": false,
-          "inherited": true
-        },
         "aria-description": {
           "description": "Inherited Solid/HTML attribute; see the generated type.",
           "type": "string | undefined",
@@ -426822,6 +426826,12 @@
           "inherited": true
         },
         "aria-labelledby": {
+          "description": "Inherited Solid/HTML attribute; see the generated type.",
+          "type": "string | undefined",
+          "required": false,
+          "inherited": true
+        },
+        "aria-describedby": {
           "description": "Inherited Solid/HTML attribute; see the generated type.",
           "type": "string | undefined",
           "required": false,
@@ -429212,12 +429222,6 @@
         "aria-current": {
           "description": "Inherited Solid/HTML attribute; see the generated type.",
           "type": "boolean | \"true\" | \"false\" | \"page\" | \"step\" | \"location\" | \"date\" | \"time\" | undefined",
-          "required": false,
-          "inherited": true
-        },
-        "aria-describedby": {
-          "description": "Inherited Solid/HTML attribute; see the generated type.",
-          "type": "string | undefined",
           "required": false,
           "inherited": true
         },

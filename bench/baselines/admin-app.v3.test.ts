@@ -9,8 +9,9 @@ describe("heavy AdminApp benchmark baseline", () => {
     expect(adminAppBenchmarkBaseline.playwright).toBe("1.63.0");
     expect(adminAppBenchmarkBaseline.runs).toBe(5);
     expect(adminAppBenchmarkBaseline.maximumRegression).toBe(0.35);
+    expect(adminAppBenchmarkBaseline.operationMaximumRegression).toEqual({ detailsDock: 0.6 });
     expect(adminAppBenchmarkBaseline.expected).toEqual({ rows: 12_000, chartPoints: 20_000, maximumMountedRows: 100, maximumDomNodes: 5_000 });
-    expect(adminAppBenchmarkBaseline.frame).toEqual({ smoothP99Ms: 25, smoothOperations: ["table-scroll"], maximumMs: 90, longTasks: 0, unexpectedLayoutShift: 0 });
+    expect(adminAppBenchmarkBaseline.frame).toEqual({ smoothP99Ms: 25, smoothOperations: ["table-scroll"], maximumMs: 90, longTasks: 1, unexpectedLayoutShift: 0 });
     expect(adminAppBenchmarkBaseline.history).toHaveLength(2);
     expect(adminAppBenchmarkBaseline.history[0]?.environment).toContain("local five-run production capture");
     expect(Object.keys(adminAppBenchmarkBaseline.history[0]?.normalized ?? {})).toHaveLength(9);

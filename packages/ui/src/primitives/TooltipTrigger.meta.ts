@@ -17,6 +17,7 @@ export default defineMeta<TooltipTriggerProps>({
   examples: [
     { title: "Existing button", code: '<TooltipTrigger content="Archive the selected rows">{trigger => <Button {...trigger} variant="outline">Archive</Button>}</TooltipTrigger>' },
     { title: "Native element", code: '<TooltipTrigger content="Copied values stay local" shortcut="mod+c">{trigger => <button type="button" {...trigger}>Copy</button>}</TooltipTrigger>' },
+    { title: "Switch or checkbox", code: '<TooltipTrigger content="Allows destructive actions for this session">{trigger => <Switch label="Danger mode" inputRef={trigger.ref} aria-describedby={trigger["aria-describedby"]} />}</TooltipTrigger>' },
   ],
   guidance: { do: ["Use for an element that already exists, such as an app button or a third-party control, instead of nesting it inside Tooltip."], dont: ["Do not render more than one element from the bindings or attach help to a non-focusable element.", "Do not put interactive content in the tooltip; use Popover."] },
 });
