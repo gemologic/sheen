@@ -1,5 +1,20 @@
 # @gemologic/sheen-patterns
 
+## 0.4.1
+
+### Patch Changes
+
+- 93dea59: Gaps found while porting an embedded admin to 0.4.0.
+  
+  - `Checkbox` and `Switch` put a passed `aria-describedby` on the native input, merged with the description and error, instead of on the root container. With `TooltipTrigger`, pass `inputRef={trigger.ref}` and `aria-describedby={trigger["aria-describedby"]}`.
+  - `AdminNavigationGroup` declares `defaultOpen`, which `AdminApp` already forwarded to `SidebarNav`.
+  - `@gemologic/sheen-date/styles.css` uses `@layer components` like every other Sheen stylesheet. It was in `sheen.components`, a separate top-level layer that outranked `utilities`.
+  - `@gemologic/sheen-code/languages` adds `go`, `rust`, and `toml`.
+  - `resolveLucideIconName` maps `building-2`, `scroll`, `scroll-text`, and `table-2`.
+- 4a41ac8: A failed AdminApp or AppShell deferred overlay load (command palette, shortcut sheet) no longer surfaces as an unhandled rejection. The trigger keeps working and the next hover, focus, or shortcut retries the load.
+- Updated dependencies [93dea59]
+  - @gemologic/sheen@0.4.1
+
 ## 0.4.0
 
 ### Minor Changes
