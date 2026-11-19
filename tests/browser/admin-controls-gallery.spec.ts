@@ -94,6 +94,7 @@ test("admin-control gallery is accessible with scoped RTL footer overlays", asyn
   await notification.click();
   const popover = page.locator(".sheen-admin-notification-popover:visible");
   expect(await popover.evaluate(element => element.closest('[data-sheen-portal="scope"]') !== null)).toBe(true);
+  await popover.evaluate(element => Promise.all(element.getAnimations({ subtree: true }).map(animation => animation.finished)));
   const axe = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"]).analyze();
   expect(axe.violations).toEqual([]);
 });
