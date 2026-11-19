@@ -1,5 +1,21 @@
 # @gemologic/sheen-table
 
+## 0.4.0
+
+### Minor Changes
+
+- 1667433: Add cursor server pagination to `DataTable`. Pass `pagination={{ kind: "cursor", pageSize, cursor: null }}` in server mode and return `{ rows, nextCursor, previousCursor, total? }` from `onStateChange`; the request state carries `cursor: { direction: "after" | "before", value }` for the next request. Either cursor may be null, and `total` is optional with an `exact`, `estimate`, or `atLeast` precision so capped or estimated counts are never shown as exact. The pager shows first/previous/next only, keeps focus through requests, announces the page through a polite status, and search, filter, and sort changes return to the first page. Numbered and complete server modes, and their types, are unchanged; `ServerDataTableProps`, `TableState`, `ClientStateChange`, `TableStateChange`, and `TableExportRequest` gain an optional pagination type parameter that defaults to the existing numbered contract. Core adds `parseCursorPagination`, `parseServerPagination`, and `assessCursorPage`, and `resetPagination`/`resizePagination` accept cursor state.
+- 1667433: Saved views and table URL state accept cursor pagination. Pass a `CursorTableStateSchema` (`{ ...schema, pagination: "cursor" }`) to `createSavedViews`, `createTableUrlState`, `parseTableState`, `serializeState`, `deserializeState`, or `changeTableState` to read and write `TableState<CursorPagination>`. Cursor tokens are short-lived, so persisted state always stores `cursor: null` (the first page) and restoring a stored token, or a numbered envelope under a cursor schema, fails closed. Schemas without `pagination` keep the existing complete/numbered contract.
+- 1667433: Add `createDataTable(features)` for lighter DataTable bundles. Compose only the features a table needs from `filterBarFeature`, `groupingFeature`, `hierarchyFeature`, and `cellEditingFeature`; `createDataTable([])` is about 83 KB gzip with its static imports versus about 111 KB for `DataTable`. Props owned by an omitted feature (`filterBar`, `grouping`, `hierarchy`, `onCellCommit`, `editResetKey`, and editor columns) are rejected by the composition's types and throw at render. `DataTable` is unchanged and still includes every feature.
+
+### Patch Changes
+
+- Updated dependencies [1667433]
+- Updated dependencies [1667433]
+- Updated dependencies [1667433]
+- Updated dependencies [1667433]
+  - @gemologic/sheen@0.4.0
+
 ## 0.3.0
 
 ### Minor Changes
