@@ -1,5 +1,22 @@
 # @gemologic/sheen-patterns
 
+## 0.4.0
+
+### Minor Changes
+
+- 1667433: AdminApp defers the command palette and AppShell defers the keyboard shortcut sheet into client-only chunks that preload on idle or trigger intent. Their triggers still render on the server, a first Ctrl/Cmd+K or `?` press is queued until the chunk arrives, and closing the palette returns focus to its opener. The Admin first-paint chunk drops from 79.3 KB to 74.4 KB gzip, with 8.2 KB gzip deferred.
+  
+  `primaryNavigation` and `secondaryNavigation` now also accept an ordered array of navigation models, so the sidebar or topbar can render any number of labeled sections. A single model still works unchanged.
+- 1667433: `SidebarNav` groups accept `defaultOpen` to start expanded. A group that contains the current destination still opens regardless.
+
+### Patch Changes
+
+- Updated dependencies [1667433]
+- Updated dependencies [1667433]
+- Updated dependencies [1667433]
+- Updated dependencies [1667433]
+  - @gemologic/sheen@0.4.0
+
 ## 0.3.0
 
 ### Minor Changes

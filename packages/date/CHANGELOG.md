@@ -1,5 +1,19 @@
 # @gemologic/sheen-date
 
+## 0.4.0
+
+### Minor Changes
+
+- 1667433: Add `NativeDateField`, `NativeTimeField`, and `NativeDateTimeField`, Sheen-styled wrappers around the native date, time, and datetime-local inputs, from a new `@gemologic/sheen-date/native` entry (about 9.2KB gzip for all three, no Ark UI). They use the existing `CalendarDate`, `Time`, and `DateTime` values and ISO form projections, restore uncontrolled defaults on form reset, adopt pre-hydration drafts, and mark app errors invalid. `NativeDateTimeField` requires an explicit `timeZone` and rejects repeated or skipped local times until an instant is chosen, like `DateTimePicker`.
+
+### Patch Changes
+
+- Updated dependencies [1667433]
+- Updated dependencies [1667433]
+- Updated dependencies [1667433]
+- Updated dependencies [1667433]
+  - @gemologic/sheen@0.4.0
+
 ## 0.3.0
 
 ### Minor Changes

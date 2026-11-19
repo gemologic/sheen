@@ -1,5 +1,0 @@
----
-"@gemologic/sheen-table": minor
----
-
-Add cursor server pagination to `DataTable`. Pass `pagination={{ kind: "cursor", pageSize, cursor: null }}` in server mode and return `{ rows, nextCursor, previousCursor, total? }` from `onStateChange`; the request state carries `cursor: { direction: "after" | "before", value }` for the next request. Either cursor may be null, and `total` is optional with an `exact`, `estimate`, or `atLeast` precision so capped or estimated counts are never shown as exact. The pager shows first/previous/next only, keeps focus through requests, announces the page through a polite status, and search, filter, and sort changes return to the first page. Numbered and complete server modes, and their types, are unchanged; `ServerDataTableProps`, `TableState`, `ClientStateChange`, `TableStateChange`, and `TableExportRequest` gain an optional pagination type parameter that defaults to the existing numbered contract. Core adds `parseCursorPagination`, `parseServerPagination`, and `assessCursorPage`, and `resetPagination`/`resizePagination` accept cursor state.

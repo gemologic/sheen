@@ -1,5 +1,18 @@
 # @gemologic/sheen
 
+## 0.4.0
+
+### Minor Changes
+
+- 1667433: `CommandPaletteCommand` accepts optional `icon` and `trailing` render functions for a decorative leading icon and trailing content such as a shortcut hint or badge. The label stays the option's accessible name, and trailing content becomes its description.
+- 1667433: `Popover` accepts `disabled`, which natively disables its trigger like `Button` does.
+- 1667433: Add `TooltipTrigger`, which attaches tooltip help to an existing focusable element instead of rendering another button. Its render child receives `ref` and `aria-describedby` bindings, and the element keeps its own event handlers.
+- 1667433: `Checkbox` and `Switch` accept `aria-label` or `aria-labelledby` instead of a visible `label`, for table cells and other places where a visible label would repeat nearby text. The props type requires exactly one of the three. The native input is now the pointer hit target over the decorative indicator, so a plain click works before and after hydration without a test helper.
+
+### Patch Changes
+
+- @gemologic/sheen-tokens@0.4.0
+
 ## 0.3.0
 
 ### Minor Changes
