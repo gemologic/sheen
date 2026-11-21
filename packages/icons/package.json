@@ -1,6 +1,6 @@
 {
   "name": "@gemologic/sheen-icons",
-  "version": "0.4.2",
+  "version": "0.4.3",
   "description": "Build-time-selectable icon sets for the Sheen SolidJS design system.",
   "type": "module",
   "license": "MIT",
