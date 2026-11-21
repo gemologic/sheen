@@ -1,6 +1,6 @@
 {
   "name": "@gemologic/sheen",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "description": "Accessible, themeable SolidJS components for application interfaces.",
   "type": "module",
   "license": "MIT",

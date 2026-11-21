@@ -1,5 +1,12 @@
 # @gemologic/sheen
 
+## 0.4.2
+
+### Patch Changes
+
+- 50b7882: Keep one submenu open per parent menu. Moving between sibling submenus, such as DataTable column controls, closes the previous panel, and closing the parent clears its open submenu so it reopens with none showing. ContextMenu gets the same behavior.
+- @gemologic/sheen-tokens@0.4.2
+
 ## 0.4.1
 
 ### Patch Changes
