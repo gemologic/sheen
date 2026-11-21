@@ -129,7 +129,7 @@ function createFocusScope(props, ref) {
     const activationObserver = new MutationObserver(() => {
       if (container.hasAttribute("data-expanded")) {
         restored = false;
-        focusEntered = contains(container, getActiveElement(container));
+        focusEntered = false;
         focusScopeStack.add(focusScope);
         focusScope.resume();
       } else if (props.restoreFocusOnClose && container.hasAttribute("data-closed")) {
@@ -141,7 +141,6 @@ function createFocusScope(props, ref) {
       container
     );
     const hasFocusedCandidate = contains(container, previouslyFocusedElement);
-    focusEntered = hasFocusedCandidate;
     if (!hasFocusedCandidate) {
       const mountEvent = new CustomEvent(
         AUTOFOCUS_ON_MOUNT_EVENT,

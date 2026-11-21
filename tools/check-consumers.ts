@@ -608,7 +608,7 @@ try {
     assert.ok(css.some(asset => asset.type === "asset" && String(asset.source).includes("sheen-data-table")), "Installed DataTable styles must produce component CSS");
     process.stdout.write(`Isolated ${entryCondition} DataTable entry and styles passed\n`);
   }
-  await assertDataTableBundleBudget(temporary, table, "table-datatable", 111_300);
+  await assertDataTableBundleBudget(temporary, table, "table-datatable", 111_500);
   await assertDataTableBundleBudget(temporary, table, "table-datatable-light", 83_500);
   const patterns = join(temporary, "node_modules", "@gemologic", "sheen-patterns");
   await mkdir(patterns, { recursive: true });

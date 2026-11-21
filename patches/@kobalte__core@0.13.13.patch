@@ -160,10 +160,10 @@ index 069ac57d156ad35cf46407f833db0d6ddd5a4115..5dd8b1328972bdd0882c44fec887ad9d
    });
    const context = {
 diff --git a/dist/chunk/G3KI2B4X.js b/dist/chunk/G3KI2B4X.js
-index 7844b9f7b903e5cddd00467678d9d40384fd2ad2..bcb6fd2627e659764514e686af8aebbf9bf9bfac 100644
+index 7844b9f7b903e5cddd00467678d9d40384fd2ad2..af35f1f6d76783169b432bf790eb0dd76b53bc33 100644
 --- a/dist/chunk/G3KI2B4X.js
 +++ b/dist/chunk/G3KI2B4X.js
-@@ -86,14 +86,54 @@ function createFocusScope(props, ref) {
+@@ -86,6 +86,44 @@ function createFocusScope(props, ref) {
        return;
      }
      focusScopeStack.add(focusScope);
@@ -197,7 +197,7 @@ index 7844b9f7b903e5cddd00467678d9d40384fd2ad2..bcb6fd2627e659764514e686af8aebbf
 +    const activationObserver = new MutationObserver(() => {
 +      if (container.hasAttribute("data-expanded")) {
 +        restored = false;
-+        focusEntered = contains(container, getActiveElement(container));
++        focusEntered = false;
 +        focusScopeStack.add(focusScope);
 +        focusScope.resume();
 +      } else if (props.restoreFocusOnClose && container.hasAttribute("data-closed")) {
@@ -207,9 +207,8 @@ index 7844b9f7b903e5cddd00467678d9d40384fd2ad2..bcb6fd2627e659764514e686af8aebbf
 +    activationObserver.observe(container, { attributes: true, attributeFilter: ["data-expanded"] });
      const previouslyFocusedElement = getActiveElement(container);
      const hasFocusedCandidate = contains(container, previouslyFocusedElement);
-+    focusEntered = hasFocusedCandidate;
      if (!hasFocusedCandidate) {
-       const mountEvent = new CustomEvent(AUTOFOCUS_ON_MOUNT_EVENT, EVENT_OPTIONS);
+@@ -93,7 +131,8 @@ function createFocusScope(props, ref) {
        container.addEventListener(AUTOFOCUS_ON_MOUNT_EVENT, onMountAutoFocus);
        container.dispatchEvent(mountEvent);
        if (!mountEvent.defaultPrevented) {
@@ -219,7 +218,7 @@ index 7844b9f7b903e5cddd00467678d9d40384fd2ad2..bcb6fd2627e659764514e686af8aebbf
            focusWithoutScrolling(firstTabbable());
            if (getActiveElement(container) === previouslyFocusedElement) {
              focusWithoutScrolling(container);
-@@ -102,20 +142,12 @@ function createFocusScope(props, ref) {
+@@ -102,20 +141,12 @@ function createFocusScope(props, ref) {
        }
      }
      onCleanup(() => {
@@ -270,10 +269,10 @@ index a5906978688e5b06e493f93d551a6dd882d5eb51..7925416aaed644889f4b7470626824a8
        focusWithoutScrolling(context.triggerRef());
      }
 diff --git a/dist/chunk/KEL2LLJM.jsx b/dist/chunk/KEL2LLJM.jsx
-index 1ff4c0953b05dc157c1523e289729783bd005238..dc7a9b1978aa51c7b89e7fd0f61a1da96a3304ec 100644
+index 1ff4c0953b05dc157c1523e289729783bd005238..1cc84356761212373d0ad5772fb980a98299cd3a 100644
 --- a/dist/chunk/KEL2LLJM.jsx
 +++ b/dist/chunk/KEL2LLJM.jsx
-@@ -98,10 +98,49 @@ function createFocusScope(props, ref) {
+@@ -98,6 +98,44 @@ function createFocusScope(props, ref) {
        return;
      }
      focusScopeStack.add(focusScope);
@@ -307,7 +306,7 @@ index 1ff4c0953b05dc157c1523e289729783bd005238..dc7a9b1978aa51c7b89e7fd0f61a1da9
 +    const activationObserver = new MutationObserver(() => {
 +      if (container.hasAttribute("data-expanded")) {
 +        restored = false;
-+        focusEntered = contains(container, getActiveElement(container));
++        focusEntered = false;
 +        focusScopeStack.add(focusScope);
 +        focusScope.resume();
 +      } else if (props.restoreFocusOnClose && container.hasAttribute("data-closed")) {
@@ -318,12 +317,7 @@ index 1ff4c0953b05dc157c1523e289729783bd005238..dc7a9b1978aa51c7b89e7fd0f61a1da9
      const previouslyFocusedElement = getActiveElement(
        container
      );
-     const hasFocusedCandidate = contains(container, previouslyFocusedElement);
-+    focusEntered = hasFocusedCandidate;
-     if (!hasFocusedCandidate) {
-       const mountEvent = new CustomEvent(
-         AUTOFOCUS_ON_MOUNT_EVENT,
-@@ -110,7 +149,8 @@ function createFocusScope(props, ref) {
+@@ -110,7 +148,8 @@ function createFocusScope(props, ref) {
        container.addEventListener(AUTOFOCUS_ON_MOUNT_EVENT, onMountAutoFocus);
        container.dispatchEvent(mountEvent);
        if (!mountEvent.defaultPrevented) {
@@ -333,7 +327,7 @@ index 1ff4c0953b05dc157c1523e289729783bd005238..dc7a9b1978aa51c7b89e7fd0f61a1da9
            focusWithoutScrolling(firstTabbable());
            if (getActiveElement(container) === previouslyFocusedElement) {
              focusWithoutScrolling(container);
-@@ -119,31 +159,12 @@ function createFocusScope(props, ref) {
+@@ -119,31 +158,12 @@ function createFocusScope(props, ref) {
        }
      }
      onCleanup(() => {
