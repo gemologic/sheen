@@ -308,6 +308,38 @@ test("columns reorder, pin, and hide through pointer-independent controls withou
   await expect(section.getByLabel("Accepted column layout")).toContainText("amount:hidden");
 });
 
+test("column submenus keep one sibling open and reset when the parent menu closes", async ({ page }) => {
+  await page.goto("/data-table");
+  await expect(page.locator('[data-sheen-portal="root"]')).toHaveAttribute("data-sheen-ready", "true");
+  const section = page.getByRole("region", { name: "Column interaction example" });
+  await openColumns(page, section, "Interactive columns");
+  const columns = page.getByRole("menu", { name: "Columns", exact: true });
+  const expanded = columns.locator('[role="menuitem"][aria-haspopup][aria-expanded="true"]');
+  for (const name of ["Name", "Amount", "Identifier", "Name"]) {
+    const trigger = columns.getByRole("menuitem", { name, exact: true });
+    await openSubmenu(page, trigger, page.getByRole("menu", { name, exact: true }));
+    await expect(expanded).toHaveCount(1);
+    await expect(trigger).toHaveAttribute("aria-expanded", "true");
+    await expect(page.getByRole("menuitemcheckbox", { name: "Show column" })).toHaveCount(1);
+  }
+
+  await page.mouse.click(1, 1);
+  await expect(columns).toHaveCount(0);
+  await openColumns(page, section, "Interactive columns");
+  await expect(columns).toBeVisible();
+  await expect(expanded).toHaveCount(0);
+  await expect(page.getByRole("menuitemcheckbox", { name: "Show column" })).toHaveCount(0);
+
+  const amount = columns.getByRole("menuitem", { name: "Amount", exact: true });
+  await amount.focus();
+  await page.keyboard.press("ArrowRight");
+  await expect(page.getByRole("menu", { name: "Amount", exact: true })).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("menu", { name: "Amount", exact: true })).toHaveCount(0);
+  await expect(columns).toBeVisible();
+  await expect(amount).toBeFocused();
+});
+
 test("server-side column layout changes do not dispatch data requests", async ({ page }) => {
   let requests = 0;
   page.on("request", request => { if (new URL(request.url()).pathname === "/api/data-table") requests++; });

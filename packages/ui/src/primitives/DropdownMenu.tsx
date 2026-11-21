@@ -116,10 +116,11 @@ function MenuItemIcon(props: { readonly icon: (() => JSX.Element) | undefined })
   return <Show when={props.icon}>{render => <span class="sheen-menu-item-icon" aria-hidden="true">{render()()}</span>}</Show>;
 }
 
-function Submenu(props: { item: MenuSubmenu }): JSX.Element {
+function Submenu(props: { item: MenuSubmenu; open: boolean; onOpenChange: (open: boolean) => void }): JSX.Element {
   const theme = useTheme();
   const id = createUniqueId();
-  const [open, setOpen] = createSignal(false);
+  const open = () => props.open;
+  const setOpen = (next: boolean): void => props.onOpenChange(next);
   const [content, setContent] = createSignal<HTMLElement>();
   useShortcutKeyboardOwner(content, open);
   createMenuFocusRecovery(content, open);
@@ -151,8 +152,12 @@ function Submenu(props: { item: MenuSubmenu }): JSX.Element {
   </Primitive.Sub>;
 }
 
+/** Each list owns one open submenu. A late close from the previous sibling cannot close its replacement, and closing the enclosing menu clears it. */
 export function MenuItems(props: { items: readonly MenuItem[] }): JSX.Element {
   const items = createMemo(() => indexItems(props.items));
+  const menu = useMenuContext();
+  const [activeSubmenu, setActiveSubmenu] = createSignal<string | null>(null);
+  createEffect(() => { if (!menu.isOpen()) setActiveSubmenu(null); });
   return <For each={[...items().keys()]}>{id => {
     const action = () => { const item = items().get(id); return item?.kind === "action" ? item : undefined; };
     const checkbox = () => { const item = items().get(id); return item?.kind === "checkbox" ? item : undefined; };
@@ -168,7 +173,8 @@ export function MenuItems(props: { items: readonly MenuItem[] }): JSX.Element {
         <Show when={item().shortcut}>{shortcut => <MenuShortcut keys={shortcut()} />}</Show>
       </Primitive.CheckboxItem>}</Show>
       <Show when={radio()}>{item => <RadioItems group={item()} />}</Show>
-      <Show when={submenu()}>{item => <Submenu item={item()} />}</Show>
+      <Show when={submenu()}>{item => <Submenu item={item()} open={activeSubmenu() === id}
+        onOpenChange={open => setActiveSubmenu(current => open ? id : current === id ? null : current)} />}</Show>
       <Show when={items().get(id)?.kind === "separator"}><Primitive.Separator class="sheen-menu-separator" /></Show>
     </>;
   }}</For>;

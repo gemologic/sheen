@@ -183,6 +183,7 @@ try {
   await writeFile(join(consumerDirectory, "node-consumer.mjs"), nodeConsumer(expectedVersion));
   await writeFile(join(consumerDirectory, "vite-probe.mjs"), viteProbe);
   await execute(process.execPath, ["node-consumer.mjs"], consumerDirectory);
+  assert.match(await execute("npm", ["exec", "--", "sheen", "--help"], consumerDirectory), /sheen doctor/u, "The installed sheen bin must run through its package-manager symlink");
   await execute("npm", ["exec", "--", "tsc", "--noEmit", "--strict", "--skipLibCheck", "--target", "ES2023", "--module", "ESNext", "--moduleResolution", "Bundler", "--jsx", "preserve", "--types", "vite/client", "browser-consumer.tsx"], consumerDirectory);
   await cp(join(root, "tests/consumers/ui-runtime-types.mts"), join(consumerDirectory, "runtime-types.mts"));
   await execute("npm", ["exec", "--", "tsc", "--noEmit", "--strict", "--target", "ES2023", "--module", "ESNext", "--moduleResolution", "Bundler", "--types", "vite/client", "runtime-types.mts"], consumerDirectory);

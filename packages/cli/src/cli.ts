@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { realpathSync } from "node:fs";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { applyPlan } from "./files.js";
@@ -65,6 +66,10 @@ function parseArguments(args: readonly string[], cwd: string): ParsedArguments {
 }
 
 export async function runCli(args: readonly string[], cwd: string, streams: CliStreams): Promise<number> {
+  if (args.includes("--help") || args.includes("-h")) {
+    streams.out(usage());
+    return 0;
+  }
   try {
     const parsed = parseArguments(args, cwd);
     const [command, kind, name, ...extra] = parsed.positional;
@@ -112,7 +117,8 @@ export async function runCli(args: readonly string[], cwd: string, streams: CliS
   }
 }
 
-const invoked = process.argv[1] ? pathToFileURL(resolve(process.argv[1])).href : undefined;
+// Package managers run bins through a symlink; Node resolves import.meta.url to the real file.
+const invoked = process.argv[1] ? pathToFileURL(realpathSync(process.argv[1])).href : undefined;
 if (invoked === import.meta.url) {
   process.exitCode = await runCli(process.argv.slice(2), process.cwd(), {
     out: value => process.stdout.write(value),
