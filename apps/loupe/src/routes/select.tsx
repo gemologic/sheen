@@ -1,9 +1,10 @@
 import { createSignal } from "solid-js";
-import { Button, Dialog, Select, Stack, ThemeScope } from "@gemologic/sheen";
+import { Button, Dialog, Select, Stack, Textarea, ThemeScope } from "@gemologic/sheen";
 import type { SelectOption } from "@gemologic/sheen";
 
 const choices: SelectOption[] = [{ value: "live", label: "Live", description: "Continuous updates" }, { value: "paused", label: "Paused", disabled: true }, { value: "manual", label: "Manual" }];
 export default function SelectFixture() {
+  let question: HTMLTextAreaElement | undefined;
   const [options, setOptions] = createSignal(choices);
   const [value, setValue] = createSignal<string | null>(null);
   const [cancel, setCancel] = createSignal(false);
@@ -36,5 +37,9 @@ export default function SelectFixture() {
     <ThemeScope theme="paper" mode="light" accent="violet" direction="rtl" class="select-scope">
       <Dialog title="Scoped dialog" trigger="Open scoped dialog"><Select label="Scoped cadence" options={choices} defaultValue="live" /></Dialog>
     </ThemeScope>
+    <Dialog title="Draft dialog" trigger="Open draft dialog" initialFocus={() => question}><Stack>
+      <Select label="Draft cadence" options={choices} defaultValue="live" />
+      <Textarea label="Draft question" ref={element => { question = element; }} />
+    </Stack></Dialog>
   </Stack></main>;
 }

@@ -86,6 +86,23 @@ test("Select popup inherits scoped theme and only the inner layer closes on Esca
   await expect(dialog).toHaveCount(0);
 });
 
+test("a pointer-picked Select leaves focus on a field the user returned to during its exit", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await page.goto("/select");
+  await expect(page.locator('[data-sheen-portal="root"]')).toHaveAttribute("data-sheen-ready", "true");
+  await page.getByRole("button", { name: "Open draft dialog" }).click();
+  const dialog = page.getByRole("dialog", { name: "Draft dialog" });
+  const question = dialog.getByLabel("Draft question");
+  await expect(question).toBeFocused();
+  await dialog.getByRole("button", { name: "Draft cadence Live", exact: true }).click();
+  await page.getByRole("option", { name: "Manual" }).click();
+  await question.evaluate((element: HTMLTextAreaElement) => { element.focus(); element.value = "why is the sky blue"; element.setSelectionRange(4, 6); });
+  await expect(page.locator(".sheen-select-content")).toHaveCount(0);
+  await page.evaluate(() => new Promise(resolve => setTimeout(resolve, 50)));
+  await expect(question).toBeFocused();
+  expect(await question.evaluate((element: HTMLTextAreaElement) => [element.selectionStart, element.selectionEnd])).toEqual([4, 6]);
+});
+
 test("Select supports typeahead, Home/End, repeated selection, and transient motion", async ({ page }) => {
   await page.goto("/select");
   const trigger = page.locator(".sheen-select-trigger").first();

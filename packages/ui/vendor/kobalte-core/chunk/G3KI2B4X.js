@@ -89,13 +89,20 @@ function createFocusScope(props, ref) {
     focusScopeStack.add(focusScope);
     let restored = false;
     let disposed = false;
+    let focusEntered = false;
+    const onFocusIn = () => {
+      focusEntered = true;
+    };
+    container.addEventListener("focusin", onFocusIn);
     let mountTimer;
     const restoreFocus = () => {
       if (restored) return;
       restored = true;
       clearTimeout(mountTimer);
-      // Focus still on the element that held it at open was never moved by the user, so closing restores it as usual.
-      const preventAutoFocus = isPaused() || getActiveElement(container) !== previouslyFocusedElement && shouldPreventUnmountAutoFocus();
+      // Focus that never entered the scope and is still on the element that held it at open was never moved by the user,
+      // so closing restores it as usual. Focus that entered and then returned there was moved deliberately.
+      const untouched = !focusEntered && getActiveElement(container) === previouslyFocusedElement;
+      const preventAutoFocus = isPaused() || !untouched && shouldPreventUnmountAutoFocus();
       focusScope.pause();
       focusScopeStack.remove(focusScope);
       const unmountEvent = new CustomEvent(AUTOFOCUS_ON_UNMOUNT_EVENT, EVENT_OPTIONS);
@@ -110,6 +117,7 @@ function createFocusScope(props, ref) {
     const activationObserver = new MutationObserver(() => {
       if (container.hasAttribute("data-expanded")) {
         restored = false;
+        focusEntered = contains(container, getActiveElement(container));
         focusScopeStack.add(focusScope);
         focusScope.resume();
       } else if (props.restoreFocusOnClose && container.hasAttribute("data-closed")) {
@@ -119,6 +127,7 @@ function createFocusScope(props, ref) {
     activationObserver.observe(container, { attributes: true, attributeFilter: ["data-expanded"] });
     const previouslyFocusedElement = getActiveElement(container);
     const hasFocusedCandidate = contains(container, previouslyFocusedElement);
+    focusEntered = hasFocusedCandidate;
     if (!hasFocusedCandidate) {
       const mountEvent = new CustomEvent(AUTOFOCUS_ON_MOUNT_EVENT, EVENT_OPTIONS);
       container.addEventListener(AUTOFOCUS_ON_MOUNT_EVENT, onMountAutoFocus);
@@ -137,6 +146,7 @@ function createFocusScope(props, ref) {
       disposed = true;
       clearTimeout(mountTimer);
       activationObserver.disconnect();
+      container.removeEventListener("focusin", onFocusIn);
       container.removeEventListener(AUTOFOCUS_ON_MOUNT_EVENT, onMountAutoFocus);
       setTimeout(restoreFocus, 0);
     });

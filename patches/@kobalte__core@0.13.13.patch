@@ -160,22 +160,29 @@ index 069ac57d156ad35cf46407f833db0d6ddd5a4115..5dd8b1328972bdd0882c44fec887ad9d
    });
    const context = {
 diff --git a/dist/chunk/G3KI2B4X.js b/dist/chunk/G3KI2B4X.js
-index 7844b9f7b903e5cddd00467678d9d40384fd2ad2..ced7874e31d49060b2aba6341e54064c324cb721 100644
+index 7844b9f7b903e5cddd00467678d9d40384fd2ad2..bcb6fd2627e659764514e686af8aebbf9bf9bfac 100644
 --- a/dist/chunk/G3KI2B4X.js
 +++ b/dist/chunk/G3KI2B4X.js
-@@ -86,6 +86,36 @@ function createFocusScope(props, ref) {
+@@ -86,14 +86,54 @@ function createFocusScope(props, ref) {
        return;
      }
      focusScopeStack.add(focusScope);
 +    let restored = false;
 +    let disposed = false;
++    let focusEntered = false;
++    const onFocusIn = () => {
++      focusEntered = true;
++    };
++    container.addEventListener("focusin", onFocusIn);
 +    let mountTimer;
 +    const restoreFocus = () => {
 +      if (restored) return;
 +      restored = true;
 +      clearTimeout(mountTimer);
-+      // Focus still on the element that held it at open was never moved by the user, so closing restores it as usual.
-+      const preventAutoFocus = isPaused() || getActiveElement(container) !== previouslyFocusedElement && shouldPreventUnmountAutoFocus();
++      // Focus that never entered the scope and is still on the element that held it at open was never moved by the user,
++      // so closing restores it as usual. Focus that entered and then returned there was moved deliberately.
++      const untouched = !focusEntered && getActiveElement(container) === previouslyFocusedElement;
++      const preventAutoFocus = isPaused() || !untouched && shouldPreventUnmountAutoFocus();
 +      focusScope.pause();
 +      focusScopeStack.remove(focusScope);
 +      const unmountEvent = new CustomEvent(AUTOFOCUS_ON_UNMOUNT_EVENT, EVENT_OPTIONS);
@@ -190,6 +197,7 @@ index 7844b9f7b903e5cddd00467678d9d40384fd2ad2..ced7874e31d49060b2aba6341e54064c
 +    const activationObserver = new MutationObserver(() => {
 +      if (container.hasAttribute("data-expanded")) {
 +        restored = false;
++        focusEntered = contains(container, getActiveElement(container));
 +        focusScopeStack.add(focusScope);
 +        focusScope.resume();
 +      } else if (props.restoreFocusOnClose && container.hasAttribute("data-closed")) {
@@ -199,8 +207,9 @@ index 7844b9f7b903e5cddd00467678d9d40384fd2ad2..ced7874e31d49060b2aba6341e54064c
 +    activationObserver.observe(container, { attributes: true, attributeFilter: ["data-expanded"] });
      const previouslyFocusedElement = getActiveElement(container);
      const hasFocusedCandidate = contains(container, previouslyFocusedElement);
++    focusEntered = hasFocusedCandidate;
      if (!hasFocusedCandidate) {
-@@ -93,7 +123,8 @@ function createFocusScope(props, ref) {
+       const mountEvent = new CustomEvent(AUTOFOCUS_ON_MOUNT_EVENT, EVENT_OPTIONS);
        container.addEventListener(AUTOFOCUS_ON_MOUNT_EVENT, onMountAutoFocus);
        container.dispatchEvent(mountEvent);
        if (!mountEvent.defaultPrevented) {
@@ -210,13 +219,14 @@ index 7844b9f7b903e5cddd00467678d9d40384fd2ad2..ced7874e31d49060b2aba6341e54064c
            focusWithoutScrolling(firstTabbable());
            if (getActiveElement(container) === previouslyFocusedElement) {
              focusWithoutScrolling(container);
-@@ -102,20 +133,11 @@ function createFocusScope(props, ref) {
+@@ -102,20 +142,12 @@ function createFocusScope(props, ref) {
        }
      }
      onCleanup(() => {
 +      disposed = true;
 +      clearTimeout(mountTimer);
 +      activationObserver.disconnect();
++      container.removeEventListener("focusin", onFocusIn);
        container.removeEventListener(AUTOFOCUS_ON_MOUNT_EVENT, onMountAutoFocus);
 -      setTimeout(() => {
 -        const unmountEvent = new CustomEvent(AUTOFOCUS_ON_UNMOUNT_EVENT, EVENT_OPTIONS);
@@ -260,22 +270,29 @@ index a5906978688e5b06e493f93d551a6dd882d5eb51..7925416aaed644889f4b7470626824a8
        focusWithoutScrolling(context.triggerRef());
      }
 diff --git a/dist/chunk/KEL2LLJM.jsx b/dist/chunk/KEL2LLJM.jsx
-index 1ff4c0953b05dc157c1523e289729783bd005238..07d455e40281a6c16a8c3f445cc173bc1619016c 100644
+index 1ff4c0953b05dc157c1523e289729783bd005238..dc7a9b1978aa51c7b89e7fd0f61a1da96a3304ec 100644
 --- a/dist/chunk/KEL2LLJM.jsx
 +++ b/dist/chunk/KEL2LLJM.jsx
-@@ -98,6 +98,36 @@ function createFocusScope(props, ref) {
+@@ -98,10 +98,49 @@ function createFocusScope(props, ref) {
        return;
      }
      focusScopeStack.add(focusScope);
 +    let restored = false;
 +    let disposed = false;
++    let focusEntered = false;
++    const onFocusIn = () => {
++      focusEntered = true;
++    };
++    container.addEventListener("focusin", onFocusIn);
 +    let mountTimer;
 +    const restoreFocus = () => {
 +      if (restored) return;
 +      restored = true;
 +      clearTimeout(mountTimer);
-+      // Focus still on the element that held it at open was never moved by the user, so closing restores it as usual.
-+      const preventAutoFocus = isPaused() || getActiveElement(container) !== previouslyFocusedElement && shouldPreventUnmountAutoFocus();
++      // Focus that never entered the scope and is still on the element that held it at open was never moved by the user,
++      // so closing restores it as usual. Focus that entered and then returned there was moved deliberately.
++      const untouched = !focusEntered && getActiveElement(container) === previouslyFocusedElement;
++      const preventAutoFocus = isPaused() || !untouched && shouldPreventUnmountAutoFocus();
 +      focusScope.pause();
 +      focusScopeStack.remove(focusScope);
 +      const unmountEvent = new CustomEvent(AUTOFOCUS_ON_UNMOUNT_EVENT, EVENT_OPTIONS);
@@ -290,6 +307,7 @@ index 1ff4c0953b05dc157c1523e289729783bd005238..07d455e40281a6c16a8c3f445cc173bc
 +    const activationObserver = new MutationObserver(() => {
 +      if (container.hasAttribute("data-expanded")) {
 +        restored = false;
++        focusEntered = contains(container, getActiveElement(container));
 +        focusScopeStack.add(focusScope);
 +        focusScope.resume();
 +      } else if (props.restoreFocusOnClose && container.hasAttribute("data-closed")) {
@@ -300,7 +318,12 @@ index 1ff4c0953b05dc157c1523e289729783bd005238..07d455e40281a6c16a8c3f445cc173bc
      const previouslyFocusedElement = getActiveElement(
        container
      );
-@@ -110,7 +140,8 @@ function createFocusScope(props, ref) {
+     const hasFocusedCandidate = contains(container, previouslyFocusedElement);
++    focusEntered = hasFocusedCandidate;
+     if (!hasFocusedCandidate) {
+       const mountEvent = new CustomEvent(
+         AUTOFOCUS_ON_MOUNT_EVENT,
+@@ -110,7 +149,8 @@ function createFocusScope(props, ref) {
        container.addEventListener(AUTOFOCUS_ON_MOUNT_EVENT, onMountAutoFocus);
        container.dispatchEvent(mountEvent);
        if (!mountEvent.defaultPrevented) {
@@ -310,13 +333,14 @@ index 1ff4c0953b05dc157c1523e289729783bd005238..07d455e40281a6c16a8c3f445cc173bc
            focusWithoutScrolling(firstTabbable());
            if (getActiveElement(container) === previouslyFocusedElement) {
              focusWithoutScrolling(container);
-@@ -119,31 +150,11 @@ function createFocusScope(props, ref) {
+@@ -119,31 +159,12 @@ function createFocusScope(props, ref) {
        }
      }
      onCleanup(() => {
 +      disposed = true;
 +      clearTimeout(mountTimer);
 +      activationObserver.disconnect();
++      container.removeEventListener("focusin", onFocusIn);
        container.removeEventListener(AUTOFOCUS_ON_MOUNT_EVENT, onMountAutoFocus);
 -      setTimeout(() => {
 -        const unmountEvent = new CustomEvent(
