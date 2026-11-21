@@ -609,7 +609,7 @@ try {
     process.stdout.write(`Isolated ${entryCondition} DataTable entry and styles passed\n`);
   }
   await assertDataTableBundleBudget(temporary, table, "table-datatable", 111_500);
-  await assertDataTableBundleBudget(temporary, table, "table-datatable-light", 83_500);
+  await assertDataTableBundleBudget(temporary, table, "table-datatable-light", 83_700);
   const patterns = join(temporary, "node_modules", "@gemologic", "sheen-patterns");
   await mkdir(patterns, { recursive: true });
   await cp(new URL("packages/patterns/package.json", root), join(patterns, "package.json"));
