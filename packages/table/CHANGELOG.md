@@ -1,5 +1,12 @@
 # @gemologic/sheen-table
 
+## 0.4.2
+
+### Patch Changes
+
+- Updated dependencies [50b7882]
+  - @gemologic/sheen@0.4.2
+
 ## 0.4.1
 
 ### Patch Changes
